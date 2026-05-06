@@ -1,0 +1,106 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and preferences",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "energyScore": { "type": "number" },
+        "vibeMode": { "type": "string", "enum": ["hustle", "zen", "balance"] },
+        "fitnessProfile": {
+          "type": "object",
+          "properties": {
+            "height": { "type": "number" },
+            "weight": { "type": "number" },
+            "goal": { "type": "string" },
+            "equipment": { "type": "array" }
+          }
+        },
+        "streak": { "type": "number" },
+        "lastCheckIn": { "type": "string", "format": "date-time" }
+      }
+    },
+    "EnergyCheckIn": {
+      "title": "Energy Check-In",
+      "description": "Daily energy calibration data",
+      "type": "object",
+      "properties": {
+        "energy": { "type": "number" },
+        "stress": { "type": "number" },
+        "focus": { "type": "number" },
+        "score": { "type": "number" },
+        "mode": { "type": "string" },
+        "quote": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Task": {
+      "title": "Task",
+      "description": "User task and schedule item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "duration": { "type": "number" },
+        "priority": { "type": "string" },
+        "category": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Workout": {
+      "title": "Workout",
+      "description": "Fitness exercise data",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string" },
+        "exercises": { "type": "array" },
+        "duration": { "type": "number" },
+        "energyScoreAtTime": { "type": "number" },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Journal": {
+      "title": "Journal",
+      "description": "Self-reflection entry",
+      "type": "object",
+      "properties": {
+        "rating": { "type": "number" },
+        "highlight": { "type": "string" },
+        "challenge": { "type": "string" },
+        "mood": { "type": "string" },
+        "reflection": { "type": "string" },
+        "aiResponse": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Root user document"
+    },
+    "/users/{userId}/energyCheckIns/{id}": {
+      "schema": "EnergyCheckIn",
+      "description": "History of energy check-ins"
+    },
+    "/users/{userId}/tasks/{id}": {
+      "schema": "Task",
+      "description": "User task list"
+    },
+    "/users/{userId}/workouts/{id}": {
+      "schema": "Workout",
+      "description": "Generated workouts"
+    },
+    "/users/{userId}/journals/{id}": {
+      "schema": "Journal",
+      "description": "Daily journals"
+    }
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "profile": {
+    "title": "Profil",
+    "accountDetails": "Detail Akun",
+    "settings": "Pengaturan",
+    "username": "Nama Pengguna",
+    "email": "Alamat Email",
+    "phone": "Nomor Telepon",
+    "changePassword": "Ubah Kata Sandi",
+    "uploadAvatar": "Unggah Gambar Profil",
+    "saveChanges": "Simpan Perubahan",
+    "notifications": {
+      "title": "Preferensi Notifikasi",
+      "email": "Notifikasi Email",
+      "push": "Notifikasi Push",
+      "messages": "Pesan Baru",
+      "alerts": "Peringatan Aktivitas",
+      "promo": "Penawaran Promosi"
+    },
+    "privacy": {
+      "title": "Pengaturan Privasi",
+      "visibility": "Visibilitas Profil",
+      "public": "Publik",
+      "friends": "Hanya Teman",
+      "private": "Pribadi",
+      "dataSharing": "Berbagi Data Pihak Ketiga"
+    },
+    "security": {
+      "title": "Pengaturan Keamanan",
+      "twoFactor": "Autentikasi Dua Faktor (2FA)",
+      "activeSessions": "Sesi Aktif",
+      "linkedAccounts": "Akun Tertaut",
+      "logoutRemote": "Keluar dari perangkat lain"
+    },
+    "appearance": {
+      "title": "Tampilan",
+      "theme": "Tema",
+      "light": "Terang",
+      "dark": "Gelap",
+      "system": "Default Sistem",
+      "fontSize": "Ukuran Font"
+    },
+    "language": {
+      "title": "Bahasa",
+      "select": "Pilih Bahasa"
+    },
+    "dataManagement": {
+      "title": "Manajemen Data",
+      "export": "Ekspor Data",
+      "delete": "Hapus Akun",
+      "deleteWarning": "Tindakan ini tidak dapat dibatalkan."
+    }
+  },
+  "tasks": {
+    "title": "Manajer Tugas AI",
+    "subtitle": "Sistem Efisiensi v3.0",
+    "optimize": "Auto-Optimize",
+    "newEntry": "Entri Baru",
+    "titleLabel": "Judul Tugas",
+    "durationLabel": "Durasi (menit)",
+    "priorityLabel": "Prioritas",
+    "categoryLabel": "Kategori",
+    "deadlineLabel": "Tenggat Waktu",
+    "recurrenceLabel": "Pengulangan",
+    "statusLabel": "Status",
+    "projectLabel": "Proyek",
+    "tagsLabel": "Tag (pisahkan koma)",
+    "addTask": "Tambah Tugas",
+    "empty": "Ruang Kerja Kosong",
+    "activeTimeline": "Timeline Aktif",
+    "priorities": {
+      "Critical": "Kritis",
+      "High": "Tinggi",
+      "Med": "Sedang",
+      "Low": "Rendah"
+    },
+    "statuses": {
+      "To-Do": "Yang Harus Dilakukan",
+      "In Progress": "Sedang Dikerjakan",
+      "Blocked": "Diblokir",
+      "Waiting for Review": "Menunggu Peninjauan",
+      "Completed": "Selesai"
+    },
+    "recurrence": {
+      "None": "Tidak ada",
+      "Daily": "Harian",
+      "Weekly": "Mingguan",
+      "Monthly": "Bulanan",
+      "Custom": "Kustom"
+    },
+    "tooltips": {
+      "optimize": "AI akan menjadwalkan tugas berdasarkan skor energi dan mode vibamu.",
+      "priority": "Tingkat kepentingan tugas. Tugas Kritis akan tampil paling atas.",
+      "deadline": "Atur waktu tepat untuk menyelesaikan tugas ini.",
+      "recurrence": "Buat tugas ini muncul secara otomatis dalam interval tertentu.",
+      "status": "Lacak kemajuan siklus hidup tugas ini.",
+      "project": "Kelompokkan tugas ini ke dalam proyek yang lebih besar.",
+      "duration": "Estimasi waktu yang dibutuhkan untuk menyelesaikan tugas ini."
+    }
+  },
+  "common": {
+    "save": "Simpan",
+    "cancel": "Batal",
+    "loading": "Memuat...",
+    "error": "Terjadi kesalahan",
+    "success": "Berhasil"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "energy": "Cek Energi",
+    "tasks": "Tugas",
+    "fitness": "Coach Kebugaran",
+    "journal": "Jurnal",
+    "summarizer": "Ringkasan",
+    "analytics": "Analitik",
+    "profile": "Profil",
+    "logout": "Keluar"
+  }
+}

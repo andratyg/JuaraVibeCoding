@@ -1,0 +1,119 @@
+{
+  "profile": {
+    "title": "Profile",
+    "accountDetails": "Account Details",
+    "settings": "Settings",
+    "username": "Username",
+    "email": "Email Address",
+    "phone": "Phone Number",
+    "changePassword": "Change Password",
+    "uploadAvatar": "Upload Profile Picture",
+    "saveChanges": "Save Changes",
+    "notifications": {
+      "title": "Notification Preferences",
+      "email": "Email Notifications",
+      "push": "Push Notifications",
+      "messages": "New Messages",
+      "alerts": "Activity Alerts",
+      "promo": "Promotional Offers"
+    },
+    "privacy": {
+      "title": "Privacy Settings",
+      "visibility": "Profile Visibility",
+      "public": "Public",
+      "friends": "Friends Only",
+      "private": "Private",
+      "dataSharing": "Third-Party Data Sharing"
+    },
+    "security": {
+      "title": "Security Settings",
+      "twoFactor": "Two-Factor Authentication (2FA)",
+      "activeSessions": "Active Sessions",
+      "linkedAccounts": "Linked Accounts",
+      "logoutRemote": "Logout from other devices"
+    },
+    "appearance": {
+      "title": "Appearance",
+      "theme": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System Default",
+      "fontSize": "Font Size"
+    },
+    "language": {
+      "title": "Language",
+      "select": "Select Language"
+    },
+    "dataManagement": {
+      "title": "Data Management",
+      "export": "Export Data",
+      "delete": "Delete Account",
+      "deleteWarning": "This action is irreversible."
+    }
+  },
+  "tasks": {
+    "title": "AI Task Manager",
+    "subtitle": "Efficiency System v3.0",
+    "optimize": "Auto-Optimize",
+    "newEntry": "New Entry",
+    "titleLabel": "Task Title",
+    "durationLabel": "Duration (mins)",
+    "priorityLabel": "Priority",
+    "categoryLabel": "Category",
+    "deadlineLabel": "Deadline",
+    "recurrenceLabel": "Recurrence",
+    "statusLabel": "Status",
+    "projectLabel": "Project",
+    "tagsLabel": "Tags (comma separated)",
+    "addTask": "Add Task",
+    "empty": "Empty Workspace",
+    "activeTimeline": "Active Timeline",
+    "priorities": {
+      "Critical": "Critical",
+      "High": "High",
+      "Med": "Medium",
+      "Low": "Low"
+    },
+    "statuses": {
+      "To-Do": "To-Do",
+      "In Progress": "In Progress",
+      "Blocked": "Blocked",
+      "Waiting for Review": "Waiting for Review",
+      "Completed": "Completed"
+    },
+    "recurrence": {
+      "None": "None",
+      "Daily": "Daily",
+      "Weekly": "Weekly",
+      "Monthly": "Monthly",
+      "Custom": "Custom"
+    },
+    "tooltips": {
+      "optimize": "AI will schedule tasks based on your energy score and vibe mode.",
+      "priority": "The importance level of the task. Critical tasks appear at the top.",
+      "deadline": "Set an exact time to finish this task.",
+      "recurrence": "Make this task repeat automatically at specific intervals.",
+      "status": "Track the lifecycle progress of this task.",
+      "project": "Group this task into a larger project.",
+      "duration": "Estimated time needed to complete this task."
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "energy": "Energy Check",
+    "tasks": "Tasks",
+    "fitness": "Fitness Coach",
+    "journal": "Journal",
+    "summarizer": "Summarizer",
+    "analytics": "Analytics",
+    "profile": "Profile",
+    "logout": "Logout"
+  }
+}
