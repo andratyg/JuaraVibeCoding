@@ -23,14 +23,20 @@
       "public": "Public",
       "friends": "Friends Only",
       "private": "Private",
-      "dataSharing": "Third-Party Data Sharing"
+      "dataSharing": "Anonymous Data Sharing",
+      "dataSharingDesc": "Help us improve the AI by sharing anonymous usage patterns. Your identity remains 100% private."
     },
     "security": {
       "title": "Security Settings",
-      "twoFactor": "Two-Factor Authentication (2FA)",
+      "twoFactor": "Two-Factor Authentication (A2F)",
       "activeSessions": "Active Sessions",
       "linkedAccounts": "Linked Accounts",
-      "logoutRemote": "Logout from other devices"
+      "logoutRemote": "Logout from other devices",
+      "mfaStatusProtected": "Protected",
+      "mfaStatusStandard": "Standard Security",
+      "mfaDesc": "Mandatory Multi-Factor Authentication (A2F) implements a cryptographical layer for every authentication attempt.",
+      "mfaActivate": "ACTIVATE ADVANCED A2F",
+      "mfaActive": "A2F SECURITY ENABLED"
     },
     "appearance": {
       "title": "Appearance",
@@ -43,6 +49,31 @@
     "language": {
       "title": "Language",
       "select": "Select Language"
+    },
+    "vibe": {
+      "hustle": "Focus on peak productivity. Get things done fast.",
+      "balance": "Optimal mix of productivity and mental well-being.",
+      "zen": "Prioritize recovery, mindfulness, and calm."
+    },
+    "ai": {
+      "title": "Pulse AI Intelligence",
+      "subtitle": "Logic & Personality",
+      "persona": "Coach Persona (AI Tone)",
+      "frequency": "Nudge Frequency",
+      "frequencyDesc": "Controls how often Pulse AI will intervene or offer suggestions throughout your day.",
+      "tones": {
+        "balanced": "Balanced",
+        "tough": "Tough Love",
+        "supportive": "Supportive",
+        "stoic": "Stoic"
+      }
+    },
+    "accessibility": {
+      "title": "Accessibility",
+      "subtitle": "Visual & Cognitive",
+      "highContrast": "High Contrast Mode",
+      "reducedMotion": "Reduced Motion",
+      "fontScale": "Font Scale"
     },
     "dataManagement": {
       "title": "Data Management",

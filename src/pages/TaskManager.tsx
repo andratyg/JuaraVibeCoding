@@ -136,6 +136,7 @@ export default function TaskManager() {
           <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mt-1">{t('tasks.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
+          <Tooltip content={t('tasks.tooltips.optimize')} />
           <button
             onClick={handleAutoSchedule}
             disabled={scheduling}
@@ -143,7 +144,6 @@ export default function TaskManager() {
           >
             {scheduling ? <Loader2 className="animate-spin h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
             {t('tasks.optimize')}
-            <Tooltip content={t('tasks.tooltips.optimize')} />
           </button>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../App';
+import { useTranslation } from 'react-i18next';
 import { db } from '../lib/firebase';
 import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { motion } from 'motion/react';
@@ -9,6 +10,7 @@ import { formatTime, cn } from '../lib/utils';
 import { Task, VibeMode } from '../types';
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const { profile, vibeMode, setVibeMode } = useApp();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,16 +50,21 @@ export default function Dashboard() {
         <div className="flex items-center gap-6">
           <div className="flex bg-slate-100 p-1 rounded-full">
             {(['hustle', 'balance', 'zen'] as VibeMode[]).map(mode => (
-              <button 
-                key={mode}
-                onClick={() => setVibeMode(mode)}
-                className={cn(
-                    "px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all",
-                    vibeMode === mode ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                )}
-              >
-                {mode}
-              </button>
+              <div key={mode} className="relative group">
+                <button 
+                  onClick={() => setVibeMode(mode)}
+                  className={cn(
+                      "px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full transition-all",
+                      vibeMode === mode ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                  )}
+                >
+                  {mode}
+                </button>
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] px-3 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-normal w-48 z-50 shadow-xl font-bold text-center">
+                  {t(`profile.vibe.${mode}`)}
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-b-slate-900" />
+                </div>
+              </div>
             ))}
           </div>
           <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-lg">

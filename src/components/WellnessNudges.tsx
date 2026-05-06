@@ -10,8 +10,10 @@ export default function WellnessNudges() {
   const [nudge, setNudge] = useState<string>('');
 
   useEffect(() => {
-    // Check every 90 minutes (5400000 ms)
-    // For demo, we'll trigger after 2 minutes of being active
+    // Determine interval based on preference
+    const frequency = profile?.settings?.aiPreferences?.nudgeFrequency || 'normal';
+    const interval = frequency === 'high' ? 60000 : frequency === 'low' ? 300000 : 120000;
+
     const timer = setTimeout(async () => {
       if (!profile) return;
       const hour = new Date().getHours();
@@ -19,13 +21,16 @@ export default function WellnessNudges() {
       const prompt = `Generate micro-wellness activity (2-3 menit) untuk user:
       Mood: ${profile.energyScore < 5 ? 'Stres/Lelah' : 'Fokus/Energik'}
       Time: ${timeOfDay}
+      Persona: ${profile.settings?.aiPreferences?.coachTone || 'balanced'}
       Berikan 1 kalimat instruksi singkat dan 1 kalimat alasan. Bahasa Indonesia.`;
       
-      // We'll reuse chatWithCoach for simplicity or a direct call
-      const res = await geminiService.chatWithCoach(prompt, { profile });
+      const res = await geminiService.chatWithCoach(prompt, { 
+        profile, 
+        tone: profile.settings?.aiPreferences?.coachTone || 'balanced' 
+      });
       setNudge(res);
       setShow(true);
-    }, 120000); 
+    }, interval); 
 
     return () => clearTimeout(timer);
   }, [profile]);

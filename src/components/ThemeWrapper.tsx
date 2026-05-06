@@ -4,6 +4,7 @@ import { useApp } from '../App';
 export default function ThemeWrapper({ children }: { children: ReactNode }) {
   const { profile, theme } = useApp();
   const energyScore = profile?.energyScore || 5;
+  const accessibility = profile?.settings?.accessibility;
 
   const getThemeClass = () => {
     let classes = '';
@@ -14,11 +15,20 @@ export default function ThemeWrapper({ children }: { children: ReactNode }) {
     if (theme === 'dark') classes += 'dark ';
     else if (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) classes += 'dark ';
 
+    if (accessibility?.highContrast) classes += 'high-contrast ';
+
     return classes.trim();
   };
 
+  const getRootStyles = () => {
+    const scale = accessibility?.fontScale || 1;
+    return {
+      fontSize: `${scale * 100}%`,
+    };
+  };
+
   return (
-    <div className={`contents ${getThemeClass()}`}>
+    <div className={`contents ${getThemeClass()}`} style={getRootStyles() as any}>
       <style>{`
         .theme-high {
           --primary: #0d9488; /* teal-600 */
@@ -36,6 +46,12 @@ export default function ThemeWrapper({ children }: { children: ReactNode }) {
           --accent: #7c3aed; /* violet-600 */
         }
         
+        .high-contrast {
+          --primary: #000000;
+          --accent: #000000;
+          --primary-light: #ffffff;
+        }
+
         .dark .bg-white { background-color: #0f172a !important; }
         .dark .bg-slate-50 { background-color: #020617 !important; }
         .dark .text-slate-900 { color: #f1f5f9 !important; }
@@ -44,6 +60,14 @@ export default function ThemeWrapper({ children }: { children: ReactNode }) {
         .dark .border-slate-100 { border-color: #1e293b !important; }
         .dark .border-slate-200 { border-color: #334155 !important; }
         .dark .bg-slate-100 { background-color: #1e293b !important; }
+        
+        ${accessibility?.reducedMotion ? `
+          * {
+            animation-duration: 0.001ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.001ms !important;
+          }
+        ` : ''}
       `}</style>
       {children}
     </div>

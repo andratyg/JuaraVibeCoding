@@ -126,11 +126,20 @@ export const geminiService = {
   },
 
   async chatWithCoach(message: string, context: any): Promise<string> {
+    const toneDescription = {
+      balanced: "seimbang, profesional, dan empatik",
+      tough: "tegas, disiplin, berorientasi hasil, dan tidak basa-basi (tough love)",
+      supportive: "sangat mendukung, penyabar, hangat, dan penuh kasih sayang",
+      stoic: "tenang, logis, fokus pada kendali diri, dan filosofis (stoicism)"
+    }[context.tone as keyof typeof toneDescription] || "personal, actionable, dan empatik";
+
     const prompt = `Kamu adalah AI Life Coach di FlowState. Kamu memahami kondisi user ( wellness + produktivitas).
+    Persona kamu saat ini adalah: ${toneDescription}.
+    
     User Data Context: ${JSON.stringify(context)}
     User Message: "${message}"
     
-    Berikan respon yang personal, actionable, dan empatik dalam Bahasa Indonesia.`;
+    Berikan respon sesuai dengan persona tersebut dalam Bahasa Indonesia.`;
 
     try {
       const result = await ai.models.generateContent({

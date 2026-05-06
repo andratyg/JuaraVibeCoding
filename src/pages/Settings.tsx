@@ -35,6 +35,13 @@ export default function SettingsPage() {
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [mfaEnrolling, setMfaEnrolling] = useState(false);
+  const otpInputRef = React.useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (showOtpModal && otpInputRef.current) {
+      otpInputRef.current.focus();
+    }
+  }, [showOtpModal]);
 
   // Local settings state
   const [notifications, setNotifications] = useState(profile?.settings?.notifications || {
@@ -47,10 +54,22 @@ export default function SettingsPage() {
     visibility: 'public',
     dataSharing: true
   });
+  const [aiPrefs, setAiPrefs] = useState(profile?.settings?.aiPreferences || {
+    coachTone: 'balanced',
+    nudgeFrequency: 'normal',
+    focusAreas: ['Fitness', 'Mental Health']
+  });
+  const [accessibility, setAccessibility] = useState(profile?.settings?.accessibility || {
+    highContrast: false,
+    fontScale: 1,
+    reducedMotion: false
+  });
 
   useEffect(() => {
     if (profile?.settings?.notifications) setNotifications(profile.settings.notifications);
     if (profile?.settings?.privacy) setPrivacy(profile.settings.privacy);
+    if (profile?.settings?.aiPreferences) setAiPrefs(profile.settings.aiPreferences);
+    if (profile?.settings?.accessibility) setAccessibility(profile.settings.accessibility);
   }, [profile]);
 
   const updateSettings = async (updates: any) => {
@@ -60,6 +79,8 @@ export default function SettingsPage() {
         settings: {
           notifications: updates.notifications || notifications,
           privacy: updates.privacy || privacy,
+          aiPreferences: updates.aiPreferences || aiPrefs,
+          accessibility: updates.accessibility || accessibility,
           theme: updates.theme || theme
         }
       });
@@ -79,6 +100,18 @@ export default function SettingsPage() {
     const newPrivacy = { ...privacy, [key]: !privacy[key] };
     setPrivacy(newPrivacy);
     updateSettings({ privacy: newPrivacy });
+  };
+
+  const handleToggleAccessibility = (key: keyof typeof accessibility) => {
+    const newAccessibility = { ...accessibility, [key]: !accessibility[key] };
+    setAccessibility(newAccessibility);
+    updateSettings({ accessibility: newAccessibility });
+  };
+
+  const handleAiPrefChange = (key: keyof typeof aiPrefs, value: any) => {
+    const newAiPrefs = { ...aiPrefs, [key]: value };
+    setAiPrefs(newAiPrefs);
+    updateSettings({ aiPreferences: newAiPrefs });
   };
 
   const handleVisibilityChange = (visibility: any) => {
@@ -298,13 +331,13 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="font-black text-slate-900 text-lg">{t('profile.security.twoFactor')}</h4>
                   {isMfaActive ? (
-                    <span className="bg-emerald-500 text-white text-[8px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] shadow-sm">Protected</span>
+                    <span className="bg-emerald-500 text-white text-[8px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] shadow-sm">{t('profile.security.mfaStatusProtected')}</span>
                   ) : (
-                    <span className="bg-white text-slate-400 text-[8px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] border border-slate-200">Standard Security</span>
+                    <span className="bg-white text-slate-400 text-[8px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] border border-slate-200">{t('profile.security.mfaStatusStandard')}</span>
                   )}
                 </div>
                 <p className="text-[11px] font-bold text-slate-500 leading-relaxed max-w-xs">
-                  Mandatory Multi-Factor Authentication (A2F) implements a cryptographical layer for every authentication attempt.
+                  {t('profile.security.mfaDesc')}
                 </p>
               </div>
               
@@ -326,7 +359,7 @@ export default function SettingsPage() {
                 )}
               >
                 {isMfaActive ? <ShieldCheck size={16} /> : (loading && mfaEnrolling ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} className="text-indigo-400" />)}
-                {isMfaActive ? "A2F SECURITY ENABLED" : "ACTIVATE ADVANCED A2F"}
+                {isMfaActive ? t('profile.security.mfaActive') : t('profile.security.mfaActivate')}
               </button>
             </div>
           </div>
@@ -359,6 +392,87 @@ export default function SettingsPage() {
                 <option value="en">English (Global)</option>
                 <option value="id">Bahasa Indonesia</option>
               </select>
+            </div>
+          </div>
+        </SectionContainer>
+
+        {/* AI Configuration */}
+        <SectionContainer 
+          title={t('profile.ai.title')} 
+          subtitle={t('profile.ai.subtitle')} 
+          icon={<Zap size={24} className="text-amber-500" />} 
+          className="md:col-span-12 lg:col-span-7 border-amber-100"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.ai.persona')}</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { id: 'balanced', label: t('profile.ai.tones.balanced'), color: 'bg-slate-100' },
+                  { id: 'tough', label: t('profile.ai.tones.tough'), color: 'bg-rose-50' },
+                  { id: 'supportive', label: t('profile.ai.tones.supportive'), color: 'bg-emerald-50' },
+                  { id: 'stoic', label: t('profile.ai.tones.stoic'), color: 'bg-indigo-50' }
+                ].map((tone) => (
+                  <button
+                    key={tone.id}
+                    onClick={() => handleAiPrefChange('coachTone', tone.id)}
+                    className={cn(
+                      "p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-center",
+                      aiPrefs.coachTone === tone.id ? "bg-slate-900 text-white shadow-lg" : "bg-slate-50 text-slate-400 hover:bg-slate-100"
+                    )}
+                  >
+                    {tone.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.ai.frequency')}</label>
+              <div className="flex bg-slate-100 p-1 rounded-2xl">
+                {['low', 'normal', 'high'].map((freq) => (
+                  <button
+                    key={freq}
+                    onClick={() => handleAiPrefChange('nudgeFrequency', freq)}
+                    className={cn(
+                      "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
+                      aiPrefs.nudgeFrequency === freq ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                    )}
+                  >
+                    {freq}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[9px] font-bold text-slate-400 leading-tight">{t('profile.ai.frequencyDesc')}</p>
+            </div>
+          </div>
+        </SectionContainer>
+
+        {/* Accessibility */}
+        <SectionContainer 
+          title={t('profile.accessibility.title')} 
+          subtitle={t('profile.accessibility.subtitle')} 
+          icon={<Monitor size={24} className="text-sky-500" />} 
+          className="md:col-span-12 lg:col-span-5 border-sky-100"
+        >
+          <div className="space-y-6">
+            <Toggle isOn={accessibility.highContrast} onToggle={() => handleToggleAccessibility('highContrast')} label={t('profile.accessibility.highContrast')} />
+            <Toggle isOn={accessibility.reducedMotion} onToggle={() => handleToggleAccessibility('reducedMotion')} label={t('profile.accessibility.reducedMotion')} />
+            
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.accessibility.fontScale')}</label>
+                <span className="text-xs font-black text-slate-900">{Math.round(accessibility.fontScale * 100)}%</span>
+              </div>
+              <input 
+                type="range" 
+                min="0.8" 
+                max="1.5" 
+                step="0.1" 
+                value={accessibility.fontScale}
+                onChange={(e) => handleAiPrefChange('accessibility', { ...accessibility, fontScale: parseFloat(e.target.value) })}
+                className="w-full accent-slate-900"
+              />
             </div>
           </div>
         </SectionContainer>
@@ -412,13 +526,13 @@ export default function SettingsPage() {
                       privacy.visibility === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
                     )}
                   >
-                    {v}
+                    {t(`profile.privacy.${v}`)}
                   </button>
                 ))}
               </div>
             </div>
-            <Toggle isOn={privacy.dataSharing} onToggle={() => handleTogglePrivacy('dataSharing')} label="Anonymous Data Sharing" />
-            <p className="text-[9px] font-bold text-slate-400 leading-tight">Help us improve the AI by sharing anonymous usage patterns. Your identity remains 100% private.</p>
+            <Toggle isOn={privacy.dataSharing} onToggle={() => handleTogglePrivacy('dataSharing')} label={t('profile.privacy.dataSharing')} />
+            <p className="text-[9px] font-bold text-slate-400 leading-tight">{t('profile.privacy.dataSharingDesc')}</p>
           </div>
         </SectionContainer>
 
@@ -475,24 +589,25 @@ export default function SettingsPage() {
                 <Smartphone size={40} />
               </div>
               <h3 className="text-2xl font-black text-slate-900 text-center mb-3">
-                Security Core
+                {mfaEnrolling ? 'Aktifkan A2F' : 'Verifikasi Nomor'}
               </h3>
               <div className="bg-amber-50 rounded-2xl p-4 mb-6 border border-amber-100">
                 <p className="text-[11px] font-bold text-amber-700 leading-relaxed text-center">
-                  Identity verification mandatory to fulfill security protocol A2F-4029. Ensure your device is ready.
+                  Kami telah mengirimkan 6 digit kode ke <span className="text-slate-900">{phone}</span>. Masukkan kode tersebut untuk melanjutkan.
                 </p>
               </div>
               
               <div className="space-y-6">
                 <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-center mb-4">Enter 6-Digit Auth Code</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-center mb-4">6-Digit Verification Code</label>
                   <input
+                    ref={otpInputRef}
                     type="text"
                     maxLength={6}
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                    placeholder="000 000"
-                    className="w-full text-center tracking-[0.5em] text-3xl font-black p-6 bg-slate-50 border-4 border-slate-50 rounded-[2rem] focus:border-indigo-600 focus:bg-white focus:outline-none transition-all mb-2 shadow-inner"
+                    placeholder="000000"
+                    className="w-full text-center tracking-[0.3em] text-3xl font-black p-6 bg-slate-50 border-4 border-slate-50 rounded-[2rem] focus:border-indigo-600 focus:bg-white focus:outline-none transition-all mb-2 shadow-inner"
                   />
                 </div>
 
@@ -503,13 +618,17 @@ export default function SettingsPage() {
                     className="w-full py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98]"
                   >
                     {loading ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
-                    Authorize Identity
+                    {mfaEnrolling ? 'Konfirmasi & Aktifkan' : 'Verifikasi Nomor'}
                   </button>
                   <button
-                    onClick={() => setShowOtpModal(false)}
+                    onClick={() => {
+                      setShowOtpModal(false);
+                      setMfaEnrolling(false);
+                      setVerificationCode('');
+                    }}
                     className="w-full py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] text-slate-400 hover:text-slate-600 transition-all"
                   >
-                    Abort Protocol
+                    Batalkan
                   </button>
                 </div>
               </div>

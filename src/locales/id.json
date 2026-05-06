@@ -23,14 +23,20 @@
       "public": "Publik",
       "friends": "Hanya Teman",
       "private": "Pribadi",
-      "dataSharing": "Berbagi Data Pihak Ketiga"
+      "dataSharing": "Berbagi Data Anonim",
+      "dataSharingDesc": "Bantu kami meningkatkan AI dengan berbagi pola penggunaan anonim. Identitas Anda tetap 100% pribadi."
     },
     "security": {
       "title": "Pengaturan Keamanan",
-      "twoFactor": "Autentikasi Dua Faktor (2FA)",
+      "twoFactor": "Autentikasi Dua Faktor (A2F)",
       "activeSessions": "Sesi Aktif",
       "linkedAccounts": "Akun Tertaut",
-      "logoutRemote": "Keluar dari perangkat lain"
+      "logoutRemote": "Keluar dari perangkat lain",
+      "mfaStatusProtected": "Terlindungi",
+      "mfaStatusStandard": "Keamanan Standar",
+      "mfaDesc": "Otentikasi Multi-Faktor (A2F) wajib menerapkan lapisan kriptografi untuk setiap upaya masuk.",
+      "mfaActivate": "AKTIFKAN A2F LANJUTAN",
+      "mfaActive": "KEAMANAN A2F AKTIF"
     },
     "appearance": {
       "title": "Tampilan",
@@ -43,6 +49,31 @@
     "language": {
       "title": "Bahasa",
       "select": "Pilih Bahasa"
+    },
+    "vibe": {
+      "hustle": "Fokus pada produktivitas maksimal. Selesaikan banyak hal dengan cepat.",
+      "balance": "Keseimbangan optimal antara fokus kerja dan kesehatan mental.",
+      "zen": "Prioritaskan pemulihan energi dan ketenangan pikiran."
+    },
+    "ai": {
+      "title": "Kecerdasan Pulse AI",
+      "subtitle": "Logika & Kepribadian",
+      "persona": "Persona Coach (Nada AI)",
+      "frequency": "Frekuensi Intervensi",
+      "frequencyDesc": "Mengontrol seberapa sering Pulse AI akan memberikan saran atau intervensi sepanjang hari.",
+      "tones": {
+        "balanced": "Seimbang",
+        "tough": "Tegas",
+        "supportive": "Mendukung",
+        "stoic": "Stoik"
+      }
+    },
+    "accessibility": {
+      "title": "Aksesibilitas",
+      "subtitle": "Visual & Kognitif",
+      "highContrast": "Mode Kontras Tinggi",
+      "reducedMotion": "Kurangi Gerakan",
+      "fontScale": "Skala Font"
     },
     "dataManagement": {
       "title": "Manajemen Data",

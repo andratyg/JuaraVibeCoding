@@ -11,6 +11,16 @@ export interface UserSettings {
     visibility: 'public' | 'friends' | 'private';
     dataSharing: boolean;
   };
+  aiPreferences: {
+    coachTone: 'balanced' | 'tough' | 'supportive' | 'stoic';
+    nudgeFrequency: 'low' | 'normal' | 'high';
+    focusAreas: string[];
+  };
+  accessibility: {
+    highContrast: boolean;
+    fontScale: number;
+    reducedMotion: boolean;
+  };
   theme?: 'light' | 'dark' | 'system';
 }
 

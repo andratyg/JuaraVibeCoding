@@ -5,7 +5,7 @@ import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { 
   LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell 
 } from 'recharts';
-import { TrendingUp, Activity, Target, Brain, Download, Loader2, Sparkles } from 'lucide-react';
+import { TrendingUp, Activity, Target, Brain, Download, Loader2, Sparkles, FileText } from 'lucide-react';
 import { motion } from 'motion/react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -14,6 +14,7 @@ export default function Analytics() {
   const { profile } = useApp();
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -37,13 +38,147 @@ export default function Analytics() {
   const exportPDF = async () => {
     const el = document.getElementById('analytics-content');
     if (!el) return;
-    const canvas = await html2canvas(el);
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const width = pdf.internal.pageSize.getWidth();
-    const height = (canvas.height * width) / canvas.width;
-    pdf.addImage(imgData, 'PNG', 0, 0, width, height);
-    pdf.save('FlowState-Weekly-Report.pdf');
+    
+    setExporting(true);
+    try {
+      // Small delay to ensure any hover states/tooltips are gone
+      await new Promise(r => setTimeout(r, 200));
+
+      const canvas = await html2canvas(el, {
+        scale: 2, // Higher resolution
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 1200, // Fixed width for consistent layout in PDF
+        onclone: (clonedDoc) => {
+          // Remove ALL existing stylesheets and style tags in the clone
+          // html2canvas fails if it parses ANY rule containing oklch
+          const styles = Array.from(clonedDoc.getElementsByTagName('style'));
+          const links = Array.from(clonedDoc.getElementsByTagName('link'));
+          
+          styles.forEach(s => s.remove());
+          links.forEach(l => {
+            if (l.rel === 'stylesheet') l.remove();
+          });
+
+          // Also scrub any inline styles that might use modern color functions
+          clonedDoc.querySelectorAll('*').forEach(node => {
+            const el = node as HTMLElement;
+            if (el.style) {
+              const style = el.getAttribute('style');
+              if (style && (style.includes('oklch') || style.includes('oklab'))) {
+                // Replace both oklch and oklab with a safe fallback
+                el.setAttribute('style', style.replace(/(oklch|oklab)\([^)]+\)/g, '#64748b'));
+              }
+            }
+          });
+
+          // Re-inject a clean, basic stylesheet using only standard HEX/RGB
+          const style = clonedDoc.createElement('style');
+          style.innerHTML = `
+            @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+            
+            body, html {
+              background-color: #ffffff !important;
+              color: #0f172a !important;
+              font-family: 'Plus Jakarta Sans', sans-serif !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+
+            #analytics-content {
+              background-color: #ffffff !important;
+              padding: 40px !important;
+              width: 1100px !important; /* Slightly narrower to fit A4 aspect better */
+              margin: 0 auto !important;
+            }
+
+            .grid { display: grid !important; gap: 24px !important; }
+            .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)) !important; }
+            .md\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            .lg\\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+            .lg\\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
+            .flex { display: flex !important; }
+            .items-center { align-items: center !important; }
+            .justify-between { justify-content: space-between !important; }
+            .gap-3 { gap: 12px !important; }
+            .gap-6 { gap: 24px !important; }
+
+            .bg-white { background-color: #ffffff !important; }
+            .bg-slate-50 { background-color: #f8fafc !important; }
+            .bg-slate-900 { background-color: #0f172a !important; }
+            .bg-indigo-50 { background-color: #eef2ff !important; }
+            .bg-emerald-50 { background-color: #ecfdf5 !important; }
+            .bg-amber-50 { background-color: #fffbeb !important; }
+            .bg-rose-50 { background-color: #fff1f2 !important; }
+
+            .text-slate-900 { color: #0f172a !important; }
+            .text-slate-800 { color: #1e293b !important; }
+            .text-slate-600 { color: #475569 !important; }
+            .text-slate-400 { color: #94a3b8 !important; }
+            .text-indigo-600 { color: #4f46e5 !important; }
+            .text-emerald-600 { color: #059669 !important; }
+            .text-amber-600 { color: #d97706 !important; }
+            .text-rose-600 { color: #e11d48 !important; }
+
+            .rounded-[2.5rem] { border-radius: 40px !important; }
+            .rounded-xl { border-radius: 12px !important; }
+            .rounded-lg { border-radius: 8px !important; }
+            
+            .border { border: 1px solid #f1f5f9 !important; }
+            .border-b { border-bottom: 1px solid #f1f5f9 !important; }
+            .border-slate-100 { border-color: #f1f5f9 !important; }
+            
+            .font-bold { font-weight: 700 !important; }
+            .font-black { font-weight: 800 !important; }
+            
+            .p-8 { padding: 32px !important; }
+            .mb-8 { margin-bottom: 32px !important; }
+            .mb-12 { margin-bottom: 48px !important; }
+
+            /* Hide buttons and interactive elements */
+            button, .lucide-download { display: none !important; }
+
+            /* Ensure charts have some size */
+            .recharts-responsive-container { min-height: 320px !important; }
+          `;
+          clonedDoc.head.appendChild(style);
+        }
+      });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // First page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      // Subsequent pages if content overflows
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`FlowState-Weekly-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('PDF Export failed:', error);
+    } finally {
+      setExporting(false);
+    }
   };
 
   const moodData = [
@@ -68,10 +203,25 @@ export default function Analytics() {
         </div>
         <button
           onClick={exportPDF}
-          className="flex items-center gap-2 bg-slate-900 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-black transition-all"
+          disabled={exporting}
+          className="flex items-center gap-2 bg-slate-900 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-black transition-all disabled:opacity-50"
         >
-          <Download className="h-4 w-4" /> Export PDF
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {exporting ? 'Generating PDF...' : 'Export PDF'}
         </button>
+      </div>
+
+      <div id="pdf-report-header" className="hidden print:block mb-8 border-b-2 border-slate-900 pb-4">
+        <div className="flex justify-between items-end">
+            <div>
+                <h2 className="text-2xl font-black text-slate-900">FLOWSTATE PREMIUM REPORT</h2>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Wellness & Productivity Intelligence</p>
+            </div>
+            <div className="text-right">
+                <p className="text-xs font-bold text-slate-900">{new Date().toLocaleDateString()}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Client: {profile?.name}</p>
+            </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -143,7 +293,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
             <h3 className="font-bold text-slate-800 mb-8">Produktifitas vs Wellness</h3>
             <div className="h-80 w-full">
@@ -152,8 +302,8 @@ export default function Analytics() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                         <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fontSize: 12, fontWeight: 600, fill: '#94a3b8' }} />
                         <Tooltip />
-                        <Bar dataKey="tasks" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="wellness" fill="#ccfbf1" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="tasks" name="Tasks" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="wellness" name="Wellness %" fill="#ccfbf1" radius={[4, 4, 0, 0]} />
                     </BarChart>
                 </ResponsiveContainer>
             </div>
@@ -167,8 +317,56 @@ export default function Analytics() {
             </p>
         </div>
       </div>
+
+      {/* Detailed Data Table */}
+      <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+        <div className="flex items-center gap-3 mb-8">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
+                <FileText size={20} />
+            </div>
+            <h3 className="font-bold text-slate-800">Raw Data Inventory</h3>
+        </div>
+        <div className="overflow-x-auto">
+            <table className="w-full text-left">
+                <thead>
+                    <tr className="border-b border-slate-50">
+                        <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Day</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Energy Score</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Tasks Completed</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Wellness Index</th>
+                        <th className="pb-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Status</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                    {data.map((row) => (
+                        <tr key={row.day} className="group hover:bg-slate-50/50 transition-colors">
+                            <td className="py-4 font-bold text-slate-600">{row.day}</td>
+                            <td className="py-4 text-center">
+                                <span className={cn(
+                                    "inline-block px-2 py-1 rounded-lg text-[10px] font-black",
+                                    row.score > 7 ? "bg-emerald-50 text-emerald-600" : row.score > 4 ? "bg-amber-50 text-amber-600" : "bg-rose-50 text-rose-600"
+                                )}>
+                                    {row.score}/10
+                                </span>
+                            </td>
+                            <td className="py-4 text-center font-bold text-slate-900">{row.tasks}</td>
+                            <td className="py-4 text-center font-mono text-xs">{row.wellness}%</td>
+                            <td className="py-4 text-right">
+                                <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Verified</span>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+      </div>
     </div>
   );
+}
+
+// Helper for conditional classes
+function cn(...classes: any[]) {
+    return classes.filter(Boolean).join(' ');
 }
 
 function StatCard({ label, value, unit, icon, trend }: any) {

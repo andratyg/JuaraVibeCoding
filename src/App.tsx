@@ -79,6 +79,16 @@ export default function App() {
             visibility: 'public',
             dataSharing: true
           },
+          aiPreferences: {
+            coachTone: 'balanced',
+            nudgeFrequency: 'normal',
+            focusAreas: ['Fitness', 'Mental Health']
+          },
+          accessibility: {
+            highContrast: false,
+            fontScale: 1,
+            reducedMotion: false
+          },
           theme: 'light'
         }
       };

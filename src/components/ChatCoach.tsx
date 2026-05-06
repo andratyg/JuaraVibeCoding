@@ -30,7 +30,8 @@ export default function ChatCoach() {
     const context = {
       profile,
       currentEnergy: profile?.energyScore,
-      vibe: profile?.vibeMode
+      vibe: profile?.vibeMode,
+      tone: profile?.settings?.aiPreferences?.coachTone || 'balanced'
     };
 
     const response = await geminiService.chatWithCoach(userMsg, context);
