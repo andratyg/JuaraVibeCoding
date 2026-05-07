@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useApp } from '../App';
+import { useApp } from '../../App';
 
 export default function ThemeWrapper({ children }: { children: ReactNode }) {
   const { profile, theme } = useApp();

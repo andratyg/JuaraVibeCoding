@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useApp } from '../App';
-import { geminiService } from '../services/geminiService';
+import { useApp } from '../../App';
+import { geminiService } from '../../services/geminiService';
 import { MessageCircle, Send, X, Bot, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 

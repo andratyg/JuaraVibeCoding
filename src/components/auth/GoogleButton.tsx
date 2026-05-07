@@ -1,5 +1,5 @@
 import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../../lib/firebase';
+import { auth, googleProvider } from '../../config/firebase';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export default function GoogleButton({ label, onClickSuccess }: { label: string,
       type="button"
       onClick={handleLogin}
       disabled={loading}
-      className="w-full py-3 border-2 border-gray-100 hover:border-gray-200 hover:bg-gray-50 rounded-xl text-sm font-medium text-gray-700 flex items-center justify-center gap-3 transition-all duration-200 active:scale-[0.98] min-h-[44px] md:min-h-[48px] disabled:opacity-50"
+      className="w-full py-4 border-2 border-slate-50 hover:border-slate-200 hover:bg-slate-50 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-slate-900 flex items-center justify-center gap-4 transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
     >
       {loading ? (
         <Loader2 className="h-5 w-5 animate-spin" />

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../App';
-import { db } from '../lib/firebase';
+import { db } from '../config/firebase';
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';

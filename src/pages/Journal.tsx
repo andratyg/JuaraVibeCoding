@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../App';
-import { db } from '../lib/firebase';
+import { db } from '../config/firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { Journal } from '../types';

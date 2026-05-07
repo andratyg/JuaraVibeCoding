@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../App';
-import { auth, db } from '../lib/firebase';
+import { auth, db } from '../config/firebase';
 import { 
   doc, deleteDoc, updateDoc
 } from 'firebase/firestore';

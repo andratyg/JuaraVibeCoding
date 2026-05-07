@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useApp } from '../App';
-import { geminiService } from '../services/geminiService';
+import { useApp } from '../../App';
+import { geminiService } from '../../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, X, Sparkles } from 'lucide-react';
 

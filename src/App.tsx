@@ -6,11 +6,11 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
+import { auth, db, handleFirestoreError, OperationType } from './config/firebase';
 import { doc, getDoc, setDoc, updateDoc, getDocFromServer } from 'firebase/firestore';
 import { UserProfile, VibeMode } from './types';
-import Sidebar from './components/Sidebar';
-import ThemeWrapper from './components/ThemeWrapper';
+import Sidebar from './components/layout/Sidebar';
+import ThemeWrapper from './components/layout/ThemeWrapper';
 import Dashboard from './pages/Dashboard';
 import EnergyCheckInPage from './pages/EnergyCheckIn';
 import TaskManager from './pages/TaskManager';
@@ -22,8 +22,8 @@ import ProfilePage from './pages/Profile';
 import SettingsPage from './pages/Settings';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import ChatCoach from './components/ChatCoach';
-import WellnessNudges from './components/WellnessNudges';
+import ChatCoach from './components/features/ChatCoach';
+import WellnessNudges from './components/features/WellnessNudges';
 
 interface AppContextType {
   user: User | null;

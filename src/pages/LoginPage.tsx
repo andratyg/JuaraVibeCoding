@@ -9,7 +9,7 @@ import {
   AuthError
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth, db } from '../config/firebase';
 import { Mail, ArrowRight, CheckCircle2, User as UserIcon, AlertCircle, Loader2, Lock, Eye, EyeOff, Bot as BotIcon, Zap as ZapIcon, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
 import { cn } from '../lib/utils';
 import GoogleButton from '../components/auth/GoogleButton';
@@ -31,13 +31,13 @@ export default function LoginPage() {
 
   const getFirebaseErrorMessage = (code: string) => {
     switch (code) {
-      case 'auth/wrong-password': return t('common.error');
-      case 'auth/user-not-found': return t('common.error');
-      case 'auth/email-already-in-use': return t('common.error');
-      case 'auth/weak-password': return t('common.error');
-      case 'auth/too-many-requests': return t('common.error');
-      case 'auth/network-request-failed': return t('common.error');
-      case 'auth/invalid-email': return t('common.error');
+      case 'auth/wrong-password': return t('auth.errors.wrongPassword') || 'Incorrect password. Please try again.';
+      case 'auth/user-not-found': return t('auth.errors.userNotFound') || 'No account found with this email.';
+      case 'auth/email-already-in-use': return t('auth.errors.emailInUse') || 'This email is already registered.';
+      case 'auth/weak-password': return t('auth.errors.weakPassword') || 'Password is too weak. Use at least 6 characters.';
+      case 'auth/too-many-requests': return t('auth.errors.tooManyRequests') || 'Too many attempts. Try again later.';
+      case 'auth/network-request-failed': return t('auth.errors.networkError') || 'Network error. Check your connection.';
+      case 'auth/invalid-email': return t('auth.errors.invalidEmail') || 'Please enter a valid email address.';
       default: return t('common.error');
     }
   };

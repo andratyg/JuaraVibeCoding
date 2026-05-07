@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../App';
 import { useTranslation } from 'react-i18next';
-import { db } from '../lib/firebase';
+import { db } from '../config/firebase';
 import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
 import { motion } from 'motion/react';
 import { Zap, CheckSquare, Dumbbell, AlertTriangle, ArrowRight } from 'lucide-react';

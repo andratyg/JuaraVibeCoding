@@ -9,6 +9,11 @@
     "changePassword": "Change Password",
     "uploadAvatar": "Upload Profile Picture",
     "saveChanges": "Save Changes",
+    "errors": {
+      "invalidUsername": "Username must be at least 3 characters.",
+      "invalidFullName": "Full Name must be at least 3 characters.",
+      "invalidPhone": "Please enter a valid phone number."
+    },
     "tabs": {
       "account": "Account",
       "security": "Security",
@@ -56,15 +61,17 @@
     },
     "security": {
       "title": "Security Settings",
-      "twoFactor": "Two-Factor Authentication (A2F)",
+      "googleAuth": "Google Identity Protection",
       "activeSessions": "Active Sessions",
       "linkedAccounts": "Linked Accounts",
       "logoutRemote": "Logout from other devices",
-      "mfaStatusProtected": "Protected",
-      "mfaStatusStandard": "Standard Security",
-      "mfaDesc": "Mandatory Multi-Factor Authentication (A2F) implements a cryptographical layer for every authentication attempt.",
-      "mfaActivate": "ACTIVATE ADVANCED A2F",
-      "mfaActive": "A2F SECURITY ENABLED"
+      "googleStatusProtected": "Protected via Google",
+      "googleStatusStandard": "Standard Security",
+      "googleDesc": "Google Authentication implements a cryptographic layer for every sign-in attempt, utilizing Passkeys and secure hardware verification.",
+      "googleActivate": "SYNC GOOGLE IDENTITY",
+      "googleActive": "IDENTITY SYNCED",
+      "resetSent": "Password reset link sent to your email.",
+      "sessionsRevoked": "All other active sessions have been invalidated."
     },
     "appearance": {
       "title": "Appearance",
@@ -171,6 +178,17 @@
     "haveAccount": "Already have an account?",
     "registerNow": "Register now",
     "loginInstead": "Login instead"
+  },
+  "auth": {
+    "errors": {
+      "wrongPassword": "Incorrect password. Please try again.",
+      "userNotFound": "No account found with this email.",
+      "emailInUse": "This email is already registered.",
+      "weakPassword": "Password is too weak. Use at least 6 characters.",
+      "tooManyRequests": "Too many attempts. Try again later.",
+      "networkError": "Network error. Check your connection.",
+      "invalidEmail": "Please enter a valid email address."
+    }
   },
   "sidebar": {
     "dashboard": "Dashboard",

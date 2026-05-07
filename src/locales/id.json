@@ -9,6 +9,11 @@
     "changePassword": "Ubah Kata Sandi",
     "uploadAvatar": "Unggah Gambar Profil",
     "saveChanges": "Simpan Perubahan",
+    "errors": {
+      "invalidUsername": "Nama pengguna minimal 3 karakter.",
+      "invalidFullName": "Nama lengkap minimal 3 karakter.",
+      "invalidPhone": "Masukkan nomor telepon yang valid."
+    },
     "tabs": {
       "account": "Akun",
       "security": "Keamanan",
@@ -56,15 +61,17 @@
     },
     "security": {
       "title": "Pengaturan Keamanan",
-      "twoFactor": "Autentikasi Dua Faktor (A2F)",
+      "googleAuth": "Perlindungan Identitas Google",
       "activeSessions": "Sesi Aktif",
       "linkedAccounts": "Akun Tertaut",
       "logoutRemote": "Keluar dari perangkat lain",
-      "mfaStatusProtected": "Terlindungi",
-      "mfaStatusStandard": "Keamanan Standar",
-      "mfaDesc": "Otentikasi Multi-Faktor (A2F) wajib menerapkan lapisan kriptografi untuk setiap upaya masuk.",
-      "mfaActivate": "AKTIFKAN A2F LANJUTAN",
-      "mfaActive": "KEAMANAN A2F AKTIF"
+      "googleStatusProtected": "Dilindungi via Google",
+      "googleStatusStandard": "Keamanan Standar",
+      "googleDesc": "Otentikasi Google menerapkan lapisan kriptografi untuk setiap upaya masuk, menggunakan Kunci Sandi (Passkeys) dan verifikasi perangkat keras yang aman.",
+      "googleActivate": "SINKRONISASI IDENTITAS GOOGLE",
+      "googleActive": "IDENTITAS TERSINKRONISASI",
+      "resetSent": "Tautan reset kata sandi telah dikirim ke email Anda.",
+      "sessionsRevoked": "Semua sesi aktif lainnya telah dibatalkan."
     },
     "appearance": {
       "title": "Tampilan",
@@ -171,6 +178,17 @@
     "haveAccount": "Sudah punya akun?",
     "registerNow": "Daftar sekarang",
     "loginInstead": "Masuk saja"
+  },
+  "auth": {
+    "errors": {
+      "wrongPassword": "Kata sandi salah. Silakan coba lagi.",
+      "userNotFound": "Akun tidak ditemukan dengan email ini.",
+      "emailInUse": "Email ini sudah terdaftar.",
+      "weakPassword": "Kata sandi terlalu lemah. Gunakan minimal 6 karakter.",
+      "tooManyRequests": "Terlalu banyak percobaan. Coba lagi nanti.",
+      "networkError": "Kesalahan jaringan. Periksa koneksi Anda.",
+      "invalidEmail": "Masukkan alamat email yang valid."
+    }
   },
   "sidebar": {
     "dashboard": "Dashboard",

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../App';
-import { db } from '../lib/firebase';
+import { db } from '../config/firebase';
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy, Timestamp } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { Task } from '../types';
@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { formatTime, cn, formatDate } from '../lib/utils';
 import { useTranslation } from 'react-i18next';
-import Tooltip from '../components/Tooltip';
+import Tooltip from '../components/common/Tooltip';
 
 export default function TaskManager() {
   const { t } = useTranslation();

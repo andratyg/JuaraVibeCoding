@@ -5,9 +5,9 @@ import {
   ChevronRight, Moon, Sun, Monitor, Zap, Activity, Globe
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useApp } from '../App';
-import { auth } from '../lib/firebase';
-import { cn } from '../lib/utils';
+import { useApp } from '../../App';
+import { auth } from '../../config/firebase';
+import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 
 export default function ProfileDropdown() {
