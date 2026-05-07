@@ -2,22 +2,23 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../App';
 import { useTranslation } from 'react-i18next';
 import { db } from '../config/firebase';
-import { collection, query, where, getDocs, limit, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, orderBy, Timestamp, doc, getDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { Zap, CheckSquare, Dumbbell, AlertTriangle, ArrowRight, Brain, Sparkles, HelpCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { formatTime, cn } from '../lib/utils';
-import { Task, VibeMode } from '../types';
+import { Task, VibeMode } from '../types/index';
 
 export default function Dashboard() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { profile, vibeMode, setVibeMode } = useApp();
+  
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [latestCheckIn, setLatestCheckIn] = useState<any>(null);
-
   const [weeklyConsistency, setWeeklyConsistency] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+  const [streak, setStreak] = useState(0);
 
   const [showSystemHelp, setShowSystemHelp] = useState(false);
   const [showVibeHelp, setShowVibeHelp] = useState(false);
@@ -25,63 +26,87 @@ export default function Dashboard() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (!profile) return;
+      if (!profile?.id) return;
       
-      // 1. Fetch Today's Tasks
-      const qTasks = query(
-        collection(db, `users/${profile.id}/tasks`),
-        where('completed', '==', false),
-        orderBy('createdAt', 'desc'),
-        limit(3)
-      );
-      const snapshotTasks = await getDocs(qTasks);
-      setTasks(snapshotTasks.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task)));
+      try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayId = today.toISOString().split('T')[0];
 
-      // 2. Fetch Latest Energy CheckIn
-      const qCheckIn = query(
-        collection(db, `users/${profile.id}/energyCheckIns`),
-        orderBy('createdAt', 'desc'),
-        limit(1)
-      );
-      const snapshotCheckIn = await getDocs(qCheckIn);
-      if (!snapshotCheckIn.empty) {
-        setLatestCheckIn(snapshotCheckIn.docs[0].data());
-      }
-
-      // 3. Fetch Weekly Consistency Data
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const qAllTasks = query(
-        collection(db, `users/${profile.id}/tasks`),
-        where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo))
-      );
-      
-      const snapshotAll = await getDocs(qAllTasks);
-      const days = [0,0,0,0,0,0,0]; // Monday to Sunday
-      const totals = [0,0,0,0,0,0,0];
-      
-      snapshotAll.docs.forEach(doc => {
-        const d = doc.data();
-        const date = d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
-        const dayIndex = (date.getDay() + 6) % 7; // Convert Sun-Sat (0-6) to Mon-Sun (0-6)
-        
-        totals[dayIndex]++;
-        if (d.completed || d.status === 'Completed') {
-          days[dayIndex]++;
+        // 1. Fetch Today's Specific Check-In
+        const checkinDoc = await getDoc(doc(db, `users/${profile.id}/energyCheckIns`, todayId));
+        if (checkinDoc.exists()) {
+          setLatestCheckIn(checkinDoc.data());
+        } else {
+          // Fallback to latest ever if today is not found
+          const qCheckIn = query(
+            collection(db, `users/${profile.id}/energyCheckIns`),
+            orderBy('createdAt', 'desc'),
+            limit(1)
+          );
+          const snapshotCheckIn = await getDocs(qCheckIn);
+          if (!snapshotCheckIn.empty) {
+            setLatestCheckIn(snapshotCheckIn.docs[0].data());
+          }
         }
-      });
-      
-      const consistency = days.map((done, i) => 
-        totals[i] > 0 ? Math.round((done / totals[i]) * 100) : 0
-      );
-      setWeeklyConsistency(consistency);
 
-      setLoading(false);
+        // 2. Fetch Today's Tasks
+        const qTasks = query(
+          collection(db, `users/${profile.id}/tasks`),
+          where('completed', '==', false),
+          orderBy('createdAt', 'desc'),
+          limit(3)
+        );
+        const snapshotTasks = await getDocs(qTasks);
+        setTasks(snapshotTasks.docs.map(doc => ({ id: doc.id, ...doc.data() } as Task)));
+
+        // 3. Fetch Consistency & Streak
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        const qAllTasks = query(
+          collection(db, `users/${profile.id}/tasks`),
+          where('createdAt', '>=', Timestamp.fromDate(sevenDaysAgo))
+        );
+        
+        const snapshotAll = await getDocs(qAllTasks);
+        const days = [0,0,0,0,0,0,0];
+        const totals = [0,0,0,0,0,0,0];
+        
+        snapshotAll.docs.forEach(doc => {
+          const d = doc.data();
+          const date = d.createdAt?.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+          const dayIndex = (date.getDay() + 6) % 7; 
+          
+          totals[dayIndex]++;
+          if (d.completed || d.status === 'Completed') {
+            days[dayIndex]++;
+          }
+        });
+        
+        const consistency = days.map((done, i) => 
+          totals[i] > 0 ? Math.round((done / totals[i]) * 100) : 0
+        );
+        setWeeklyConsistency(consistency);
+
+        // Calculate simple streak from last 7 checkins
+        const qRecentCheckins = query(
+          collection(db, `users/${profile.id}/energyCheckIns`),
+          orderBy('createdAt', 'desc'),
+          limit(7)
+        );
+        const recentSnap = await getDocs(qRecentCheckins);
+        setStreak(recentSnap.size);
+
+      } catch (err) {
+        console.error('Dashboard fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchDashboardData();
-  }, [profile]);
+  }, [profile?.id]);
 
   const dateStr = new Date().toLocaleDateString(i18n.language === 'id' ? 'id-ID' : 'en-US', { 
     weekday: 'long', 

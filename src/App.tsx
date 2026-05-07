@@ -26,6 +26,9 @@ import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ChatCoach from './components/features/ChatCoach';
 import WellnessNudges from './components/features/WellnessNudges';
+import { BurnoutAlert } from './components/BurnoutAlert';
+import { Toaster } from 'react-hot-toast';
+import ErrorBoundary from './components/ErrorBoundary';
 
 interface AppContextType {
   user: User | null;
@@ -145,9 +148,10 @@ export default function App() {
   }
 
   return (
-    <AppContext.Provider value={{ 
-      user, 
-      profile, 
+    <ErrorBoundary>
+      <AppContext.Provider value={{ 
+        user, 
+        profile, 
       loading, 
       refreshProfile: () => fetchProfile(user?.uid || ''), 
       vibeMode, 
@@ -160,6 +164,7 @@ export default function App() {
     }}>
       <BrowserRouter>
         <ThemeWrapper>
+          <Toaster position="top-right" />
           <Routes>
             <Route path="/login" element={<ProtectedRoute reverse><LoginPage /></ProtectedRoute>} />
             <Route path="/*" element={
@@ -171,6 +176,7 @@ export default function App() {
                     <div className="flex-1 px-4 md:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto w-full">
                       <ChatCoach />
                       <WellnessNudges />
+                      {profile?.id && <BurnoutAlert userId={profile.id} />}
                       <Routes>
                         <Route path="/" element={<Dashboard />} />
                         <Route path="/energy" element={<EnergyCheckInPage />} />
@@ -192,5 +198,6 @@ export default function App() {
         </ThemeWrapper>
       </BrowserRouter>
     </AppContext.Provider>
+    </ErrorBoundary>
   );
 }

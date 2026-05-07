@@ -1,20 +1,40 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# ⚡ FlowState — Work Smarter. Feel Better. Every Single Day.
 
-# Run and deploy your AI Studio app
+> AI Wellness-Productivity Coach yang menyesuaikan jadwal kerjamu dengan kondisi energi harian.
+> Dibangun untuk #JuaraVibeCoding 2026 menggunakan Google AI Studio + Cloud Run.
 
-This contains everything you need to run your app locally.
+🌐 **Live Demo**: https://flowstate-759233134630.asia-southeast1.run.app
 
-View your app in AI Studio: https://ai.studio/apps/58490a95-8802-4b6d-8b4e-c5f138cf1b03
+## Fitur Utama
+- 🌅 **Morning Energy Check-in** — 3 pertanyaan, Gemini analisis, dapat mode kerja optimal
+- 📋 **Adaptive Task Scheduler** — AI susun jadwal berdasarkan energimu
+- 🏃 **Personal Fitness Coach** — program latihan yang menyesuaikan hari sibukmu
+- 🧠 **AI Life Coach Chat** — tanya apapun, AI tahu konteks penuhmu
+- ⚠️ **Burnout Early Warning** — deteksi risiko burnout 3-5 hari lebih awal
+- 📖 **Self-Reflection Journal** — AI respond dengan empati + insight mendalam
+- 📊 **Weekly Analytics** — lihat pattern produktivitas dan wellnessmu
+- 📄 **Document Summarizer** — hemat waktu dari baca dokumen panjang
 
-## Run Locally
+## Tech Stack
+| Layer | Teknologi |
+|-------|-----------|
+| Frontend | React 18 + Vite + Tailwind CSS |
+| AI | Gemini 2.0 Flash API |
+| Auth | Firebase Authentication |
+| Database | Firestore |
+| Deploy | Google Cloud Run |
+| Animasi | Framer Motion |
+| Charts | Recharts |
 
-**Prerequisites:**  Node.js
+## Cara Jalankan Lokal
+1. Clone: `git clone https://github.com/andratyg/JuaraVibeCoding.git`
+2. Install: `npm install`
+3. Copy: `cp .env.example .env` dan isi nilai yang dibutuhkan
+4. Run: `npm run dev`
 
+## Environment Variables
+Lihat `.env.example` untuk daftar variabel yang dibutuhkan.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Dibuat untuk
+JuaraVibeCoding 2026 — Google Developer Student Clubs Indonesia
+#JuaraVibeCoding
