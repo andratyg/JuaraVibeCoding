@@ -9,6 +9,34 @@
     "changePassword": "Ubah Kata Sandi",
     "uploadAvatar": "Unggah Gambar Profil",
     "saveChanges": "Simpan Perubahan",
+    "tabs": {
+      "account": "Akun",
+      "security": "Keamanan",
+      "preferences": "Preferensi",
+      "activity": "Aktivitas",
+      "social": "Sosial",
+      "help": "Bantuan"
+    },
+    "fullName": "Nama Lengkap",
+    "bio": "Bio / Tentang Saya",
+    "activity": {
+      "title": "Nadi Aktivitas",
+      "subtitle": "Interaksi Terbaru",
+      "empty": "Nadi Anda tenang. Mulailah berinteraksi untuk melihat aktivitas di sini."
+    },
+    "social": {
+      "title": "Integrasi Sosial",
+      "subtitle": "Koneksi Pihak Ketiga",
+      "connect": "Hubungkan",
+      "disconnect": "Putuskan"
+    },
+    "help": {
+      "title": "Bantuan & Dukungan",
+      "subtitle": "Basis Pengetahuan",
+      "faq": "Baca FAQ",
+      "contact": "Hubungi Dukungan",
+      "docs": "Dokumentasi API"
+    },
     "notifications": {
       "title": "Preferensi Notifikasi",
       "email": "Notifikasi Email",
@@ -134,7 +162,15 @@
     "cancel": "Batal",
     "loading": "Memuat...",
     "error": "Terjadi kesalahan",
-    "success": "Berhasil"
+    "success": "Berhasil",
+    "signIn": "Masuk",
+    "signUp": "Daftar",
+    "forgotPassword": "Lupa kata sandi?",
+    "orContinueWith": "atau lanjutkan dengan",
+    "noAccount": "Belum punya akun?",
+    "haveAccount": "Sudah punya akun?",
+    "registerNow": "Daftar sekarang",
+    "loginInstead": "Masuk saja"
   },
   "sidebar": {
     "dashboard": "Dashboard",

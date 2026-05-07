@@ -6,8 +6,8 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth, db } from './lib/firebase';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { auth, db, handleFirestoreError, OperationType } from './lib/firebase';
+import { doc, getDoc, setDoc, updateDoc, getDocFromServer } from 'firebase/firestore';
 import { UserProfile, VibeMode } from './types';
 import Sidebar from './components/Sidebar';
 import ThemeWrapper from './components/ThemeWrapper';
@@ -52,52 +52,70 @@ export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
 
   const fetchProfile = async (uid: string) => {
-    const docRef = doc(db, 'users', uid);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      setProfile({ id: uid, ...data } as UserProfile);
-      if (data.theme) setTheme(data.theme);
-    } else {
-      // Initialize profile
-      const newProfile: UserProfile = {
-        id: uid,
-        displayName: auth.currentUser?.displayName || 'User',
-        email: auth.currentUser?.email || '',
-        photoURL: auth.currentUser?.photoURL || '',
-        energyScore: 5,
-        vibeMode: 'balance',
-        streak: 0,
-        settings: {
-          notifications: {
-            email: true,
-            push: true,
-            messages: false,
-            alerts: true
-          },
-          privacy: {
-            visibility: 'public',
-            dataSharing: true
-          },
-          aiPreferences: {
-            coachTone: 'balanced',
-            nudgeFrequency: 'normal',
-            focusAreas: ['Fitness', 'Mental Health']
-          },
-          accessibility: {
-            highContrast: false,
-            fontScale: 1,
-            reducedMotion: false
-          },
-          theme: 'light'
-        }
-      };
-      await setDoc(docRef, newProfile);
-      setProfile(newProfile);
+    try {
+      const docRef = doc(db, 'users', uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setProfile({ id: uid, ...data } as UserProfile);
+        if (data.theme) setTheme(data.theme);
+      } else {
+        // Initialize profile
+        const newProfile: UserProfile = {
+          id: uid,
+          displayName: auth.currentUser?.displayName || 'User',
+          fullName: auth.currentUser?.displayName || 'Flow Member',
+          email: auth.currentUser?.email || '',
+          photoURL: auth.currentUser?.photoURL || '',
+          bio: '',
+          phoneNumber: auth.currentUser?.phoneNumber || '',
+          energyScore: 5,
+          vibeMode: 'balance',
+          streak: 0,
+          settings: {
+            notifications: {
+              email: true,
+              push: true,
+              messages: false,
+              alerts: true
+            },
+            privacy: {
+              visibility: 'public',
+              dataSharing: true
+            },
+            aiPreferences: {
+              coachTone: 'balanced',
+              nudgeFrequency: 'normal',
+              focusAreas: ['Fitness', 'Mental Health']
+            },
+            accessibility: {
+              highContrast: false,
+              fontScale: 1,
+              reducedMotion: false
+            },
+            theme: 'light'
+          }
+        };
+        await setDoc(docRef, newProfile);
+        setProfile(newProfile);
+      }
+    } catch (err) {
+      handleFirestoreError(err, OperationType.GET, `users/${uid}`);
     }
   };
 
   useEffect(() => {
+    async function testConnection() {
+      try {
+        await getDocFromServer(doc(db, 'system', 'connection'));
+      } catch (error) {
+        if (error instanceof Error && error.message.includes('the client is offline')) {
+          console.error("Please check your Firebase configuration.");
+        }
+      }
+    }
+    testConnection();
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -152,7 +170,7 @@ export default function App() {
                       <Route path="/summarizer" element={<Summarizer />} />
                       <Route path="/analytics" element={<Analytics />} />
                       <Route path="/profile" element={<ProfilePage />} />
-                      <Route path="/settings" element={<SettingsPage />} />
+                      <Route path="/settings" element={<Navigate to="/profile" replace />} />
                     </Routes>
                   </main>
                 </div>

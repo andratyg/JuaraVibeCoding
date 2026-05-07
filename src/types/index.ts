@@ -27,8 +27,11 @@ export interface UserSettings {
 export interface UserProfile {
   id: string;
   displayName: string | null;
+  fullName?: string;
   email: string | null;
+  phoneNumber?: string;
   photoURL: string | null;
+  bio?: string;
   energyScore: number;
   vibeMode: VibeMode;
   fitnessProfile?: {
@@ -36,6 +39,12 @@ export interface UserProfile {
     weight: number;
     goal: string;
     equipment: string[];
+  };
+  socialLinks?: {
+    google?: boolean;
+    github?: boolean;
+    twitter?: string;
+    linkedin?: string;
   };
   streak: number;
   lastCheckIn?: Date;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   signInWithEmailAndPassword, 
@@ -10,11 +11,13 @@ import {
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { Mail, ArrowRight, CheckCircle2, User as UserIcon, AlertCircle, Loader2, Lock, Eye, EyeOff, Bot as BotIcon, Zap as ZapIcon, AlertTriangle as AlertTriangleIcon } from 'lucide-react';
+import { cn } from '../lib/utils';
 import GoogleButton from '../components/auth/GoogleButton';
 import PasswordInput from '../components/auth/PasswordInput';
 import PasswordStrength from '../components/auth/PasswordStrength';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,14 +31,14 @@ export default function LoginPage() {
 
   const getFirebaseErrorMessage = (code: string) => {
     switch (code) {
-      case 'auth/wrong-password': return 'Password salah. Coba lagi.';
-      case 'auth/user-not-found': return 'Email tidak terdaftar.';
-      case 'auth/email-already-in-use': return 'Email sudah digunakan.';
-      case 'auth/weak-password': return 'Password terlalu lemah (min 8 karakter).';
-      case 'auth/too-many-requests': return 'Terlalu banyak percobaan. Tunggu sebentar.';
-      case 'auth/network-request-failed': return 'Koneksi bermasalah. Periksa internet kamu.';
-      case 'auth/invalid-email': return 'Format email tidak valid.';
-      default: return 'Terjadi kesalahan. Coba lagi.';
+      case 'auth/wrong-password': return t('common.error');
+      case 'auth/user-not-found': return t('common.error');
+      case 'auth/email-already-in-use': return t('common.error');
+      case 'auth/weak-password': return t('common.error');
+      case 'auth/too-many-requests': return t('common.error');
+      case 'auth/network-request-failed': return t('common.error');
+      case 'auth/invalid-email': return t('common.error');
+      default: return t('common.error');
     }
   };
 
@@ -56,7 +59,7 @@ export default function LoginPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError('Password tidak cocok.');
+      setError(t('common.error'));
       return;
     }
     setLoading(true);
@@ -65,15 +68,23 @@ export default function LoginPage() {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: name });
       
-      // Initialize Firestore User Doc
-      await setDoc(doc(db, 'users', cred.user.uid), {
+      const newProfile = {
         displayName: name,
+        fullName: name,
         email: email,
         createdAt: new Date().toISOString(),
         energyScore: 5,
         streak: 0,
-        vibeMode: 'balance'
-      });
+        vibeMode: 'balance',
+        settings: {
+          notifications: { email: true, push: true, messages: false, alerts: true },
+          privacy: { visibility: 'public', dataSharing: true },
+          aiPreferences: { coachTone: 'balanced', nudgeFrequency: 'normal', focusAreas: [] },
+          accessibility: { highContrast: false, fontScale: 1, reducedMotion: false },
+          theme: 'light'
+        }
+      };
+      await setDoc(doc(db, 'users', cred.user.uid), newProfile);
     } catch (err) {
       const authErr = err as AuthError;
       setError(getFirebaseErrorMessage(authErr.code));
@@ -82,214 +93,141 @@ export default function LoginPage() {
     }
   };
 
-  const handleResetPassword = async () => {
-    if (!email) {
-      setError('Masukkan email Anda terlebih dahulu.');
-      return;
-    }
-    try {
-      await sendPasswordResetEmail(auth, email);
-      setSuccessMsg('Link reset password telah dikirim ke email Anda.');
-      setError(null);
-    } catch (err) {
-      const authErr = err as AuthError;
-      setError(getFirebaseErrorMessage(authErr.code));
-    }
-  };
-
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 font-sans lg:flex-row" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <div className="flex min-h-screen flex-col bg-white font-sans lg:flex-row relative overflow-hidden">
+      {/* Abstract Background Accents */}
+      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-indigo-50 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-teal-50 rounded-full blur-[100px] pointer-events-none" />
+
       {/* Branding Section (Left - Desktop) */}
       <motion.div 
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
-        className="hidden bg-slate-900 p-16 text-white lg:flex lg:w-[45%] lg:flex-col lg:justify-between"
+        className="hidden bg-slate-900 p-20 text-white lg:flex lg:w-[40%] lg:flex-col lg:justify-between relative z-10"
       >
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary)] text-3xl font-black shadow-lg shadow-[var(--primary)]/20">F</div>
-            <h1 className="text-3xl font-black tracking-tighter text-white">FlowState</h1>
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent pointer-events-none" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-indigo-500 text-white shadow-2xl shadow-indigo-500/20">
+                <ZapIcon size={32} />
+            </div>
+            <h1 className="text-4xl font-black tracking-tight text-white italic">FlowState</h1>
           </div>
-          <p className="mt-6 text-xl text-slate-300 leading-relaxed font-medium">
-            "Work smarter. Feel better. Every single day."
+          <p className="mt-10 text-2xl text-slate-300 leading-relaxed font-medium max-w-sm">
+            "Your digital sanctuary for peak focus and recovery."
           </p>
         </div>
 
-        <div className="space-y-10">
-          <FeatureItem 
-            icon={<Zap className="h-6 w-6" />} 
-            title="Produktivitas Adaptif" 
-            text="Jadwal yang menyesuaikan dengan level energimu setiap harinya." 
-          />
-          <FeatureItem 
-            icon={<Bot className="h-6 w-6" />} 
-            title="Wellness Coach AI" 
-            text="Bimbingan personal yang memahami kondisi fisik dan mentalmu." 
-          />
-          <FeatureItem 
-            icon={<AlertTriangle className="h-6 w-6" />} 
-            title="Burnout Detection" 
-            text="Deteksi dini resiko kelelahan berlebih sebelum itu terjadi." 
-          />
+        <div className="space-y-12 relative z-10">
+          <FeatureItem icon={<ZapIcon size={24} />} title="Adaptive Pulse" text="Systems that synchronize with your biological energy levels." />
+          <FeatureItem icon={<BotIcon size={24} />} title="Intelligent Coach" text="AI-driven mentorship for your mental and physical wellness." />
         </div>
 
-        <div className="text-slate-500 text-sm font-bold uppercase tracking-widest">
-            Powered by Gemini 2.0 Flash
+        <div className="relative z-10">
+            <div className="h-px w-20 bg-slate-700 mb-6" />
+            <div className="text-slate-500 text-[10px] font-black uppercase tracking-[0.3em]">
+                Standard Interface v4.0.1
+            </div>
         </div>
       </motion.div>
 
       {/* Form Section (Right) */}
       <motion.div 
-        initial={window.innerWidth < 1024 ? { opacity: 0, y: 40 } : { opacity: 0, x: 30 }}
-        animate={window.innerWidth < 1024 ? { opacity: 1, y: 0 } : { opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="flex flex-1 items-center justify-center px-4 py-12 md:px-8 lg:px-0"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-1 items-center justify-center p-8 relative z-10"
       >
-        <div className="w-full max-w-sm md:max-w-md lg:max-w-sm">
-          {/* Mobile & Tablet Branding Header */}
-          <div className="mb-10 flex flex-col items-center lg:hidden">
-             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary)] text-white text-2xl font-black mb-3">F</div>
-             <h1 className="text-2xl font-black text-slate-900">FlowState</h1>
-             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Smart Productivity System</p>
+        <div className="w-full max-w-md bg-white p-12 rounded-[3.5rem] shadow-2xl shadow-slate-200/50 border border-slate-50">
+          <div className="mb-12 text-center">
+             <h2 className="text-3xl font-black text-slate-900 tracking-tight">{isLogin ? t('common.signIn') : t('common.signUp')}</h2>
+             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-3">{isLogin ? 'Welcome Back to the Flow' : 'Join the Global Productivity Engine'}</p>
           </div>
 
-          {/* Tablet Branding Bar (md to lg) */}
-          <div className="hidden md:flex lg:hidden w-full bg-teal-50 rounded-2xl p-6 mb-8 gap-6 justify-center flex-wrap border border-teal-100">
-            <div className="flex items-center gap-3">
-               <Zap className="h-5 w-5 text-teal-600" />
-               <span className="text-[10px] font-black uppercase tracking-tight text-teal-800">Adaptive</span>
-            </div>
-            <div className="flex items-center gap-3">
-               <Bot className="h-5 w-5 text-teal-600" />
-               <span className="text-[10px] font-black uppercase tracking-tight text-teal-800">AI Coach</span>
-            </div>
-            <div className="flex items-center gap-3">
-               <AlertTriangle className="h-5 w-5 text-teal-600" />
-               <span className="text-[10px] font-black uppercase tracking-tight text-teal-800">Safety Guard</span>
-            </div>
-          </div>
-
-          <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-xl">
+          <div className="flex gap-2 mb-10 bg-slate-50 p-1.5 rounded-2xl">
             <button
               onClick={() => { setIsLogin(true); setError(null); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${isLogin ? 'bg-[#1a1a2e] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={cn(
+                  "flex-1 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                  isLogin ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
+              )}
             >
-              Masuk
+              {t('common.signIn')}
             </button>
             <button
               onClick={() => { setIsLogin(false); setError(null); }}
-              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${!isLogin ? 'bg-[#1a1a2e] text-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={cn(
+                "flex-1 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                !isLogin ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
+            )}
             >
-              Daftar
+              {t('common.signUp')}
             </button>
           </div>
 
-          <div className="w-full max-w-sm mx-auto overflow-y-auto max-h-[85vh] scrollbar-hide px-1">
-            <p className="text-xs font-semibold text-gray-400 tracking-widest uppercase mb-4">
-              {isLogin ? 'Masuk ke Akun' : 'Buat Akun Baru'}
-            </p>
-
-            <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-3">
-              {error && (
-                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-xs mb-4">
-                  <AlertCircle size={14} className="flex-shrink-0" />
-                  {error}
-                </div>
-              )}
-
-              {successMsg && (
-                <div className="flex items-center gap-2 rounded-xl bg-emerald-50 p-3 text-xs font-bold text-emerald-600 border border-emerald-100 mb-4">
-                  <CheckCircle2 size={14} className="flex-shrink-0" />
-                  {successMsg}
-                </div>
-              )}
-
-              {!isLogin && (
-                <div className="relative mb-3">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                    <UserIcon size={16} />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    autoComplete="name"
-                    autoCapitalize="none"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Nama Lengkap"
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-100 rounded-xl text-sm bg-white focus:border-[#4B4ACF] focus:outline-none transition-colors placeholder:text-gray-300 min-h-[44px] md:min-h-[48px]"
-                  />
-                </div>
-              )}
-
-              <div className="relative mb-3">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <Mail size={16} />
-                </div>
-                <input
-                  type="email"
-                  required
-                  autoFocus
-                  inputMode="email"
-                  autoCapitalize="none"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-100 rounded-xl text-sm bg-white focus:border-[#4B4ACF] focus:outline-none transition-colors placeholder:text-gray-300 min-h-[44px] md:min-h-[48px]"
-                />
+          <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-6">
+            {error && (
+              <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100 rounded-2xl text-rose-600 text-[11px] font-black uppercase tracking-widest animate-shake">
+                <AlertCircle size={16} />
+                {error}
               </div>
+            )}
 
-              <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
-              
-              {!isLogin && (
-                <>
-                  <PasswordStrength password={password} />
-                  <PasswordInput 
-                    value={confirmPassword} 
-                    onChange={(e) => setConfirmPassword(e.target.value)} 
-                    placeholder="Konfirmasi Password" 
-                  />
-                </>
-              )}
-
-              {isLogin && (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={handleResetPassword}
-                    className="text-[10px] font-black uppercase tracking-widest text-[#4B4ACF] hover:underline py-2"
-                  >
-                    Lupa password?
-                  </button>
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('profile.fullName')}</label>
+                <div className="relative">
+                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                    <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-slate-900 focus:outline-none transition-all font-bold" />
                 </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3 bg-[#4B4ACF] hover:bg-[#3a39be] active:scale-[0.98] text-white font-semibold rounded-xl text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px] md:min-h-[48px]"
-              >
-                {loading && <Loader2 className="animate-spin" size={16} />}
-                {loading ? 'Memproses...' : isLogin ? 'Masuk' : 'Buat Akun'}
-              </button>
-
-              <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-px bg-gray-100" />
-                <span className="text-xs text-gray-400 font-medium">atau {isLogin ? 'masuk' : 'daftar'} dengan</span>
-                <div className="flex-1 h-px bg-gray-100" />
               </div>
+            )}
 
-              <GoogleButton label="Lanjutkan dengan Google" />
+            <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('profile.email')}</label>
+                <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-slate-900 focus:outline-none transition-all font-bold" />
+                </div>
+            </div>
 
-              <p className="text-center text-xs text-gray-500 mt-6">
-                {isLogin ? (
-                  <>Belum punya akun? <button type="button" onClick={() => setIsLogin(false)} className="text-[#4B4ACF] font-bold hover:underline">Daftar sekarang</button></>
-                ) : (
-                  <>Sudah punya akun? <button type="button" onClick={() => setIsLogin(true)} className="text-[#4B4ACF] font-bold hover:underline">Masuk</button></>
-                )}
-              </p>
-            </form>
-          </div>
+            <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('common.password')}</label>
+                <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
+            </div>
+            
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Confirm Password</label>
+                <PasswordInput value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-5 bg-slate-900 text-white font-black uppercase tracking-[0.2em] rounded-2xl text-[10px] shadow-2xl shadow-slate-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? <Loader2 className="animate-spin" size={18} /> : (isLogin ? <ArrowRight size={18} /> : <CheckCircle2 size={18} />)}
+              {isLogin ? t('common.signIn') : t('common.signUp')}
+            </button>
+
+            <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-100"></div></div>
+                <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest"><span className="bg-white px-4 text-slate-300">{t('common.orContinueWith')}</span></div>
+            </div>
+
+            <GoogleButton label="Google Identity" />
+
+            <div className="text-center mt-10">
+                <p className="text-[11px] font-bold text-slate-400">
+                    {isLogin ? t('common.noAccount') : t('common.haveAccount')}
+                    <button type="button" onClick={() => setIsLogin(!isLogin)} className="ml-2 text-indigo-600 font-black uppercase tracking-widest hover:underline">
+                        {isLogin ? t('common.registerNow') : t('common.loginInstead')}
+                    </button>
+                </p>
+            </div>
+          </form>
         </div>
       </motion.div>
     </div>

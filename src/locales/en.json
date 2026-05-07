@@ -9,6 +9,34 @@
     "changePassword": "Change Password",
     "uploadAvatar": "Upload Profile Picture",
     "saveChanges": "Save Changes",
+    "tabs": {
+      "account": "Account",
+      "security": "Security",
+      "preferences": "Preferences",
+      "activity": "Activity",
+      "social": "Social",
+      "help": "Support"
+    },
+    "fullName": "Full Name",
+    "bio": "Bio / About Me",
+    "activity": {
+      "title": "Activity Pulse",
+      "subtitle": "Recent Interactions",
+      "empty": "Your pulse is quiet. Start interacting to see activity here."
+    },
+    "social": {
+      "title": "Social Integrations",
+      "subtitle": "Third-party Connections",
+      "connect": "Connect",
+      "disconnect": "Disconnect"
+    },
+    "help": {
+      "title": "Help & Support",
+      "subtitle": "Knowledge Base",
+      "faq": "Read FAQ",
+      "contact": "Contact Support",
+      "docs": "API Documentation"
+    },
     "notifications": {
       "title": "Notification Preferences",
       "email": "Email Notifications",
@@ -134,7 +162,15 @@
     "cancel": "Cancel",
     "loading": "Loading...",
     "error": "An error occurred",
-    "success": "Success"
+    "success": "Success",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "forgotPassword": "Forgot password?",
+    "orContinueWith": "or continue with",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "registerNow": "Register now",
+    "loginInstead": "Login instead"
   },
   "sidebar": {
     "dashboard": "Dashboard",
