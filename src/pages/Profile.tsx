@@ -174,29 +174,31 @@ export default function ProfilePage() {
         <div className="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-indigo-50/50 rounded-full blur-[100px]" />
       </div>
 
-      <div className="relative p-6 md:p-12 max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
+      <div className="relative p-4 md:p-8 lg:p-12 max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12">
         
-        {/* Navigation Sidebar */}
-        <aside className="w-full lg:w-80 shrink-0 space-y-8">
-          <div className="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50">
-            <div className="flex flex-col items-center mb-8">
-              <div className="relative group mb-6">
-                <div className="h-28 w-28 rounded-[2rem] bg-slate-100 overflow-hidden flex items-center justify-center border-4 border-white shadow-2xl">
+        {/* Navigation Sidebar - Responsive Layout */}
+        <aside className="w-full lg:w-80 shrink-0 space-y-6 lg:space-y-8">
+          <div className="bg-white/80 backdrop-blur-xl p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50">
+            <div className="flex flex-row lg:flex-col items-center gap-6 lg:mb-8">
+              <div className="relative group shrink-0 lg:mb-6">
+                <div className="h-20 w-20 lg:h-32 lg:w-32 rounded-[1.5rem] lg:rounded-[2.5rem] bg-slate-100 overflow-hidden flex items-center justify-center border-4 border-white shadow-xl">
                   {user?.photoURL ? (
                     <img src={user.photoURL} alt="Avatar" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
                   ) : (
-                    <User size={40} className="text-slate-300" />
+                    <User size={32} className="text-slate-300" />
                   )}
                 </div>
-                <button className="absolute -bottom-2 -right-2 h-10 w-10 bg-slate-900 text-white rounded-xl flex items-center justify-center border-4 border-white shadow-lg shadow-black/10 hover:scale-110 active:scale-95 transition-all">
-                  <Camera size={16} />
+                <button className="absolute -bottom-1 -right-1 lg:-bottom-2 lg:-right-2 h-8 w-8 lg:h-10 lg:w-10 bg-slate-900 text-white rounded-lg lg:rounded-xl flex items-center justify-center border-2 lg:border-4 border-white shadow-lg hover:scale-110 active:scale-95 transition-all">
+                  <Camera size={14} />
                 </button>
               </div>
-              <h2 className="font-black text-xl text-slate-900 text-center leading-tight">{profile?.fullName || user?.displayName || 'User'}</h2>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-2">FlowState Member Since 2024</p>
+              <div className="flex-1 lg:text-center">
+                <h2 className="font-black text-lg lg:text-2xl text-slate-900 leading-tight truncate">{profile?.fullName || user?.displayName || 'User'}</h2>
+                <p className="text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mt-1">FlowState Member</p>
+              </div>
             </div>
 
-            <nav className="space-y-1">
+            <nav className="flex lg:flex-col overflow-x-auto lg:overflow-visible no-scrollbar gap-1 mt-6 lg:mt-0 py-2 lg:py-0 border-t lg:border-t-0 border-slate-50">
               <TabButton active={activeTab === 'account'} onClick={() => setActiveTab('account')} icon={<User size={18} />} label={t('profile.tabs.account')} />
               <TabButton active={activeTab === 'security'} onClick={() => setActiveTab('security')} icon={<Shield size={18} />} label={t('profile.tabs.security')} />
               <TabButton active={activeTab === 'preferences'} onClick={() => setActiveTab('preferences')} icon={<Monitor size={18} />} label={t('profile.tabs.preferences')} />
@@ -205,7 +207,7 @@ export default function ProfilePage() {
               <TabButton active={activeTab === 'help'} onClick={() => setActiveTab('help')} icon={<HelpCircle size={18} />} label={t('profile.tabs.help')} />
             </nav>
 
-            <div className="mt-8 pt-8 border-t border-slate-50">
+            <div className="hidden lg:block mt-8 pt-8 border-t border-slate-50">
                 <button 
                   onClick={() => auth.signOut()}
                   className="w-full flex items-center gap-3 px-6 py-4 text-rose-500 font-black uppercase tracking-widest text-[10px] rounded-2xl hover:bg-rose-50 transition-all group"
@@ -217,20 +219,22 @@ export default function ProfilePage() {
           </div>
 
           {/* Quick Stats Bento */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-emerald-500 p-6 rounded-[2rem] text-white shadow-lg shadow-emerald-200/50">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Streak</p>
-              <h4 className="text-3xl font-black mt-1">12</h4>
+          <div className="grid grid-cols-2 lg:grid-cols-2 gap-4">
+            <div className="bg-emerald-500 p-6 rounded-[2.5rem] text-white shadow-xl shadow-emerald-100 relative overflow-hidden group">
+              <div className="absolute -right-4 -bottom-4 h-24 w-24 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+              <p className="text-[9px] font-black uppercase tracking-widest opacity-80 relative z-10">Streak</p>
+              <h4 className="text-3xl lg:text-4xl font-black mt-1 relative z-10">12</h4>
             </div>
-            <div className="bg-indigo-600 p-6 rounded-[2rem] text-white shadow-lg shadow-indigo-200/50">
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-80">Level</p>
-              <h4 className="text-3xl font-black mt-1">08</h4>
+            <div className="bg-indigo-600 p-6 rounded-[2.5rem] text-white shadow-xl shadow-indigo-100 relative overflow-hidden group">
+              <div className="absolute -right-4 -bottom-4 h-24 w-24 bg-white/10 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
+              <p className="text-[9px] font-black uppercase tracking-widest opacity-80 relative z-10">Level</p>
+              <h4 className="text-3xl lg:text-4xl font-black mt-1 relative z-10">08</h4>
             </div>
           </div>
         </aside>
 
         {/* Content Area */}
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 pb-20 lg:pb-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -604,20 +608,20 @@ function TabButton({ active, onClick, icon, label }: any) {
     <button 
       onClick={onClick}
       className={cn(
-        "w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all relative group",
+        "w-full flex items-center gap-4 px-6 py-4 lg:py-4 rounded-xl lg:rounded-2xl transition-all relative group shrink-0",
         active 
-            ? "bg-slate-900 text-white shadow-lg shadow-black/10" 
+            ? "bg-slate-900 text-white shadow-xl shadow-black/10" 
             : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
       )}
     >
         <div className={cn("transition-transform", active ? "scale-110" : "group-hover:scale-110")}>
             {icon}
         </div>
-        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{label}</span>
+        <span className="text-[9px] lg:text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap">{label}</span>
         {active && (
             <motion.div 
                 layoutId="activeTab"
-                className="absolute left-0 w-1.5 h-6 bg-indigo-400 rounded-r-full"
+                className="absolute bottom-0 lg:bottom-auto lg:left-0 w-full lg:w-1.5 h-1 lg:h-6 bg-indigo-400 rounded-t-full lg:rounded-r-full"
             />
         )}
     </button>

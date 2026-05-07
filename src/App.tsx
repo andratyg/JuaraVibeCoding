@@ -10,6 +10,8 @@ import { auth, db, handleFirestoreError, OperationType } from './config/firebase
 import { doc, getDoc, setDoc, updateDoc, getDocFromServer } from 'firebase/firestore';
 import { UserProfile, VibeMode } from './types';
 import Sidebar from './components/layout/Sidebar';
+import TopBar from './components/layout/TopBar';
+import BottomTabBar from './components/layout/BottomTabBar';
 import ThemeWrapper from './components/layout/ThemeWrapper';
 import Dashboard from './pages/Dashboard';
 import EnergyCheckInPage from './pages/EnergyCheckIn';
@@ -130,8 +132,8 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-teal-500 border-t-transparent"></div>
+      <div className="flex h-screen w-full items-center justify-center bg-[#0D0F14]">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
       </div>
     );
   }
@@ -156,23 +158,27 @@ export default function App() {
             <Route path="/login" element={<ProtectedRoute reverse><LoginPage /></ProtectedRoute>} />
             <Route path="/*" element={
               <ProtectedRoute>
-                <div className="flex h-screen overflow-hidden bg-white">
+                <div className="min-h-screen bg-[#0D0F14]">
                   <Sidebar />
-                  <main className="relative flex-1 overflow-y-auto">
-                    <ChatCoach />
-                    <WellnessNudges />
-                    <Routes>
-                      <Route path="/" element={<Dashboard />} />
-                      <Route path="/energy" element={<EnergyCheckInPage />} />
-                      <Route path="/tasks" element={<TaskManager />} />
-                      <Route path="/fitness" element={<FitnessCoach />} />
-                      <Route path="/journal" element={<JournalPage />} />
-                      <Route path="/summarizer" element={<Summarizer />} />
-                      <Route path="/analytics" element={<Analytics />} />
-                      <Route path="/profile" element={<ProfilePage />} />
-                      <Route path="/settings" element={<Navigate to="/profile" replace />} />
-                    </Routes>
+                  <main className="min-h-screen ml-0 md:ml-[52px] lg:ml-[220px] pb-[72px] md:pb-0 transition-all duration-300 flex flex-col">
+                    <TopBar />
+                    <div className="flex-1 px-4 md:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto w-full">
+                      <ChatCoach />
+                      <WellnessNudges />
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/energy" element={<EnergyCheckInPage />} />
+                        <Route path="/tasks" element={<TaskManager />} />
+                        <Route path="/fitness" element={<FitnessCoach />} />
+                        <Route path="/journal" element={<JournalPage />} />
+                        <Route path="/summarizer" element={<Summarizer />} />
+                        <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/profile" element={<ProfilePage />} />
+                        <Route path="/settings" element={<SettingsPage />} />
+                      </Routes>
+                    </div>
                   </main>
+                  <BottomTabBar />
                 </div>
               </ProtectedRoute>
             } />

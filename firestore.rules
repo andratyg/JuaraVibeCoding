@@ -31,6 +31,10 @@ service cloud.firestore {
       return data.score is number && 
              data.score >= 0 && 
              data.score <= 10 &&
+             data.energy is number &&
+             data.stress is number &&
+             data.focus is number &&
+             (data.enthusiasm == null || data.enthusiasm is number) &&
              (data.createdAt is string || data.createdAt is timestamp);
     }
 

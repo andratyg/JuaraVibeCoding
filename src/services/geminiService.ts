@@ -15,7 +15,14 @@ export const geminiService = {
     {
       "score": number (1-10),
       "mode": string ("Deep Work Mode", "Balance Mode", atau "Recovery Mode"),
-      "quote": string (kutipan motivasi singkat dalam Bahasa Indonesia yang relevan dengan kondisi)
+      "quote": string (kutipan motivasi singkat dalam Bahasa Indonesia yang relevan dengan kondisi),
+      "recommendations": string[] (3 tips praktis),
+      "explanation": {
+        "energy": "penjelasan awam",
+        "stress": "penjelasan awam",
+        "focus": "penjelasan awam",
+        "enthusiasm": "penjelasan awam"
+      }
     }`;
 
     try {
@@ -24,11 +31,50 @@ export const geminiService = {
         contents: prompt,
         config: { responseMimeType: "application/json" }
       });
-      const text = result.text;
-      return JSON.parse(text);
+      return JSON.parse(result.text);
     } catch (error) {
       console.error("Gemini Error:", error);
       return { score: 5, mode: "Balance Mode", quote: "Tetap semangat hari ini!" };
+    }
+  },
+
+  async calibrateDaily(userInput: string): Promise<Partial<EnergyCheckIn>> {
+    const prompt = `Kamu adalah pakar kalibrasi harian yang empatik.
+    User bercerita tentang perasaannya pagi ini: "${userInput}"
+    
+    Tugas Anda:
+    1. Analisis perasaan tersebut menjadi skor numerik (1-10).
+    2. Terjemahkan ke bahasa yang mudah dimengerti orang awam.
+    3. Untuk Stres: 1 = Sangat Rendah Stres, 10 = Sangat Tinggi Stres.
+    
+    Kembalikan JSON dengan format:
+    {
+      "energy": number (1-10),
+      "stress": number (1-10),
+      "focus": number (1-10),
+      "enthusiasm": number (1-10),
+      "score": number (1-10, overall productivity potential),
+      "mode": string (Nama kategori state: e.g. "Pagi yang Seimbang Optimal", "Perlu Prioritaskan Wellness", dll),
+      "quote": string (Kutipan motivasi kustom),
+      "explanation": {
+        "energy": "Penjelasan singkat skor energi (untuk orang awam)",
+        "stress": "Penjelasan singkat skor stres (untuk orang awam)",
+        "focus": "Penjelasan singkat skor fokus (untuk orang awam)",
+        "enthusiasm": "Penjelasan singkat skor semangat (untuk orang awam)"
+      },
+      "recommendations": string[] (1-3 rekomendasi tindakan personal untuk mengoptimalkan hari)
+    }`;
+
+    try {
+      const result = await ai.models.generateContent({
+        model: MODEL_NAME,
+        contents: prompt,
+        config: { responseMimeType: "application/json" }
+      });
+      return JSON.parse(result.text);
+    } catch (error) {
+      console.error("Gemini Calibration Error:", error);
+      throw error;
     }
   },
 

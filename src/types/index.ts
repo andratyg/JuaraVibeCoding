@@ -75,9 +75,17 @@ export interface EnergyCheckIn {
   energy: number;
   stress: number;
   focus: number;
+  enthusiasm?: number;
   score: number;
   mode: string;
   quote: string;
+  recommendations?: string[];
+  explanation?: {
+    energy: string;
+    stress: string;
+    focus: string;
+    enthusiasm: string;
+  };
   createdAt: Date;
 }
 

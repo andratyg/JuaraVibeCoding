@@ -6,7 +6,7 @@ interface TooltipProps {
   content: string;
 }
 
-export default function Tooltip({ content }: TooltipProps) {
+export function InfoTooltip({ content }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
 
   return (
@@ -26,11 +26,11 @@ export default function Tooltip({ content }: TooltipProps) {
             initial={{ opacity: 0, scale: 0.9, y: 5 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 5 }}
-            className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-slate-800 text-white text-[10px] rounded-lg shadow-xl pointer-events-none"
+            className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-3 bg-slate-900 text-white text-[10px] rounded-xl shadow-2xl pointer-events-none font-bold"
           >
             <div className="relative">
               {content}
-              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800" />
+              <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
             </div>
           </motion.div>
         )}
@@ -38,3 +38,5 @@ export default function Tooltip({ content }: TooltipProps) {
     </div>
   );
 }
+
+export default InfoTooltip;

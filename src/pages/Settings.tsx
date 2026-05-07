@@ -171,15 +171,18 @@ export default function SettingsPage() {
     }
   };
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+
   const handleChangePassword = async () => {
     if (!user?.email) return;
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, user.email);
-      setMessage({ type: 'success', text: 'Email reset password telah dikirim ke ' + user.email });
+      setShowPasswordModal(true);
+      setMessage({ type: 'success', text: 'Reset link dispatched via secure channel.' });
     } catch (err: any) {
       console.error(err);
-      setMessage({ type: 'error', text: 'Gagal mengirim email reset: ' + err.message });
+      setMessage({ type: 'error', text: 'Protocol error: ' + err.message });
     } finally {
       setLoading(false);
     }
@@ -235,17 +238,17 @@ export default function SettingsPage() {
   const isPhoneUnverified = phone && !user?.phoneNumber;
 
   return (
-    <div className="p-4 md:p-10 max-w-5xl mx-auto space-y-8 pb-24">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="h-8 w-8 bg-slate-900 text-white rounded-lg flex items-center justify-center">
-              <SettingsIcon size={18} />
+    <div className="space-y-8 md:space-y-12 pb-24 lg:pb-12">
+      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="h-8 w-8 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg shadow-slate-200">
+              <SettingsIcon size={16} />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">System Configuration</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">System Preferences</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">{t('profile.settings')}</h1>
-          <p className="text-slate-500 font-medium mt-1">Configure your digital environment and security protocols.</p>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">{t('profile.settings')}</h1>
+          <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-widest">Protocol configuration and security interface.</p>
         </div>
       </header>
 
@@ -577,6 +580,53 @@ export default function SettingsPage() {
       </div>
 
       <AnimatePresence>
+        {showPasswordModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0D0F14]/90 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-10 opacity-5">
+                 <Lock size={120} />
+              </div>
+              <div className="h-20 w-20 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center mb-8 mx-auto relative z-10 border border-indigo-100">
+                <Mail size={32} />
+              </div>
+              <h3 className="text-3xl font-black text-slate-900 text-center mb-4 tracking-tight">Email Dispatched</h3>
+              <p className="text-sm font-bold text-slate-500 leading-relaxed text-center mb-8">
+                 A secure password reset protocol has been initiated. Please check your inbox at <span className="text-indigo-600 font-black">{user?.email}</span> to proceed.
+              </p>
+
+              <div className="bg-slate-50 rounded-3xl p-6 mb-8 border border-slate-100 space-y-4">
+                 <div className="flex items-center gap-3">
+                    <Shield size={16} className="text-indigo-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Security Protocol</span>
+                 </div>
+                 <ul className="space-y-2">
+                    <li className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
+                       <CheckCircle size={10} className="text-emerald-500" /> Link expires in 60 minutes
+                    </li>
+                    <li className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
+                       <CheckCircle size={10} className="text-emerald-500" /> Verify sender authenticity
+                    </li>
+                    <li className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
+                       <CheckCircle size={10} className="text-emerald-500" /> Uses HTTPS secure channel
+                    </li>
+                 </ul>
+              </div>
+              
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-xl hover:bg-black transition-all active:scale-[0.98]"
+              >
+                Acknowledgement
+              </button>
+            </motion.div>
+          </div>
+        )}
+
         {showOtpModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
             <motion.div

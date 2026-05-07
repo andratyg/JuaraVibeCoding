@@ -24,29 +24,29 @@ export default function Summarizer() {
   };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <div className="mb-10">
-        <h1 className="text-4xl font-black text-slate-900 tracking-tight">Document Summarizer</h1>
-        <p className="text-slate-500">Hemat waktu dengan ringkasan cerdas bertenaga Gemini AI.</p>
+    <div className="space-y-6 md:space-y-10">
+      <div className="space-y-1">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Document Summarizer</h1>
+        <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-widest">Condense complex data with AI-driven intelligence.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 items-start">
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 overflow-hidden">
-            <h3 className="font-bold text-slate-800 mb-4">Input Teks / Laporan</h3>
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 md:p-8 overflow-hidden">
+            <h3 className="font-black text-slate-800 mb-6 uppercase text-xs tracking-widest px-2">Input Reservoir</h3>
             <textarea
               value={text}
               onChange={e => setText(e.target.value)}
-              placeholder="Paste email panjang, laporan rapat, atau artikel di sini..."
-              className="w-full h-80 bg-slate-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-[var(--primary)] resize-none"
+              placeholder="Paste long emails, reports, or articles here..."
+              className="w-full h-80 bg-slate-50 border-2 border-transparent rounded-[1.5rem] p-6 text-sm font-bold focus:bg-white focus:border-slate-900 outline-none transition-all placeholder:text-slate-300 resize-none"
             />
             <button
               onClick={handleSummarize}
               disabled={loading || !text.trim()}
-              className="w-full mt-4 bg-[var(--primary)] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
+              className="w-full mt-6 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl hover:bg-black transition-all disabled:opacity-50"
             >
-              {loading ? <Loader2 className="animate-spin" /> : <LayoutList className="h-5 w-5" />}
-              Hasilkan Ringkasan
+              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <LayoutList className="h-5 w-5" />}
+              Generate Intelligence
             </button>
           </div>
         </div>
@@ -69,54 +69,60 @@ export default function Summarizer() {
                 className="space-y-6"
               >
                 {/* Summary Box */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-[var(--primary)] text-lg">Executive Summary</h3>
-                    <button onClick={handleCopy} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                      {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4 text-slate-400" />}
+                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 md:p-10 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 h-40 w-40 bg-slate-50 rounded-full -mr-20 -mt-20 blur-3xl opacity-50"></div>
+                  <div className="flex justify-between items-center mb-8 relative z-10">
+                    <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">Executive Summary</h3>
+                    <button onClick={handleCopy} className="h-10 w-10 flex items-center justify-center bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl transition-all shadow-sm">
+                      {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                     </button>
                   </div>
-                  <p className="text-slate-700 leading-relaxed text-sm mb-8">
-                    {result.summary}
+                  <p className="text-slate-600 leading-relaxed text-sm font-bold mb-10 relative z-10 italic">
+                    "{result.summary}"
                   </p>
                   
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="p-4 bg-[var(--primary-light)] rounded-2xl border border-[var(--primary)]/10">
-                        <div className="text-[10px] font-bold text-[var(--primary)] uppercase mb-1">Time Saved</div>
-                        <div className="text-xl font-black text-[var(--primary)]">{result.timeSaved} Menit</div>
+                  <div className="grid grid-cols-2 gap-4 relative z-10">
+                     <div className="p-6 bg-slate-900 rounded-3xl border border-white/10 shadow-lg">
+                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Efficiency Gain</div>
+                        <div className="text-2xl font-black text-white">{result.timeSaved}m <span className="text-xs text-slate-500 font-bold ml-1 uppercase">Saved</span></div>
                      </div>
-                     <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                        <div className="text-[10px] font-bold text-orange-600 uppercase mb-1">Precision</div>
-                        <div className="text-xl font-black text-orange-600">98%</div>
+                     <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
+                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Confidence</div>
+                        <div className="text-2xl font-black text-slate-900">98% <span className="text-xs text-slate-500 font-bold ml-1 uppercase">Precision</span></div>
                      </div>
                   </div>
                 </div>
 
                 {/* Key Points */}
-                <div className="bg-slate-900 rounded-3xl p-8 text-white">
-                  <div className="flex items-center gap-3 mb-6">
-                    <FileText className="h-5 w-5 text-teal-400" />
-                    <h3 className="font-bold">Key Points</h3>
+                <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="h-10 w-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
+                        <FileText size={20} />
+                    </div>
+                    <h3 className="font-black text-slate-900 uppercase text-sm tracking-widest">Protocol Highlights</h3>
                   </div>
-                  <ul className="space-y-3">
+                  <ul className="space-y-4">
                     {result.keyPoints.map((point: string, i: number) => (
-                      <li key={i} className="flex gap-3 text-sm text-slate-400 italic">
-                        <span className="text-teal-400">•</span> {point}
+                      <li key={i} className="flex gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-50 group hover:border-teal-200 transition-all font-bold text-sm text-slate-600">
+                        <span className="text-teal-400 shrink-0 mt-1"><Zap size={14} fill="currentColor" /></span> {point}
                       </li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Action Items */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-lg p-8">
-                   <div className="flex items-center gap-3 mb-6">
-                    <CheckCircle className="h-5 w-5 text-[var(--primary)]" />
-                    <h3 className="font-bold text-slate-800">Action Items</h3>
+                <div className="bg-slate-900 rounded-[2.5rem] shadow-2xl p-8 md:p-10 relative overflow-hidden group">
+                   <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px] -ml-32 -mb-32 group-hover:scale-125 transition-transform duration-1000" />
+                   <div className="flex items-center gap-3 mb-8 relative z-10">
+                    <div className="h-10 w-10 bg-white/10 text-emerald-400 rounded-xl flex items-center justify-center">
+                        <CheckCircle size={20} />
+                    </div>
+                    <h3 className="font-black text-white uppercase text-sm tracking-widest">Active Commands</h3>
                   </div>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-1 gap-3 relative z-10">
                     {result.actionItems.map((item: string, i: number) => (
-                      <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl text-xs font-medium text-slate-600">
-                        <div className="h-2 w-2 rounded-full bg-[var(--primary)]"></div>
+                      <div key={i} className="flex items-center gap-4 p-5 bg-white/5 border border-white/5 rounded-2xl text-xs font-bold text-slate-300 backdrop-blur-sm group/item hover:bg-white/10 transition-all">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] shrink-0"></div>
                         {item}
                       </div>
                     ))}
