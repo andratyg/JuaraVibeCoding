@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../App';
 import { db } from '../config/firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { Workout } from '../types';
-import { Dumbbell, Play, CheckCircle, Loader2, Sparkles, Trophy, Zap, Clock, Activity, Brain } from 'lucide-react';
+import { Dumbbell, Play, CheckCircle, Loader2, Sparkles, Trophy, Zap, Clock, Activity, Brain, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function FitnessCoach() {
+  const { t } = useTranslation();
   const { profile } = useApp();
   const [workout, setWorkout] = useState<Partial<Workout> | null>(null);
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [showFitnessHelp, setShowFitnessHelp] = useState(false);
 
   useEffect(() => {
     const fetchLatestWorkout = async () => {
@@ -56,7 +59,31 @@ export default function FitnessCoach() {
     <div className="space-y-6 md:space-y-10">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">AI Fitness Coach</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">AI Fitness Coach</h1>
+            <div className="relative">
+              <button 
+                onClick={() => setShowFitnessHelp(!showFitnessHelp)}
+                onMouseEnter={() => setShowFitnessHelp(true)}
+                onMouseLeave={() => setShowFitnessHelp(false)}
+                className="flex items-center"
+              >
+                <HelpCircle size={20} className="text-slate-300 cursor-help" />
+              </button>
+              <AnimatePresence>
+                {showFitnessHelp && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute left-0 top-full mt-2 w-64 p-4 bg-slate-900 text-white text-[10px] font-bold rounded-2xl z-50 shadow-2xl leading-relaxed border border-white/5"
+                  >
+                    {t('help.fitness')}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
           <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-widest">Adaptive workouts tailored to your energy.</p>
         </div>
         {!workout || completed ? (

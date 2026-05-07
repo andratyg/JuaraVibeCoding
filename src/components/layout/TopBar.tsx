@@ -44,36 +44,38 @@ export default function TopBar() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <header className="sticky top-0 z-30 h-14 lg:h-16 flex items-center justify-between px-4 md:px-6 bg-[#0D0F14]/90 backdrop-blur-xl border-b border-white/5">
+    <header className="sticky top-0 z-30 h-14 lg:h-16 flex items-center justify-between px-4 md:px-6 bg-white border-b border-slate-100 shadow-sm">
       <div className="flex items-center gap-3">
         <div className="lg:hidden flex items-center gap-2">
-          <div className="w-7 h-7 bg-[#6C63FF] rounded-lg flex items-center justify-center text-white text-xs font-bold">⚡</div>
-          <span className="font-bold text-white text-sm">FlowState</span>
+          <div className="w-7 h-7 bg-[#6C63FF] rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-indigo-100">⚡</div>
+          <span className="font-black text-slate-900 text-sm italic tracking-tighter uppercase">FlowState</span>
         </div>
-        <h1 className="hidden lg:block text-white font-bold text-lg">{getPageTitle()}</h1>
+        <h1 className="hidden lg:block text-slate-900 font-black text-lg uppercase tracking-tight">{getPageTitle()}</h1>
       </div>
 
       <div className="flex items-center gap-2">
         <button 
           onClick={() => setIsSearchOpen(true)}
-          className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg text-white/40 text-sm hover:bg-white/8 transition-colors border border-white/8"
+          className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg text-slate-400 text-sm hover:bg-slate-100 transition-colors border border-slate-100"
         >
           <Search size={14} />
-          <span>Cari...</span>
-          <kbd className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded ml-2 font-mono">⌘K</kbd>
+          <span className="font-bold">Cari...</span>
+          <kbd className="text-[9px] bg-white px-1.5 py-0.5 rounded border border-slate-100 ml-2 font-black shadow-sm tracking-widest uppercase">⌘K</kbd>
         </button>
 
         <button 
           onClick={() => setIsNotificationsOpen(true)}
-          className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-white/5 transition-colors"
+          className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:text-slate-900 transition-all border border-slate-100 hover:shadow-sm"
         >
-          <Bell size={18} className="text-white/50" />
+          <Bell size={18} />
           {unreadCount > 0 && (
-            <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-[#0D0F14] shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+            <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center bg-rose-500 text-white text-[8px] font-black rounded-full border-2 border-white shadow-md animate-bounce">
+              {unreadCount}
+            </span>
           )}
         </button>
 
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6C63FF] to-[#9B8FFF] flex items-center justify-center text-white text-xs font-bold shadow-lg shadow-indigo-500/20 ring-2 ring-white/5">
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6C63FF] to-[#9B8FFF] flex items-center justify-center text-white text-xs font-bold shadow-lg ring-2 ring-white">
           {profile?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
         </div>
       </div>

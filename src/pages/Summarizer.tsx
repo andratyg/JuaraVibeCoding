@@ -1,13 +1,16 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { geminiService } from '../services/geminiService';
-import { FileText, Copy, Check, Loader2, Zap, LayoutList, CheckCircle } from 'lucide-react';
+import { FileText, Copy, Check, Loader2, Zap, LayoutList, CheckCircle, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Summarizer() {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [showSummarizerHelp, setShowSummarizerHelp] = useState(false);
 
   const handleSummarize = async () => {
     if (!text.trim()) return;
@@ -26,7 +29,31 @@ export default function Summarizer() {
   return (
     <div className="space-y-6 md:space-y-10">
       <div className="space-y-1">
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Document Summarizer</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Document Summarizer</h1>
+          <div className="relative">
+            <button 
+              onClick={() => setShowSummarizerHelp(!showSummarizerHelp)}
+              onMouseEnter={() => setShowSummarizerHelp(true)}
+              onMouseLeave={() => setShowSummarizerHelp(false)}
+              className="flex items-center"
+            >
+              <HelpCircle size={20} className="text-slate-300 cursor-help" />
+            </button>
+            <AnimatePresence>
+              {showSummarizerHelp && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  className="absolute left-0 top-full mt-2 w-72 p-4 bg-slate-900 text-white text-[10px] font-bold rounded-2xl z-50 shadow-2xl leading-relaxed border border-white/5"
+                >
+                  {t('help.summarizer')}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
         <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-widest">Condense complex data with AI-driven intelligence.</p>
       </div>
 

@@ -6,7 +6,8 @@ import { geminiService } from '../services/geminiService';
 import { Task } from '../types';
 import { 
   Plus, Trash2, Calendar, Clock, Loader2, Sparkles, CheckCircle2, 
-  Flag, Tag, Folder, RefreshCw, Paperclip, AlertCircle, AlertTriangle
+  Flag, Tag, Folder, RefreshCw, Paperclip, AlertCircle, AlertTriangle,
+  Brain, Zap, HelpCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { formatTime, cn, formatDate } from '../lib/utils';
@@ -19,6 +20,7 @@ export default function TaskManager() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [scheduling, setScheduling] = useState(false);
+  const [showFlowHelp, setShowFlowHelp] = useState(false);
   const [newTask, setNewTask] = useState<Partial<Task>>({
     title: '',
     duration: 30,
@@ -251,7 +253,31 @@ export default function TaskManager() {
                      <Brain size={20} />
                   </div>
                   <div className="flex-1">
-                     <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">AI Flow Alignment</h4>
+                     <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-[10px] font-black uppercase tracking-widest text-emerald-600">AI Flow Alignment</h4>
+                        <div className="relative">
+                          <button 
+                            onClick={() => setShowFlowHelp(!showFlowHelp)}
+                            onMouseEnter={() => setShowFlowHelp(true)}
+                            onMouseLeave={() => setShowFlowHelp(false)}
+                            className="flex items-center"
+                          >
+                            <HelpCircle size={10} className="text-emerald-400 cursor-help" />
+                          </button>
+                          <AnimatePresence>
+                            {showFlowHelp && (
+                              <motion.div 
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] font-bold rounded-xl z-50 shadow-2xl leading-relaxed border border-white/5"
+                              >
+                                {t('help.flow')}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                     </div>
                      <p className="text-xs font-bold text-slate-700 leading-relaxed">
                         {profile?.energyScore && profile.energyScore > 7 
                           ? "Your energy levels are high. Pursue deep conceptual tasks now for maximum breakthrough potential."
@@ -314,6 +340,7 @@ interface TaskItemProps {
 
 function TaskItem({ task, onToggle, onDelete, onStatusChange, deadlineInfo }: TaskItemProps) {
     const { t } = useTranslation();
+    const { profile } = useApp();
     const StatusIcon = deadlineInfo?.icon || Clock;
 
     return (

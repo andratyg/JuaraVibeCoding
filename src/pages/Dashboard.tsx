@@ -3,14 +3,14 @@ import { useApp } from '../App';
 import { useTranslation } from 'react-i18next';
 import { db } from '../config/firebase';
 import { collection, query, where, getDocs, limit, orderBy, Timestamp } from 'firebase/firestore';
-import { motion } from 'motion/react';
-import { Zap, CheckSquare, Dumbbell, AlertTriangle, ArrowRight, Brain, Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Zap, CheckSquare, Dumbbell, AlertTriangle, ArrowRight, Brain, Sparkles, HelpCircle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { formatTime, cn } from '../lib/utils';
 import { Task, VibeMode } from '../types';
 
 export default function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { profile, vibeMode, setVibeMode } = useApp();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -18,6 +18,10 @@ export default function Dashboard() {
   const [latestCheckIn, setLatestCheckIn] = useState<any>(null);
 
   const [weeklyConsistency, setWeeklyConsistency] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+
+  const [showSystemHelp, setShowSystemHelp] = useState(false);
+  const [showVibeHelp, setShowVibeHelp] = useState(false);
+  const [showSyncHelp, setShowSyncHelp] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -79,7 +83,7 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [profile]);
 
-  const dateStr = new Date().toLocaleDateString('en-US', { 
+  const dateStr = new Date().toLocaleDateString(i18n.language === 'id' ? 'id-ID' : 'en-US', { 
     weekday: 'long', 
     day: 'numeric', 
     month: 'long', 
@@ -90,39 +94,90 @@ export default function Dashboard() {
     <div className="space-y-6 md:space-y-10">
       {/* Welcome Section & Balance Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-        <section className="lg:col-span-2 bg-white/5 md:bg-white p-6 md:p-10 rounded-[3rem] border border-white/5 md:border-slate-100 shadow-sm relative overflow-hidden group">
-          <div className="absolute -right-10 -top-10 opacity-5 group-hover:scale-110 transition-transform duration-1000">
+        <section className="lg:col-span-2 bg-white p-6 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+          <div className="absolute -right-10 -top-10 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000">
             <Brain size={240} />
           </div>
           <div className="relative z-10 flex flex-col h-full justify-between">
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">System Online • Protocol Active</span>
+                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">System Online • Protocol Active</span>
+                <div className="relative ml-1">
+                  <button 
+                    onClick={() => setShowSystemHelp(!showSystemHelp)}
+                    onMouseEnter={() => setShowSystemHelp(true)}
+                    onMouseLeave={() => setShowSystemHelp(false)}
+                    className="flex items-center"
+                  >
+                    <HelpCircle size={10} className="text-slate-300 cursor-help" />
+                  </button>
+                  <AnimatePresence>
+                    {showSystemHelp && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className="absolute left-0 top-full mt-2 w-48 p-3 bg-slate-900 text-white text-[10px] font-bold rounded-xl z-50 shadow-2xl leading-relaxed border border-white/5"
+                      >
+                        {t('help.system')}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
-              <h1 className="text-3xl md:text-5xl font-black text-white md:text-slate-900 tracking-tight leading-none">
-                Hello, <span className="text-indigo-600">{profile?.displayName?.split(' ')[0]}</span>
+              <h1 className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight leading-none">
+                {t('dashboard.welcome')}, <span className="text-indigo-600">{profile?.displayName?.split(' ')[0]}</span>
               </h1>
-              <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-[0.2em]">{dateStr}</p>
+              <p className="text-xs md:text-sm font-black text-slate-300 uppercase tracking-[0.2em]">{dateStr}</p>
             </div>
             
             <div className="mt-10 flex flex-col md:flex-row items-start md:items-center gap-6">
-              <div className="flex bg-slate-900/50 md:bg-slate-50 p-1.5 rounded-2xl md:rounded-full border border-white/5 md:border-slate-100">
-                {(['hustle', 'balance', 'zen'] as VibeMode[]).map(mode => (
-                  <button 
-                    key={mode}
-                    onClick={() => setVibeMode(mode)}
-                    className={cn(
-                        "px-6 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl md:rounded-full transition-all",
-                        vibeMode === mode ? "bg-slate-900 text-white shadow-xl" : "text-slate-400 hover:text-slate-600"
-                    )}
-                  >
-                    {mode}
-                  </button>
-                ))}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{t('help.vibe.title')}</span>
+                  <div className="relative">
+                    <button 
+                      onClick={() => setShowVibeHelp(!showVibeHelp)}
+                      onMouseEnter={() => setShowVibeHelp(true)}
+                      onMouseLeave={() => setShowVibeHelp(false)}
+                      className="flex items-center"
+                    >
+                      <HelpCircle size={10} className="text-slate-300 cursor-help" />
+                    </button>
+                    <AnimatePresence>
+                      {showVibeHelp && (
+                        <motion.div 
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -5 }}
+                          className="absolute left-0 bottom-full mb-2 w-56 p-3 bg-slate-900 text-white text-[10px] font-bold rounded-xl z-50 shadow-2xl leading-relaxed border border-white/5"
+                        >
+                          <b>Hustle:</b> {t('help.vibe.hustle').split(': ')[1]}<br/>
+                          <b>Balance:</b> {t('help.vibe.balance').split(': ')[1]}<br/>
+                          <b>Zen:</b> {t('help.vibe.zen').split(': ')[1]}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+                <div className="flex bg-slate-50 p-1.5 rounded-2xl md:rounded-full border border-slate-100">
+                  {(['hustle', 'balance', 'zen'] as VibeMode[]).map(mode => (
+                    <button 
+                      key={mode}
+                      onClick={() => setVibeMode(mode)}
+                      className={cn(
+                          "px-6 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl md:rounded-full transition-all",
+                          vibeMode === mode ? "bg-slate-900 text-white shadow-xl" : "text-slate-400 hover:text-slate-900"
+                      )}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <Link to="/analytics" className="text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:translate-x-1 transition-transform inline-flex items-center gap-2">
-                 View Performance Logs <ArrowRight size={14} />
+              <Link to="/analytics" className="mt-8 md:mt-0 text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:translate-x-1 transition-transform inline-flex items-center gap-2">
+                 {t('dashboard.viewPerformance')} <ArrowRight size={14} />
               </Link>
             </div>
           </div>
@@ -134,12 +189,36 @@ export default function Dashboard() {
              <Zap className="h-40 w-40 text-emerald-400" />
           </div>
           <div className="relative z-10 flex flex-col h-full">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 mb-8">Performance Sync</h3>
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400">{t('dashboard.performanceSync')}</h3>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowSyncHelp(!showSyncHelp)}
+                  onMouseEnter={() => setShowSyncHelp(true)}
+                  onMouseLeave={() => setShowSyncHelp(false)}
+                  className="flex items-center"
+                >
+                  <HelpCircle size={14} className="text-white/20 hover:text-white transition-colors cursor-help" />
+                </button>
+                <AnimatePresence>
+                  {showSyncHelp && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 5 }}
+                      className="absolute right-0 top-full mt-2 w-64 p-4 bg-white text-slate-900 text-[10px] font-bold rounded-2xl z-50 shadow-2xl leading-relaxed"
+                    >
+                      {t('help.sync')}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
             
             <div className="flex-1 space-y-8">
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
-                   <span className="text-xs font-black uppercase tracking-widest text-slate-400">Productivity</span>
+                   <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('dashboard.productivity')}</span>
                    <span className="text-xl font-black">{weeklyConsistency[weeklyConsistency.length-1] || 0}%</span>
                 </div>
                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
@@ -153,7 +232,7 @@ export default function Dashboard() {
 
               <div className="space-y-4">
                 <div className="flex justify-between items-end">
-                   <span className="text-xs font-black uppercase tracking-widest text-slate-400">Wellness Index</span>
+                   <span className="text-xs font-black uppercase tracking-widest text-slate-400">{t('dashboard.wellnessIndex')}</span>
                    <span className="text-xl font-black text-emerald-400">{(profile?.energyScore || 0) * 10}%</span>
                 </div>
                 <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
@@ -187,17 +266,17 @@ export default function Dashboard() {
             <Brain size={120} />
           </div>
           <div className="relative z-10">
-            <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6">Daily Calibration</h3>
+            <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest mb-6">{t('dashboard.dailyCalibration')}</h3>
             <div className="flex items-baseline gap-2">
               <span className="text-6xl md:text-7xl font-black text-indigo-600 tracking-tighter">{profile?.energyScore || 0}</span>
               <span className="text-slate-300 font-bold block translate-y-[-10px]">/ 10</span>
             </div>
             <div className="mt-6 space-y-2">
               <h4 className="text-slate-900 font-black text-xl leading-tight">
-                {latestCheckIn?.mode || 'Belum Kalibrasi'}
+                {latestCheckIn?.mode || t('dashboard.notCalibrated')}
               </h4>
               <p className="text-xs text-slate-500 font-bold leading-relaxed italic">
-                "{latestCheckIn?.quote || 'Calibrate your day to see AI insights.'}"
+                "{latestCheckIn?.quote || t('dashboard.calibrateAIPrompt')}"
               </p>
             </div>
           </div>
@@ -241,22 +320,22 @@ export default function Dashboard() {
                 <Zap className="h-6 w-6 text-yellow-300" />
             </div>
             <div className="flex flex-col items-end">
-                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">AI Recommendation</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-300">{t('dashboard.aiRecommendation')}</span>
             </div>
           </div>
           <div className="relative z-10 py-6 md:py-0">
             <h4 className="text-2xl md:text-3xl font-black leading-tight tracking-tight">
-                {latestCheckIn?.recommendations?.[0] || 'Tunggu Kalibrasi...'}
+                {latestCheckIn?.recommendations?.[0] || t('dashboard.waitCalibration')}
             </h4>
             <p className="text-sm text-indigo-100/80 mt-4 font-medium leading-relaxed">
-                {latestCheckIn ? "Berdasarkan analisisi Gemini, ini adalah prioritas utamamu untuk hasil maksimal." : "Lakukan kalibrasi pagi hari untuk mendapatkan sasaran yang disesuaikan dengan energimu."}
+                {latestCheckIn ? (profile?.language === 'id' ? "Berdasarkan analisisi Gemini, ini adalah prioritas utamamu untuk hasil maksimal." : "Based on Gemini analysis, this is your primary priority for maximum results.") : (profile?.language === 'id' ? "Lakukan kalibrasi pagi hari untuk mendapatkan sasaran yang disesuaikan dengan energimu." : "Perform morning calibration to get goals tailored to your energy.")}
             </p>
           </div>
           <button 
             onClick={() => navigate('/tasks')}
             className="w-full py-4 bg-white text-indigo-900 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all hover:bg-indigo-50 relative z-10"
           >
-            Mulai Task Sekarang
+            {t('dashboard.startTaskNow')}
           </button>
         </motion.div>
 
@@ -268,9 +347,9 @@ export default function Dashboard() {
             className="md:col-span-12 lg:col-span-4 bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm flex flex-col"
         >
           <div className="flex justify-between items-center mb-8">
-            <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Optimized Timeline</h3>
+            <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{t('dashboard.optimizedTimeline')}</h3>
             <span className="text-[10px] font-bold bg-slate-50 px-3 py-1 rounded-full text-slate-600">
-                {tasks.length} PENDING
+                {tasks.length} {t('dashboard.pending')}
             </span>
           </div>
           <div className="space-y-4">
@@ -287,12 +366,12 @@ export default function Dashboard() {
             )) : (
               <div className="text-center py-10">
                   <CheckSquare className="mx-auto h-8 w-8 text-slate-200 mb-2" />
-                  <p className="text-[10px] font-black text-slate-400 uppercase">Semua Tugas Beres!</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase">{t('dashboard.allDone')}</p>
               </div>
             )}
           </div>
           <button onClick={() => navigate('/tasks')} className="mt-auto pt-6 text-[10px] font-black text-indigo-600 uppercase tracking-widest text-center">
-            Lihat Timeline Lengkap →
+            {t('dashboard.viewFullTimeline')} →
           </button>
         </motion.div>
 
@@ -304,7 +383,7 @@ export default function Dashboard() {
             className="md:col-span-8 bg-white rounded-[2.5rem] p-6 md:p-8 border border-slate-100 shadow-sm"
         >
           <div className="flex justify-between items-center mb-10">
-            <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Weekly Consistency</h3>
+            <h3 className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{t('dashboard.weeklyConsistency')}</h3>
             <div className="flex gap-2">
               <div className="h-3 w-3 rounded-full bg-indigo-600"></div>
               <div className="h-3 w-3 rounded-full bg-slate-100"></div>
@@ -339,9 +418,9 @@ export default function Dashboard() {
           <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(16,185,129,0.2)] text-emerald-500">
             <Zap className="w-8 h-8" />
           </div>
-          <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-2">Status: Optimized</h4>
+          <h4 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-2">{t('dashboard.statusOptimized')}</h4>
           <p className="text-xs text-slate-400 leading-relaxed font-bold">
-            Pola istirahatmu terpantau stabil. Lanjutkan ritme ini untuk menghindari burnout.
+            {t('dashboard.restPatternStable')}
           </p>
         </motion.div>
       </div>

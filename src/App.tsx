@@ -132,8 +132,14 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#0D0F14]">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent"></div>
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 text-slate-900 font-black italic uppercase tracking-widest text-lg">
+        <div className="flex flex-col items-center gap-6">
+          <div className="relative">
+            <div className="h-16 w-16 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent shadow-xl shadow-indigo-100"></div>
+            <div className="absolute inset-0 flex items-center justify-center text-xs">⚡</div>
+          </div>
+          <span>FlowState Initializing...</span>
+        </div>
       </div>
     );
   }
@@ -158,7 +164,7 @@ export default function App() {
             <Route path="/login" element={<ProtectedRoute reverse><LoginPage /></ProtectedRoute>} />
             <Route path="/*" element={
               <ProtectedRoute>
-                <div className="min-h-screen bg-[#0D0F14]">
+                <div className="min-h-screen bg-slate-50 transition-colors duration-500">
                   <Sidebar />
                   <main className="min-h-screen ml-0 md:ml-[52px] lg:ml-[220px] pb-[72px] md:pb-0 transition-all duration-300 flex flex-col">
                     <TopBar />

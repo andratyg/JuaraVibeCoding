@@ -31,25 +31,30 @@ export default function ThemeWrapper({ children }: { children: ReactNode }) {
     <div className={`contents ${getThemeClass()}`} style={getRootStyles() as any}>
       <style>{`
         .theme-high {
-          --primary: #0d9488; /* teal-600 */
+          --primary: #0f766e; /* teal-700 */
           --primary-light: #f0fdfa; /* teal-50 */
-          --accent: #f59e0b; /* amber-500 */
+          --accent: #d97706; /* amber-600 */
         }
         .theme-medium {
-          --primary: #4f46e5; /* indigo-600 */
-          --primary-light: #f5f3ff; /* indigo-50 */
-          --accent: #ec4899; /* pink-500 */
+          --primary: #4338ca; /* indigo-700 */
+          --primary-light: #eef2ff; /* indigo-50 */
+          --accent: #db2777; /* pink-600 */
         }
         .theme-low {
-          --primary: #e11d48; /* rose-600 */
+          --primary: #be123c; /* rose-700 */
           --primary-light: #fff1f2; /* rose-50 */
-          --accent: #7c3aed; /* violet-600 */
+          --accent: #6d28d9; /* violet-700 */
         }
         
         .high-contrast {
           --primary: #000000;
           --accent: #000000;
           --primary-light: #ffffff;
+        }
+
+        /* Modern Modern Touches */
+        .card-minimal {
+          @apply shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500 border-none bg-white/80 backdrop-blur-sm;
         }
 
         .dark .bg-white { background-color: #0f172a !important; }

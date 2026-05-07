@@ -200,5 +200,41 @@
     "analytics": "Analytics",
     "profile": "Profile",
     "logout": "Logout"
+  },
+  "dashboard": {
+    "welcome": "Hello",
+    "viewPerformance": "View Performance Logs",
+    "performanceSync": "Performance Sync",
+    "productivity": "Productivity",
+    "wellnessIndex": "Wellness Index",
+    "dailyCalibration": "Daily Calibration",
+    "notCalibrated": "Not Calibrated",
+    "calibrateAIPrompt": "Calibrate your day to see AI insights.",
+    "aiRecommendation": "AI Recommendation",
+    "waitCalibration": "Waiting for Calibration...",
+    "startTaskNow": "Start Task Now",
+    "optimizedTimeline": "Optimized Timeline",
+    "pending": "PENDING",
+    "allDone": "All tasks finished!",
+    "viewFullTimeline": "View Full Timeline",
+    "weeklyConsistency": "Weekly Consistency",
+    "statusOptimized": "Status: Optimized",
+    "restPatternStable": "Your rest pattern is stable. Continue this rhythm to avoid burnout."
+  },
+  "help": {
+    "system": "Your personal AI engine is monitoring biometric markers to optimize your workflow in real-time.",
+    "vibe": {
+      "title": "Select Vibe Mode",
+      "hustle": "Hustle: High intensity tasks",
+      "balance": "Balance: Mixed workload",
+      "zen": "Zen: Recovery & focus"
+    },
+    "sync": "This index evaluates how your output correlates with your mental and physical wellness. Keeping these aligned prevents burnout.",
+    "energy": "\"Daily Calibration\" is your daily energy alignment process. AI analyzes your mental and physical condition to provide recommendations for the most efficient activities so you don't tire easily.",
+    "flow": "AI analysis of your daily energy. We adjust the order and priority of tasks based on your current focus and fatigue levels.",
+    "summarizer": "This tool uses AI to transform long text into key points, executive summaries, and instant action lists.",
+    "fitness": "This AI coach creates adaptive training programs. If your energy is low, intensity is automatically reduced to keep it safe and productive.",
+    "moodMap": "This data is collected from your daily journal results and the emotions you shared during your morning calibration.",
+    "wellness": "The Wellness Index is calculated from your average energy, focus, and sleep quality. We compare it with the number of completed tasks to find your optimal point."
   }
 }

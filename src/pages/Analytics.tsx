@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../App';
 import { auth, db, handleFirestoreError, OperationType } from '../config/firebase';
 import { collection, getDocs, query, orderBy, limit, where } from 'firebase/firestore';
@@ -6,12 +7,13 @@ import {
   LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, 
   Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, ComposedChart 
 } from 'recharts';
-import { TrendingUp, Activity, Target, Brain, Download, Loader2, Sparkles, FileText, CheckCircle2 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { TrendingUp, Activity, Target, Brain, Download, Loader2, Sparkles, FileText, CheckCircle2, HelpCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 export default function Analytics() {
+  const { t } = useTranslation();
   const { profile } = useApp();
   const [data, setData] = useState<any[]>([]);
   const [stats, setStats] = useState({
@@ -22,6 +24,8 @@ export default function Analytics() {
   });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [showMoodHelp, setShowMoodHelp] = useState(false);
+  const [showWellnessHelp, setShowWellnessHelp] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -395,7 +399,31 @@ export default function Analytics() {
 
         {/* Mood Distribution */}
         <div className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center">
-            <h3 className="font-bold text-slate-800 mb-8 text-center text-base md:text-lg">Mood Map</h3>
+            <div className="flex items-center gap-2 mb-8">
+                <h3 className="font-bold text-slate-800 text-center text-base md:text-lg">Mood Map</h3>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowMoodHelp(!showMoodHelp)}
+                    onMouseEnter={() => setShowMoodHelp(true)}
+                    onMouseLeave={() => setShowMoodHelp(false)}
+                    className="flex items-center"
+                  >
+                    <HelpCircle size={14} className="text-slate-300 cursor-help" />
+                  </button>
+                  <AnimatePresence>
+                    {showMoodHelp && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-56 p-3 bg-slate-900 text-white text-[10px] font-bold rounded-xl z-50 shadow-2xl leading-relaxed border border-white/5"
+                      >
+                        {t('help.moodMap')}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+            </div>
             <div className="h-48 md:h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
@@ -438,7 +466,31 @@ export default function Analytics() {
             </div>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10 relative">
                 <div>
+                  <div className="flex items-center gap-3">
                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">Produktifitas vs Wellness</h3>
+                   <div className="relative">
+                      <button 
+                        onClick={() => setShowWellnessHelp(!showWellnessHelp)}
+                        onMouseEnter={() => setShowWellnessHelp(true)}
+                        onMouseLeave={() => setShowWellnessHelp(false)}
+                        className="flex items-center"
+                      >
+                        <HelpCircle size={14} className="text-slate-300 cursor-help" />
+                      </button>
+                      <AnimatePresence>
+                        {showWellnessHelp && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            className="absolute left-0 bottom-full mb-2 w-64 p-3 bg-slate-900 text-white text-[10px] font-bold rounded-xl z-50 shadow-2xl leading-relaxed border border-white/5"
+                          >
+                            {t('help.wellness')}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </div>
                    <p className="text-sm font-medium text-slate-500">Melihat keseimbangan antara hasil kerja dan kesehatan mentalmu.</p>
                 </div>
                 <div className="flex items-center gap-4 bg-slate-50 p-2 rounded-2xl border border-slate-100">

@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../App';
+import { useTranslation } from 'react-i18next';
 import { db } from '../config/firebase';
 import { collection, addDoc, doc, updateDoc, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap, ArrowRight, Loader2, MessageSquare, Brain, Target, Activity, Flame, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Zap, ArrowRight, Loader2, MessageSquare, Brain, Target, Activity, Flame, Sparkles, CheckCircle2, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
 export default function EnergyCheckInPage() {
+  const { t } = useTranslation();
   const { profile, refreshProfile } = useApp();
   const navigate = useNavigate();
   const [userInput, setUserInput] = useState('');
@@ -16,6 +18,8 @@ export default function EnergyCheckInPage() {
   const [result, setResult] = useState<any>(null);
   const [step, setStep] = useState<'intro' | 'chat' | 'result'>('intro');
   const [alreadyCalibrated, setAlreadyCalibrated] = useState(false);
+
+  const [showIntroHelp, setShowIntroHelp] = useState(false);
 
   useEffect(() => {
     const checkDailyStatus = async () => {
@@ -101,8 +105,30 @@ export default function EnergyCheckInPage() {
               <Brain size={48} className="animate-pulse" />
             </div>
             <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight flex items-center justify-center gap-3">
                 Daily <span className="text-indigo-600">Calibration</span>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowIntroHelp(!showIntroHelp)}
+                    onMouseEnter={() => setShowIntroHelp(true)}
+                    onMouseLeave={() => setShowIntroHelp(false)}
+                    className="flex items-center"
+                  >
+                    <HelpCircle size={20} className="text-slate-300 cursor-help" />
+                  </button>
+                  <AnimatePresence>
+                    {showIntroHelp && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-4 w-72 p-4 bg-slate-900 text-white text-xs font-bold rounded-2xl z-50 shadow-2xl leading-relaxed text-left border border-white/5 whitespace-normal"
+                      >
+                        {t('help.energy')}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </h1>
               <p className="text-slate-500 font-medium text-lg leading-relaxed">
                 Mari kita selaraskan energi dan fokusmu hari ini. Ceritakan perasaanmu, dan biarkan AI membantu menerjemahkannya menjadi strategi optimal.

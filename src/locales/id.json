@@ -200,5 +200,41 @@
     "analytics": "Analitik",
     "profile": "Profil",
     "logout": "Keluar"
+  },
+  "dashboard": {
+    "welcome": "Halo",
+    "viewPerformance": "Lihat Log Performa",
+    "performanceSync": "Sinkronisasi Performa",
+    "productivity": "Produktivitas",
+    "wellnessIndex": "Indeks Kesejahteraan",
+    "dailyCalibration": "Kalibrasi Harian",
+    "notCalibrated": "Belum Kalibrasi",
+    "calibrateAIPrompt": "Kalibrasi hari Anda untuk melihat wawasan AI.",
+    "aiRecommendation": "Rekomendasi AI",
+    "waitCalibration": "Menunggu Kalibrasi...",
+    "startTaskNow": "Mulai Tugas Sekarang",
+    "optimizedTimeline": "Timeline Teroptimasi",
+    "pending": "PENDING",
+    "allDone": "Semua tugas beres!",
+    "viewFullTimeline": "Lihat Timeline Lengkap",
+    "weeklyConsistency": "Konsistensi Mingguan",
+    "statusOptimized": "Status: Teroptimasi",
+    "restPatternStable": "Pola istirahat Anda terpantau stabil. Lanjutkan ritme ini untuk menghindari burnout."
+  },
+  "help": {
+    "system": "Mesin AI pribadi Anda memantau tanda-tanda biometrik untuk mengoptimalkan alur kerja Anda secara real-time.",
+    "vibe": {
+      "title": "Pilih Mode Vibe",
+      "hustle": "Hustle: Tugas intensitas tinggi",
+      "balance": "Balance: Beban kerja campuran",
+      "zen": "Zen: Pemulihan & fokus"
+    },
+    "sync": "Indeks ini mengevaluasi bagaimana hasil kerja Anda berhubungan dengan kesejahteraan mental dan fisik Anda. Menjaga keselarasan ini mencegah burnout.",
+    "energy": "\"Daily Calibration\" adalah proses penyelarasan energi harianmu. AI menganalisis kondisi mental dan fisikmu untuk memberikan rekomendasi aktivitas yang paling efisien agar kamu tidak mudah lelah.",
+    "flow": "Analisis AI terhadap energi harianmu. Kami menyesuaikan urutan dan prioritas tugas berdasarkan tingkat fokus dan kelelahanmu saat ini.",
+    "summarizer": "Alat ini menggunakan AI untuk mengubah teks panjang menjadi poin-poin penting, ringkasan eksekutif, dan daftar tindakan yang perlu diambil secara instan.",
+    "fitness": "Pelatih AI ini membuat program latihan yang adaptif. Jika energimu rendah, intensitas akan dikurangi secara otomatis agar tetap aman dan produktif.",
+    "moodMap": "Data ini dikumpulkan dari hasil jurnal harian dan emosi yang kamu bagikan saat melakukan kalibrasi pagi.",
+    "wellness": "Wellness Index dihitung dari rata-rata energi, fokus, dan kualitas tidurmu. Kami membandingkannya dengan jumlah tugas yang selesai untuk mencari titik optimalmu."
   }
 }

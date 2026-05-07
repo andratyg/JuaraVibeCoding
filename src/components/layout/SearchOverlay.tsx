@@ -39,12 +39,13 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
       });
 
       // Search Journal
-      const qJournal = queryData(collection(db, `users/${profile.id}/journal`));
+      const qJournal = queryData(collection(db, `users/${profile.id}/journals`));
       const snapJournal = await getDocs(qJournal);
       snapJournal.docs.forEach(doc => {
         const d = doc.data();
-        if (d.content.toLowerCase().includes(query.toLowerCase())) {
-          results.push({ title: d.content.substring(0, 30) + '...', category: 'Journal', icon: <Brain size={14} />, path: '/journal' });
+        const searchText = `${d.highlight || ''} ${d.challenge || ''}`.toLowerCase();
+        if (searchText.includes(query.toLowerCase())) {
+          results.push({ title: (d.highlight || d.challenge || '').substring(0, 30) + '...', category: 'Journal', icon: <Brain size={14} />, path: '/journal' });
         }
       });
 
@@ -79,35 +80,36 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-[#0D0F14]/80 backdrop-blur-md"
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="w-full max-w-2xl bg-[#13161C] border border-white/5 rounded-[2rem] shadow-2xl overflow-hidden relative z-10"
+            className="w-full max-w-2xl bg-white border border-slate-100 rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden relative z-10"
           >
-            <div className="p-4 border-b border-white/5 flex items-center gap-4">
-              <SearchIcon size={20} className="text-white/20 ml-2" />
+            <div className="p-5 border-b border-slate-50 flex items-center gap-4 bg-slate-50/50">
+              <SearchIcon size={20} className="text-slate-300 ml-2" />
               <input
                 autoFocus
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search protocols, tasks, or insights..."
-                className="flex-1 bg-transparent border-none text-white text-lg placeholder:text-white/10 focus:ring-0"
+                className="flex-1 bg-transparent border-none text-slate-900 text-lg placeholder:text-slate-300 focus:ring-0 font-bold"
               />
               <button 
                 onClick={onClose}
-                className="p-2 hover:bg-white/5 rounded-xl text-white/20 hover:text-white transition-all"
+                className="p-2 hover:bg-slate-200 rounded-xl text-slate-300 hover:text-slate-900 transition-all shadow-sm bg-white"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-4 max-h-[60vh] overflow-y-auto">
-              <div className="mb-4 px-2">
-                <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Recommendations</span>
+            <div className="p-4 max-h-[60vh] overflow-y-auto bg-white">
+              <div className="mb-4 px-3 flex items-center justify-between">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Recommendations</span>
+                {query && <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{allResults.length} Result{allResults.length !== 1 ? 's' : ''}</span>}
               </div>
               
               <div className="space-y-1">
@@ -119,33 +121,39 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                         navigate(res.path);
                         onClose();
                       }}
-                      className="w-full flex items-center justify-between p-4 rounded-2xl hover:bg-white/5 group transition-all"
+                      className="w-full flex items-center justify-between p-4 rounded-[1.5rem] hover:bg-slate-50 group transition-all"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="h-10 w-10 bg-white/5 rounded-xl flex items-center justify-center text-white/40 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-all border border-white/5">
+                        <div className="h-12 w-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-all border border-slate-100 shadow-sm">
                           {res.icon}
                         </div>
-                        <div className="text-left">
-                          <h4 className="text-white font-bold text-sm">{res.title}</h4>
-                          <span className="text-[10px] font-bold text-white/10 uppercase tracking-widest">{res.category}</span>
+                        <div className="text-left px-1">
+                          <h4 className="text-slate-900 font-black text-sm tracking-tight">{res.title}</h4>
+                          <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none">{res.category}</span>
                         </div>
                       </div>
-                      <ArrowRight size={16} className="text-white/0 group-hover:text-white/20 group-hover:-translate-x-2 transition-all" />
+                      <div className="opacity-0 group-hover:opacity-100 transition-all bg-indigo-600 rounded-full p-2 text-white shadow-lg -translate-x-2 group-hover:translate-x-0">
+                         <ArrowRight size={14} />
+                      </div>
                     </button>
                   ))
                 ) : (
-                  <div className="py-12 text-center">
-                    <p className="text-white/20 text-sm font-bold uppercase tracking-widest">No matching protocols found</p>
+                  <div className="py-20 text-center">
+                    <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-inner">
+                       <SearchIcon className="text-slate-200" size={24} />
+                    </div>
+                    <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">No protocols initialized</p>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="p-4 bg-white/[0.02] border-t border-white/5 flex items-center justify-between text-[10px] font-black text-white/20 uppercase tracking-widest">
+            <div className="p-5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-[10px] font-black text-slate-300 uppercase tracking-widest">
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-2"><kbd className="bg-white/5 px-1.5 py-0.5 rounded text-white/40">ESC</kbd> to close</span>
+                <span className="flex items-center gap-2"><kbd className="bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-400 shadow-sm">ESC</kbd> CLOSE</span>
+                <span className="flex items-center gap-2"><kbd className="bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-400 shadow-sm">↵</kbd> EXECUTE</span>
               </div>
-              <span className="flex items-center gap-2">AI Search v2.0 <Zap size={10} className="text-indigo-500" /></span>
+              <span className="flex items-center gap-2">Protocol Search <Zap size={10} className="text-indigo-600 fill-indigo-600" /></span>
             </div>
           </motion.div>
         </div>
