@@ -26,7 +26,13 @@ export default function FitnessCoach() {
       if (!profile?.id) return;
       try {
         const q = query(collection(db, `users/${profile.id}/workouts`), orderBy('createdAt', 'desc'), limit(1));
-        const snapshot = await getDocs(q);
+        const snapshot = await getDocs(q).catch(e => {
+          if (e.message?.includes('offline')) {
+            console.warn('Workouts fetch: client is offline');
+            return { empty: true, docs: [] } as any;
+          }
+          throw e;
+        });
         if (!snapshot.empty) {
           const data = snapshot.docs[0].data();
           setWorkout({

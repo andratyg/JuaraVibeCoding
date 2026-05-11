@@ -53,7 +53,13 @@ export default function ProfilePage() {
     try {
       const energyPath = `users/${user.uid}/energyCheckIns`;
       const q = query(collection(db, energyPath), orderBy('createdAt', 'desc'), limit(5));
-      const snap = await getDocs(q);
+      const snap = await getDocs(q).catch(e => {
+        if (e.message?.includes('offline')) {
+          console.warn('Activity pulse fetch: client is offline');
+          return { docs: [] } as any;
+        }
+        throw e;
+      });
       const logs = snap.docs.map(d => {
           const data = d.data();
           const date = data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt);

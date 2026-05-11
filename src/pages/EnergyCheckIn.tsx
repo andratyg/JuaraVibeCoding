@@ -40,7 +40,13 @@ export default function EnergyCheckInPage() {
           collection(db, `users/${user.uid}/checkins`),
           where('date', '==', today),
           limit(1)
-        ));
+        )).catch(e => {
+          if (e.message?.includes('offline')) {
+            console.warn('Checkin status fetch: client is offline');
+            return { empty: true, docs: [] } as any;
+          }
+          throw e;
+        });
         
         if (!docSnap.empty) {
           const data = docSnap.docs[0].data();

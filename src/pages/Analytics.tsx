@@ -56,7 +56,13 @@ export default function Analytics() {
 
         const energyPath = `users/${profile.id}/energyCheckIns`;
         const energyQuery = query(collection(db, energyPath), orderBy('createdAt', 'desc'), limit(50));
-        const energySnap = await getDocs(energyQuery);
+        const energySnap = await getDocs(energyQuery).catch(e => {
+          if (e.message?.includes('offline')) {
+            console.warn('Energy analytic fetch: client is offline');
+            return { docs: [] } as any;
+          }
+          throw e;
+        });
 
         energySnap.docs.forEach(doc => {
           const d = doc.data();
@@ -71,7 +77,13 @@ export default function Analytics() {
         });
 
         const tasksPath = `users/${profile.id}/tasks`;
-        const tasksSnap = await getDocs(collection(db, tasksPath));
+        const tasksSnap = await getDocs(collection(db, tasksPath)).catch(e => {
+          if (e.message?.includes('offline')) {
+            console.warn('Tasks analytic fetch: client is offline');
+            return { docs: [] } as any;
+          }
+          throw e;
+        });
 
         tasksSnap.docs.forEach(doc => {
           const d = doc.data();

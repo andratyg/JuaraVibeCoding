@@ -45,7 +45,13 @@ export default function TaskManager() {
     if (!profile?.id) return;
     try {
       const q = query(collection(db, `users/${profile.id}/tasks`), orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
+      const snapshot = await getDocs(q).catch(e => {
+        if (e.message?.includes('offline')) {
+          console.warn('Tasks fetch: client is offline');
+          return { docs: [] } as any;
+        }
+        throw e;
+      });
       setTasks(snapshot.docs.map(doc => {
         const data = doc.data();
         return { 

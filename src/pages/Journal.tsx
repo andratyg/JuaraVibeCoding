@@ -30,7 +30,13 @@ export default function JournalPage() {
     if (!profile?.id) return;
     try {
       const q = query(collection(db, `users/${profile.id}/journals`), orderBy('createdAt', 'desc'), limit(5));
-      const snapshot = await getDocs(q);
+      const snapshot = await getDocs(q).catch(e => {
+        if (e.message?.includes('offline')) {
+          console.warn('Journal history fetch: client is offline');
+          return { docs: [] } as any;
+        }
+        throw e;
+      });
       setHistory(snapshot.docs.map(doc => {
         const data = doc.data();
         return { 
