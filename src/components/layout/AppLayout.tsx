@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router-dom';
+import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   LayoutDashboard, Zap, CheckSquare, Dumbbell, BookOpen, 
   BarChart2, FileText, MessageCircle, Settings, MoreHorizontal, 
-  Bell, Search 
+  Bell, Search, User as UserIcon, LogOut
 } from 'lucide-react';
 import { useApp } from '../../App';
+import { auth } from '../../config/firebase';
+import { toast } from 'react-hot-toast';
 
 const AppLayout = () => {
   const { t } = useTranslation();
@@ -15,6 +17,7 @@ const AppLayout = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const mainNavItems = [
     { path: '/dashboard', icon: LayoutDashboard, key: 'dashboard' },
@@ -33,9 +36,19 @@ const AppLayout = () => {
 
   const bottomTabs = mainNavItems.slice(0, 4);
   const allItems = [...mainNavItems, ...toolsNavItems];
-  const pageTitle = allItems.find(i => location.pathname.startsWith(i.path)) ? t(`nav.${allItems.find(i => location.pathname.startsWith(i.path))?.key}`) : 'FlowState';
+  const pageTitle = allItems.find(i => location.pathname.startsWith(i.path)) 
+    ? t(`nav.${allItems.find(i => location.pathname.startsWith(i.path))?.key}`) 
+    : 'FlowState';
 
-  const user = profile;
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      toast.success(t('auth.logoutSuccess') || 'Logged out successfully');
+      navigate('/login');
+    } catch (error) {
+      toast.error('Logout failed');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
@@ -48,7 +61,7 @@ const AppLayout = () => {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-          <p className="text-[10px] font-semibold tracking-widest uppercase px-3 mb-2" style={{ color: 'var(--text3)' }}>Utama</p>
+          <p className="text-[10px] font-semibold tracking-widest uppercase px-3 mb-2" style={{ color: 'var(--text3)' }}>{t('sidebar.main') || 'Utama'}</p>
           {mainNavItems.map(item => (
             <NavLink key={item.path} to={item.path}
               className={({ isActive }) => `
@@ -62,7 +75,7 @@ const AppLayout = () => {
             </NavLink>
           ))}
 
-          <p className="text-[10px] font-semibold tracking-widest uppercase px-3 mt-5 mb-2" style={{ color: 'var(--text3)' }}>Tools</p>
+          <p className="text-[10px] font-semibold tracking-widest uppercase px-3 mt-5 mb-2" style={{ color: 'var(--text3)' }}>{t('sidebar.tools') || 'Tools'}</p>
           {toolsNavItems.map(item => (
             <NavLink key={item.path} to={item.path}
               className={({ isActive }) => `
@@ -81,11 +94,11 @@ const AppLayout = () => {
           className="flex items-center gap-3 px-4 py-4 border-t border-[var(--border)] cursor-pointer hover:bg-[var(--surface)] transition-colors flex-shrink-0">
           <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, var(--accent), #9B8FFF)' }}>
-            {user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
+            {profile?.displayName?.charAt(0)?.toUpperCase() || 'U'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[var(--text)] text-xs font-medium truncate">{user?.displayName}</p>
-            <p className="text-xs truncate" style={{ color: 'var(--text3)' }}>{user?.email}</p>
+            <p className="text-[var(--text)] text-xs font-medium truncate">{profile?.displayName}</p>
+            <p className="text-xs truncate" style={{ color: 'var(--text3)' }}>{profile?.email}</p>
           </div>
         </div>
       </aside>
@@ -124,7 +137,7 @@ const AppLayout = () => {
           <button onClick={() => setProfileOpen(true)}
             className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold min-w-[44px] min-h-[44px]"
             style={{ background: 'linear-gradient(135deg, var(--accent), #9B8FFF)' }}>
-            {user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
+            {profile?.displayName?.charAt(0)?.toUpperCase() || 'U'}
           </button>
         </div>
       </aside>
@@ -146,7 +159,7 @@ const AppLayout = () => {
             <button className="hidden lg:flex items-center gap-2 px-3 py-1.5 text-xs rounded-[var(--r-sm)] transition-colors border"
               style={{ background: 'var(--surface)', color: 'var(--text3)', borderColor: 'var(--border)' }}>
               <Search size={13} /> {t('common.search')}
-              <kbd className="text-[10px] px-1 py-0.5 rounded" style={{ background: 'var(--surface2)' }}>⌘K</kbd>
+              <kbd className="text-[10px] px-1 py-0.5 rounded ml-2" style={{ background: 'var(--surface2)' }}>⌘K</kbd>
             </button>
 
             <button className="relative w-9 h-9 flex items-center justify-center rounded-[var(--r-sm)] hover:bg-[var(--surface)] transition-colors">
@@ -157,13 +170,13 @@ const AppLayout = () => {
             <button onClick={() => setProfileOpen(true)}
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold"
               style={{ background: 'linear-gradient(135deg, var(--accent), #9B8FFF)' }}>
-              {user?.displayName?.charAt(0)?.toUpperCase() || 'U'}
+              {profile?.displayName?.charAt(0)?.toUpperCase() || 'U'}
             </button>
           </div>
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 max-w-[1400px] mx-auto px-[var(--page-x)] py-[var(--page-y)] w-full">
+        <div className="flex-1 max-w-[1400px] mx-auto px-4 py-6 md:px-6 md:py-8 w-full">
           <Outlet />
         </div>
       </main>
@@ -196,7 +209,7 @@ const AppLayout = () => {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={() => setDrawerOpen(false)}>
             <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }} />
-            <motion.div className="absolute bottom-0 left-0 right-0 rounded-t-[var(--r-2xl)] border-t border-[var(--border)]"
+            <motion.div className="absolute bottom-0 left-0 right-0 rounded-t-[var(--r-2xl)] border-t border-[var(--border)] overflow-hidden"
               style={{ background: 'var(--surface)', paddingBottom: 'env(safe-area-inset-bottom)' }}
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 300 }}
@@ -219,30 +232,37 @@ const AppLayout = () => {
         )}
       </AnimatePresence>
 
-      {/* Profile Modal Placeholder */}
+      {/* Profile Modal */}
       <AnimatePresence>
         {profileOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-md" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setProfileOpen(false)} />
+            <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-md" 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+              onClick={() => setProfileOpen(false)} 
+            />
             <motion.div className="relative w-full max-w-sm bg-[var(--surface)] rounded-[var(--r-2xl)] border border-[var(--border)] p-8 shadow-2xl"
               initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}>
               <div className="flex flex-col items-center mb-8">
                 <div className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4 shadow-xl"
                   style={{ background: 'linear-gradient(135deg, var(--accent), #9B8FFF)' }}>
-                  {user?.displayName?.charAt(0)?.toUpperCase()}
+                  {profile?.displayName?.charAt(0)?.toUpperCase()}
                 </div>
-                <h3 className="text-xl font-bold text-[var(--text)]">{user?.displayName}</h3>
-                <p className="text-sm" style={{ color: 'var(--text3)' }}>{user?.email}</p>
+                <h3 className="text-xl font-bold text-[var(--text)]">{profile?.displayName}</h3>
+                <p className="text-sm" style={{ color: 'var(--text3)' }}>{profile?.email}</p>
               </div>
-              <div className="space-y-2">
-                <NavLink to="/profile" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface2)] text-sm transition-colors">
-                  <BarChart2 size={16} /> {t('nav.profile')}
+              <div className="space-y-1">
+                <NavLink to="/profile" onClick={() => setProfileOpen(false)} 
+                  className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface2)] text-sm transition-colors text-[var(--text2)]">
+                  <UserIcon size={16} /> {t('nav.profile')}
                 </NavLink>
-                <NavLink to="/settings" onClick={() => setProfileOpen(false)} className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface2)] text-sm transition-colors">
+                <NavLink to="/settings" onClick={() => setProfileOpen(false)} 
+                  className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--surface2)] text-sm transition-colors text-[var(--text2)]">
                   <Settings size={16} /> {t('nav.settings')}
                 </NavLink>
-                <button onClick={() => { /* Handle logout */ }} className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--error-bg)] text-[var(--error)] text-sm w-full transition-colors mt-4">
-                  <MoreHorizontal size={16} /> {t('nav.logout')}
+                <div className="h-px bg-[var(--border)] my-4" />
+                <button onClick={handleLogout} 
+                  className="flex items-center gap-3 p-3 rounded-[var(--r-md)] hover:bg-[var(--error-bg)] text-[var(--error)] text-sm w-full transition-colors">
+                  <LogOut size={16} /> {t('nav.logout')}
                 </button>
               </div>
             </motion.div>

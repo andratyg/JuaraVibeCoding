@@ -29,13 +29,20 @@ export default function EnergyCheckInPage() {
   const [result, setResult] = useState<any>(null);
   const [step, setStep] = useState<'intro' | 'chat' | 'result'>('intro');
   const [alreadyCalibrated, setAlreadyCalibrated] = useState(false);
+  const [todayStr, setTodayStr] = useState('');
+
+  useEffect(() => {
+    const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    setTodayStr(today);
+  }, []);
 
   useEffect(() => {
     const checkDailyStatus = async () => {
       if (!user) return;
       
       try {
-        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         const docSnap = await getDocs(query(
           collection(db, `users/${user.uid}/checkins`),
           where('date', '==', today),
@@ -67,6 +74,7 @@ export default function EnergyCheckInPage() {
   const handleCalibrate = async () => {
     if (!profile) return;
     setIsAnalyzing(true);
+    // Move to result step to show loading brain
     setStep('result');
 
     try {
@@ -77,7 +85,8 @@ export default function EnergyCheckInPage() {
         moodState || 'Normal'
       );
       
-      const checkinDate = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const checkinDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const checkinData = {
         ...result,
         energi: energyLevel,
@@ -90,7 +99,8 @@ export default function EnergyCheckInPage() {
 
       await setDoc(doc(db, `users/${profile.id}/checkins`, checkinDate), checkinData);
       setResult(checkinData);
-      toast.success('Energi berhasil dikalibrasi!');
+      setAlreadyCalibrated(true);
+      toast.success('Energi berhasil diperbarui!');
       await refreshProfile();
     } catch (error: any) {
       console.error('Error Calibration:', error);
@@ -113,8 +123,11 @@ export default function EnergyCheckInPage() {
             {...fadeInUp}
             className="text-center space-y-8 max-w-lg"
           >
-            <div className="mx-auto w-24 h-24 bg-[var(--accent-bg)] text-[var(--accent-text)] rounded-[32px] flex items-center justify-center shadow-lg shadow-[var(--accent)]/10">
-              <Brain size={48} className="animate-pulse" />
+            <div className="space-y-2">
+               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--accent)]">{todayStr}</p>
+               <div className="mx-auto w-24 h-24 bg-[var(--accent-bg)] text-[var(--accent-text)] rounded-[32px] flex items-center justify-center shadow-lg shadow-[var(--accent)]/10">
+                 <Brain size={48} className="animate-pulse" />
+               </div>
             </div>
             <div className="space-y-3">
               <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
@@ -130,8 +143,11 @@ export default function EnergyCheckInPage() {
               onClick={() => setStep('chat')}
               icon={ArrowRight}
             >
-              {t('energyCheck.startNow')}
+              {alreadyCalibrated ? 'Update Kalibrasi Hari Ini' : t('energyCheck.startNow')}
             </Button>
+            {alreadyCalibrated && (
+              <p className="text-[10px] font-bold text-[var(--text3)] uppercase">Kamu sudah melakukan kalibrasi hari ini. Kamu bisa memperbaruinya jika merasa ada perubahan energi.</p>
+            )}
           </motion.div>
         )}
 
@@ -340,10 +356,10 @@ export default function EnergyCheckInPage() {
                   <Button
                     variant="secondary"
                     size="lg"
-                    onClick={() => navigate('/')}
-                    icon={CheckCircle2}
+                    onClick={() => setStep('chat')}
+                    icon={Activity}
                   >
-                    {t('energyCheck.backFeed')}
+                    Kalibrasi Ulang
                   </Button>
                 </div>
               </div>

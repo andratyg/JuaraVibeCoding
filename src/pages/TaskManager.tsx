@@ -5,21 +5,19 @@ import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, orderBy,
 import { geminiService } from '../services/geminiService';
 import { Task } from '../types';
 import { 
-  Plus, Trash2, Calendar, Clock, Loader2, Sparkles, CheckCircle2, 
-  Flag, Tag, Folder, RefreshCw, AlertCircle, Brain, Zap, ArrowRight,
-  Filter, MoreHorizontal
+  Plus, Trash2, Clock, Sparkles, CheckCircle2, 
+  Brain, Zap, ArrowRight, Calendar
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { formatTime, formatDateLong } from '../utils/formatters';
-import { fadeInUp, stagger, itemFadeIn } from '../utils/animations';
+import { formatTime } from '../utils/formatters';
+import { fadeInUp, itemFadeIn } from '../utils/animations';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { SkeletonPage } from '../components/ui/Skeletons';
 import toast from 'react-hot-toast';
 import { cn } from '../lib/utils';
-
 import { useDashboardData } from '../hooks/useDashboardData';
 
 export default function TaskManager() {
@@ -130,7 +128,7 @@ export default function TaskManager() {
     if (!profile?.id) return;
     try {
       await deleteDoc(doc(db, `users/${profile.id}/tasks`, id));
-      toast.success(t('common.deleted'));
+      toast.success(t('common.done'));
       fetchTasks();
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, `users/${profile.id}/tasks/${id}`);
@@ -146,22 +144,17 @@ export default function TaskManager() {
       const workSlots = dashboardData?.todayCheckin?.workSlots || ['09:00-12:00', '13:00-17:00'];
       
       const scheduledResult = await geminiService.scheduleTasks(pendingTasks, energyScore, workSlots);
-      
-      // The service returns { schedule: [...] }
       const scheduled = scheduledResult.schedule || [];
       
       const updates = scheduled.map(async (st: any) => {
-        // Find matching task by name/title
         const task = tasks.find(t => t.title === st.taskName);
         if (task && profile) {
-          // Parse HH:MM to Date
           const parseTime = (timeStr: string) => {
             const [h, m] = timeStr.split(':').map(Number);
             const d = new Date();
             d.setHours(h, m, 0, 0);
             return d;
           };
-
           await updateDoc(doc(db, `users/${profile.id}/tasks`, task.id), {
             startTime: st.startTime ? Timestamp.fromDate(parseTime(st.startTime)) : null,
             endTime: st.endTime ? Timestamp.fromDate(parseTime(st.endTime)) : null,
@@ -197,31 +190,31 @@ export default function TaskManager() {
           onClick={handleAutoSchedule}
           icon={Sparkles}
         >
-          {t('tasks.optimize')}
+          {t('tasks.scheduleAI')}
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Total Tugas" value={tasks.length} color="var(--accent)" />
-        <StatCard label="Tertunda" value={pendingCount} color="var(--warning)" />
-        <StatCard label="Selesai" value={completedCount} color="var(--success)" />
-        <StatCard label="Efisiensi" value={`${(profile?.energyScore || 0) * 10}%`} color="var(--accent)" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Tasks" value={tasks.length} color="var(--accent)" />
+        <StatCard label="Pending" value={pendingCount} color="var(--warning)" />
+        <StatCard label="Completed" value={completedCount} color="var(--success)" />
+        <StatCard label="Energy Ready" value={`${(profile?.energyScore || 0) * 10}%`} color="var(--accent)" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
           <Card className="p-6 space-y-6">
-            <h3 className="font-bold text-lg">{t('tasks.newEntry')}</h3>
+            <h3 className="font-bold text-lg">{t('tasks.addTask')}</h3>
             <div className="space-y-4">
               <Input
-                label={t('tasks.heading')}
-                placeholder={t('tasks.placeholder')}
+                label="Task Name"
+                placeholder={t('tasks.taskNamePlaceholder')}
                 value={newTask.title}
                 onChange={e => setNewTask({ ...newTask, title: e.target.value })}
               />
               <div className="grid grid-cols-2 gap-4">
                 <Input
-                  label="Durasi (min)"
+                  label={t('tasks.duration')}
                   type="number"
                   value={newTask.duration}
                   onChange={e => setNewTask({ ...newTask, duration: parseInt(e.target.value) || 0 })}
@@ -233,20 +226,15 @@ export default function TaskManager() {
                         onChange={e => setNewTask({ ...newTask, priority: e.target.value as any })}
                         className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:border-[var(--accent)] transition-all appearance-none"
                    >
-                        <option value="Critical">{t('tasks.priorities.Critical')}</option>
-                        <option value="High">{t('tasks.priorities.High')}</option>
-                        <option value="Med">{t('tasks.priorities.Med')}</option>
-                        <option value="Low">{t('tasks.priorities.Low')}</option>
+                        <option value="Critical">Critical</option>
+                        <option value="High">{t('tasks.high')}</option>
+                        <option value="Med">{t('tasks.medium')}</option>
+                        <option value="Low">{t('tasks.low')}</option>
                    </select>
                 </div>
               </div>
-              <Input
-                label={t('tasks.dueDate')}
-                type="datetime-local"
-                onChange={e => setNewTask({ ...newTask, deadline: e.target.value ? new Date(e.target.value) : null })}
-              />
               <Button fullWidth loading={isSubmitting} onClick={addTask} icon={Plus}>
-                {t('tasks.add')}
+                {t('common.add')}
               </Button>
             </div>
           </Card>
@@ -259,7 +247,7 @@ export default function TaskManager() {
             </div>
             <div className="relative z-10 space-y-3">
                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-200">
-                  <Sparkles size={12} /> Status AI Pulse
+                  <Sparkles size={12} /> Pulse AI Assistant
                </div>
                <p className="text-sm font-medium leading-relaxed">
                   {profile?.energyScore && profile.energyScore > 7 
@@ -276,7 +264,7 @@ export default function TaskManager() {
               {tasks.length === 0 ? (
                 <motion.div {...itemFadeIn} className="text-center py-20 bg-[var(--surface)] rounded-[2rem] border border-[var(--border)] border-dashed opacity-50">
                   <Calendar className="mx-auto mb-4 text-[var(--text3)]" size={32} />
-                  <p className="text-sm font-medium">{t('tasks.empty')}</p>
+                  <p className="text-sm font-medium">{t('tasks.noTasks')}</p>
                 </motion.div>
               ) : (
                 tasks.map(task => (

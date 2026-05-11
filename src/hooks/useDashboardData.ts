@@ -12,7 +12,8 @@ export const useDashboardData = (userId: string | null | undefined) => {
     setLoading(true);
     setError(null);
     try {
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const userRef = `users/${userId}`;
 
       // Parallel fetch all required data
@@ -91,7 +92,7 @@ export const useDashboardData = (userId: string | null | undefined) => {
       for (let i = 0; i < checkinDates.length; i++) {
         const expected = new Date();
         expected.setDate(expected.getDate() - i);
-        const expectedStr = expected.toISOString().split('T')[0];
+        const expectedStr = `${expected.getFullYear()}-${String(expected.getMonth() + 1).padStart(2, '0')}-${String(expected.getDate()).padStart(2, '0')}`;
         if (checkinDates[i] === expectedStr) streak++;
         else break;
       }

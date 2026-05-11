@@ -5,7 +5,7 @@ import { db, handleFirestoreError, OperationType } from '../config/firebase';
 import { collection, addDoc, getDocs, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { Workout } from '../types/index';
-import { Dumbbell, Play, CheckCircle, Loader2, Sparkles, Trophy, Zap, Clock, Activity, Brain, HelpCircle, ArrowRight } from 'lucide-react';
+import { Dumbbell, CheckCircle, Sparkles, Trophy, Zap, Clock, Activity, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fadeInUp, itemFadeIn } from '../utils/animations';
 import Card from '../components/ui/Card';
@@ -69,7 +69,7 @@ export default function FitnessCoach() {
 
       const docRef = await addDoc(collection(db, `users/${profile.id}/workouts`), workoutData);
       setWorkout({ id: docRef.id, ...workoutData } as Workout);
-      toast.success('Program latihan berhasil dibuat!');
+      toast.success(t('common.success'));
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `users/${profile.id}/workouts`);
     } finally {
@@ -79,7 +79,7 @@ export default function FitnessCoach() {
 
   const handleComplete = () => {
     setCompleted(true);
-    toast.success('Latihan Selesai! Pertahankan semangatmu!');
+    toast.success('Latihan Selesai!');
   };
 
   if (fetching) return <SkeletonPage />;
@@ -88,7 +88,7 @@ export default function FitnessCoach() {
     <motion.div {...fadeInUp} className="space-y-6 md:space-y-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">AI Fitness Coach</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('fitness.title')}</h1>
           <p className="text-sm" style={{ color: 'var(--text2)' }}>Program latihan adaptif yang disesuaikan dengan energimu.</p>
         </div>
         {(!workout || completed) && (
@@ -97,7 +97,7 @@ export default function FitnessCoach() {
             loading={loading}
             icon={Sparkles}
           >
-            Buat Rencana Latihan
+            {t('fitness.generate')}
           </Button>
         )}
       </header>
@@ -109,10 +109,10 @@ export default function FitnessCoach() {
             className="text-center py-24 md:py-32 bg-[var(--surface)] rounded-[3rem] border border-[var(--border)] border-dashed flex flex-col items-center"
           >
             <div className="h-20 w-20 bg-[var(--surface2)] rounded-full flex items-center justify-center mb-6">
-              <Dumbbell className="h-8 w-8 text-[var(--accent)]" />
+              <DumbbellIcon className="h-8 w-8 text-[var(--accent)]" />
             </div>
             <h3 className="text-xl font-bold mb-2">Siap untuk bergerak?</h3>
-            <p className="max-w-sm mx-auto px-6 text-sm font-medium opacity-60">Gemini akan merancang rutinitas khusus berdasarkan <b>Tingkat Energi</b> kamu saat ini.</p>
+            <p className="max-w-sm mx-auto px-6 text-sm font-medium opacity-60">Pulse AI akan merancang rutinitas khusus berdasarkan <b>Tingkat Energi</b> kamu hari ini.</p>
           </motion.div>
         ) : completed ? (
           <motion.div 
@@ -133,7 +133,7 @@ export default function FitnessCoach() {
                   onClick={() => setWorkout(null)}
                   className="bg-white text-slate-900 hover:bg-slate-100"
               >
-                  Tutup Sesi
+                  {t('common.done')}
               </Button>
             </div>
           </motion.div>
@@ -154,13 +154,13 @@ export default function FitnessCoach() {
                           <Zap size={12} /> Protokol Aktif
                         </div>
                       </div>
-                      <h2 className="text-3xl font-bold tracking-tight">{workout.name}</h2>
+                      <h2 className="text-3xl font-bold tracking-tight">{workout.intensity} Session</h2>
                       <div className="flex gap-6">
                         <div className="flex items-center gap-2 text-sm font-bold opacity-80">
-                          <Clock size={16} /> {workout.duration} Menit
+                          <Clock size={16} /> {workout.totalDuration} {t('fitness.minutes') || 'Min'}
                         </div>
                         <div className="flex items-center gap-2 text-sm font-bold opacity-80">
-                          <Activity size={16} /> Intensitas Adaptif
+                          <Activity size={16} /> {workout.estimatedCalories} {t('fitness.calories')}
                         </div>
                       </div>
                     </div>
@@ -169,7 +169,7 @@ export default function FitnessCoach() {
                         className="bg-white text-emerald-600 hover:bg-white/90 shadow-2xl"
                         icon={CheckCircle}
                     >
-                        Selesaikan Latihan
+                        {t('fitness.markDone')}
                     </Button>
                   </div>
                </Card>
@@ -183,9 +183,9 @@ export default function FitnessCoach() {
                     <Brain size={20} />
                   </div>
                   <div className="space-y-2">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">AI Coach Persona</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">AI Trainer Profile</h4>
                     <p className="text-sm font-medium leading-relaxed italic">
-                      "Berdasarkan tingkat energi kamu hari ini (<b>{workout.energyScoreAtTime}/10</b>), saya telah menyesuaikan sesi <b>{workout.duration} menit</b> ini untuk memaksimalkan metabolisme tanpa kelelahan berlebih. Fokus pada teknik, bukan kecepatan."
+                      "{workout.motivationalMessage || 'Semangat!'}"
                     </p>
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export default function FitnessCoach() {
 
             {/* Exercise Sequence */}
             <div className="lg:col-span-8 space-y-4">
-              <h3 className="font-bold text-xs uppercase tracking-widest opacity-50 ml-2">Urutan Latihan</h3>
+              <h3 className="font-bold text-xs uppercase tracking-widest opacity-50 ml-2">{t('fitness.exercises')}</h3>
               <div className="grid grid-cols-1 gap-3">
                 {workout.exercises?.map((ex: any, i: number) => (
                   <motion.div 
@@ -207,7 +207,7 @@ export default function FitnessCoach() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-sm mb-0.5">{ex.name}</h4>
-                        <p className="text-xs opacity-60 line-clamp-1">{ex.description}</p>
+                        <p className="text-xs opacity-60 line-clamp-1">{ex.formTip}</p>
                       </div>
                       <div className="shrink-0 px-4 py-2 bg-[var(--surface)] rounded-xl border border-[var(--border)]">
                         <div className="text-emerald-500 font-bold text-sm">{ex.sets} x {ex.reps}</div>
@@ -223,3 +223,24 @@ export default function FitnessCoach() {
     </motion.div>
   );
 }
+
+const DumbbellIcon = ({ className }: { className?: string }) => (
+  <svg 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2.5" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <path d="M6.5 6.5h11" />
+    <path d="M6.5 17.5h11" />
+    <path d="M3 21v-2" />
+    <path d="M3 5V3" />
+    <path d="M21 21v-2" />
+    <path d="M21 5V3" />
+    <path d="M3 7h1v10H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
+    <path d="M21 7h-1v10h1a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
+  </svg>
+);

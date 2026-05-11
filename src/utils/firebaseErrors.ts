@@ -1,57 +1,47 @@
 export const getFirebaseErrorMessage = (errorCode: string) => {
   const messages: Record<string, string> = {
-    // Auth errors
     'auth/wrong-password':
       'Kata sandi salah. Silakan coba lagi.',
     'auth/invalid-credential':
       'Email atau kata sandi salah. Periksa kembali.',
     'auth/user-not-found':
-      'Email ini belum terdaftar. Periksa kembali atau daftar akun baru.',
+      'Email ini belum terdaftar. Daftar akun baru?',
     'auth/email-already-in-use':
-      'Email ini sudah digunakan akun lain. Coba masuk atau gunakan email lain.',
+      'Email ini sudah digunakan. Coba masuk atau gunakan email lain.',
     'auth/weak-password':
-      'Kata sandi terlalu lemah. Gunakan minimal 8 karakter dengan angka.',
+      'Kata sandi terlalu lemah. Gunakan minimal 8 karakter.',
     'auth/invalid-email':
-      'Format email tidak valid. Contoh yang benar: nama@email.com',
+      'Format email tidak valid. Contoh: nama@email.com',
     'auth/too-many-requests':
-      'Terlalu banyak percobaan masuk. Tunggu beberapa menit sebelum coba lagi.',
+      'Terlalu banyak percobaan. Tunggu beberapa menit.',
     'auth/network-request-failed':
-      'Koneksi internet bermasalah. Periksa koneksimu dan coba lagi.',
+      'Koneksi bermasalah. Periksa internet kamu.',
     'auth/popup-closed-by-user':
-      'Login dengan Google dibatalkan. Silakan coba lagi.',
+      'Login dengan Google dibatalkan.',
     'auth/popup-blocked':
-      'Pop-up diblokir browser. Izinkan pop-up untuk login dengan Google.',
+      'Pop-up diblokir browser. Izinkan pop-up untuk login Google.',
     'auth/account-exists-with-different-credential':
-      'Email ini sudah terdaftar dengan metode login berbeda. Coba masuk dengan metode lain.',
+      'Email ini terdaftar dengan metode login berbeda.',
     'auth/user-disabled':
-      'Akun ini telah dinonaktifkan. Hubungi dukungan untuk bantuan.',
+      'Akun ini telah dinonaktifkan. Hubungi dukungan.',
     'auth/requires-recent-login':
-      'Sesi kamu sudah habis. Silakan masuk kembali untuk melanjutkan.',
-    'auth/expired-action-code':
-      'Tautan sudah kedaluwarsa. Minta tautan baru.',
-    'auth/invalid-action-code':
-      'Tautan tidak valid atau sudah digunakan.',
-    // Firestore errors
+      'Sesi habis. Silakan masuk kembali.',
     'permission-denied':
-      'Akses ditolak. Kamu tidak memiliki izin untuk tindakan ini.',
+      'Akses ditolak. Kamu tidak punya izin untuk ini.',
     'unavailable':
-      'Layanan sedang tidak tersedia. Coba lagi dalam beberapa saat.',
+      'Layanan tidak tersedia. Coba lagi nanti.',
     'not-found':
-      'Data yang dicari tidak ditemukan.',
-    'already-exists':
-      'Data ini sudah ada sebelumnya.',
-    'resource-exhausted':
-      'Batas penggunaan tercapai. Coba lagi nanti.',
-    // Default
+      'Data tidak ditemukan.',
     'default':
-      'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.'
-  }
-  return messages[errorCode] || messages['default']
-}
+      'Terjadi kesalahan. Silakan coba lagi.'
+  };
+  return messages[errorCode] || messages['default'];
+};
 
 export const getGeminiErrorMessage = (error: any) => {
-  if (error.message?.includes('429')) return 'AI sedang sibuk. Tunggu beberapa detik dan coba lagi.'
-  if (error.message?.includes('500')) return 'Server AI sedang bermasalah. Coba lagi nanti.'
-  if (error.message?.includes('network')) return 'Koneksi bermasalah saat menghubungi AI.'
-  return 'AI tidak dapat merespons saat ini. Coba lagi.'
-}
+  if (error?.message?.includes('429'))
+    return 'AI sedang sibuk. Tunggu beberapa detik dan coba lagi.';
+  if (error?.message?.includes('500'))
+    return 'Server AI bermasalah. Coba lagi nanti.';
+  return 'AI tidak dapat merespons saat ini. Coba lagi.';
+};

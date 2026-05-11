@@ -58,6 +58,7 @@ Berikan ringkasan energi hari ini dan mode kerja yang direkomendasikan.`;
 
     const systemInstruction = `Kamu adalah Pulse AI Wellness Coach yang empatik. Kamu menganalisis data energi user dan memberikan strategi harian. 
 Balas SELALU dalam Bahasa Indonesia yang natural dan hangat. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
 Gunakan JSON untuk menjawab.`;
 
     const responseSchema = {
@@ -98,6 +99,7 @@ ${taskList}`;
 
     const systemInstruction = `Susun jadwal kerja hari ini. Tugas berat di slot pagi/energi tinggi, tugas ringan di sore.
 Gunakan Bahasa Indonesia yang natural. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
 Balas dalam format JSON.`;
 
     const responseSchema = {
@@ -132,7 +134,8 @@ Balas dalam format JSON.`;
 Equipment: ${(profile.equipment || ['Bodyweight']).join(', ')}. Energy Score: ${energyScore}/10.`;
 
     const systemInstruction = `Buat program latihan fitness yang sesuai dengan profil dan level energi user hari ini.
-Balas dalam Bahasa Indonesia yang natural dan actionable.
+Balas SELALU dalam Bahasa Indonesia yang natural dan hangat. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
 Gunakan format JSON.`;
 
     const responseSchema = {
@@ -186,7 +189,9 @@ Gunakan format JSON.`;
 User butuh micro-break 2-3 menit.`;
 
     const systemInstruction = `Berikan aktivitas micro-break yang tepat. 
-Balas dalam Bahasa Indonesia yang natural. Format JSON.`;
+Balas SELALU dalam Bahasa Indonesia yang natural dan hangat. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
+Format JSON.`;
 
     const responseSchema = {
       type: Type.OBJECT,
@@ -212,7 +217,9 @@ Tantangan: "${entry.challenge}"
 Catatan: "${entry.freeWrite || ''}"`;
 
     const systemInstruction = `Berikan respons sebagai coach yang empatik dan bijak terhadap jurnal user.
-Balas dalam Bahasa Indonesia yang hangat. Format JSON.`;
+Balas SELALU dalam Bahasa Indonesia yang hangat. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
+Format JSON.`;
 
     const responseSchema = {
       type: Type.OBJECT,
@@ -236,7 +243,9 @@ Balas dalam Bahasa Indonesia yang hangat. Format JSON.`;
 ${summary}`;
 
     const systemInstruction = `Berikan insight performa mingguan user.
-Balas dalam Bahasa Indonesia yang informatif. Format JSON.`;
+Balas SELALU dalam Bahasa Indonesia yang informatif. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
+Format JSON.`;
 
     const responseSchema = {
       type: Type.OBJECT,
@@ -268,7 +277,9 @@ ${data}
 Analisis risiko burnout.`;
 
     const systemInstruction = `Analisis risiko burnout berdasarkan tren data check-in user.
-Balas dalam Bahasa Indonesia yang empatik. Format JSON.`;
+Balas SELALU dalam Bahasa Indonesia yang empatik. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
+Format JSON.`;
 
     const responseSchema = {
       type: Type.OBJECT,
@@ -300,7 +311,7 @@ Balas dalam Bahasa Indonesia yang empatik. Format JSON.`;
   chatWithCoach: async (message: string, context: any) => {
     const systemInstruction = `Kamu adalah FlowState AI Life Coach — asisten wellness dan produktivitas yang sangat empatik, personal, dan actionable.
 Konteks user: Energy=${context.energyScore || '?'}/10, Task=${context.completedTasks || 0}/${context.totalTasks || 0}, Mood=${context.mood || '?'}, Nama=${context.userName || 'User'}.
-Panduan: natural, hangat, max 150 kata, Bahasa Indonesia, berikan saran konkret.`;
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Berikan saran konkret dalam Bahasa Indonesia.`;
 
     return callGemini(message, systemInstruction);
   },
@@ -316,7 +327,9 @@ Panduan: natural, hangat, max 150 kata, Bahasa Indonesia, berikan saran konkret.
 ${text.substring(0, 8000)}`;
 
     const systemInstruction = `Ringkas dokumen yang diberikan sesuai format. 
-Balas dalam Bahasa Indonesia. Format JSON.`;
+Balas SELALU dalam Bahasa Indonesia. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural dan jelas. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
+Format JSON.`;
 
     const responseSchema = {
       type: Type.OBJECT,
@@ -361,7 +374,9 @@ Balas dalam Bahasa Indonesia. Format JSON.`;
     const prompt = `Energy: ${energyScore}/10, Mood: "${mood}".`;
 
     const systemInstruction = `Berikan quote motivasi yang tepat. 
-Balas dalam Bahasa Indonesia. Format JSON.`;
+Balas SELALU dalam Bahasa Indonesia. 
+PENTING: Balas SELALU dalam Bahasa Indonesia yang natural. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
+Format JSON.`;
 
     const responseSchema = {
       type: Type.OBJECT,
