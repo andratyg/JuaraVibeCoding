@@ -4,6 +4,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
+  fullWidth?: boolean;
   icon?: React.ElementType;
 }
 
@@ -26,6 +27,7 @@ const Button: React.FC<ButtonProps> = ({
   variant = 'primary',
   size = 'md',
   loading,
+  fullWidth,
   disabled,
   onClick,
   className = '',
@@ -38,7 +40,7 @@ const Button: React.FC<ButtonProps> = ({
     className={`inline-flex items-center justify-center gap-2 font-medium
       rounded-[var(--r-md)] transition-all active:scale-[0.97]
       disabled:opacity-50 disabled:cursor-not-allowed select-none
-      ${SIZES[size]} ${className}`}
+      ${fullWidth ? 'w-full' : ''} ${SIZES[size]} ${className}`}
     style={VARIANTS[variant]}
     {...props}
   >
