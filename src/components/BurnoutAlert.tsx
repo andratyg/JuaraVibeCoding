@@ -1,119 +1,172 @@
 import { useState, useEffect } from 'react';
-import { db } from '../config/firebase';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { geminiService } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
-import { AlertTriangle, ChevronRight, X } from 'lucide-react';
+import { AlertTriangle, X, ChevronDown, ChevronUp, Heart } from 'lucide-react';
+import { geminiService } from '../services/geminiService';
 
 interface BurnoutAlertProps {
-  userId: string;
+  recentCheckins: any[];
+  onDismiss?: () => void;
 }
 
-export const BurnoutAlert = ({ userId }: BurnoutAlertProps) => {
-  const [burnoutData, setBurnoutData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [isOpen, setIsOpen] = useState(true);
+const BurnoutAlert = ({ recentCheckins, onDismiss }: BurnoutAlertProps) => {
+  const [plan, setPlan] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [showFull, setShowFull] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const checkBurnout = async () => {
-      if (!userId) return;
-      
-      try {
-        const recentCheckinsSnap = await getDocs(query(
-          collection(db, `users/${userId}/energyCheckIns`),
-          orderBy('createdAt', 'desc'),
-          limit(7)
-        ));
-        
-        const checkins = recentCheckinsSnap.docs.map(d => d.data());
-        if (checkins.length >= 3) {
-          const last3Scores = checkins.slice(0, 3).map(c => c.energyScore || c.score || 0);
-          const avgScore = last3Scores.reduce((a, b) => a + b, 0) / 3;
-          
-          if (avgScore < 4) {
-            const result = await geminiService.checkBurnoutRisk(checkins);
-            setBurnoutData(result);
-          }
-        }
-      } catch (err) {
-        console.error('Burnout check error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!recentCheckins || recentCheckins.length < 3) return;
+    const last3Energi = recentCheckins.slice(0, 3).map(c => c.energi || c.energyScore || 5);
+    const avg = last3Energi.reduce((a, b) => a + b, 0) / 3;
+    if (avg >= 4) return; // don't trigger if average is still okay
     
-    checkBurnout();
-  }, [userId]);
+    setLoading(true);
+    geminiService.checkBurnoutRisk(recentCheckins)
+      .then(result => {
+        if (result.riskLevel !== 'low') {
+          setPlan(result);
+          setVisible(true);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [recentCheckins]);
 
-  if (loading || !burnoutData || burnoutData.riskLevel === 'low' || !isOpen) return null;
+  const handleDismiss = () => {
+    setVisible(false);
+    setTimeout(() => onDismiss?.(), 300);
+  };
+
+  const riskColors: any = {
+    medium: { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400', badge: 'bg-amber-500/15' },
+    high: { bg: 'bg-red-500/10', border: 'border-red-500/30', text: 'text-red-400', badge: 'bg-red-500/15' },
+    critical: { bg: 'bg-red-600/15', border: 'border-red-600/40', text: 'text-red-300', badge: 'bg-red-600/20' }
+  };
+  const colors = plan ? (riskColors[plan.riskLevel] || riskColors.medium) : riskColors.medium;
+
+  if (loading) return null;
 
   return (
     <AnimatePresence>
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md"
-      >
-        <motion.div 
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          className="bg-[#1A1E28] border border-red-500/30 rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+      {visible && plan && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
         >
-          {/* Background Glow */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-red-500/10 rounded-full blur-3xl"></div>
-          
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors"
+          <motion.div
+            initial={{ y: 60, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 60, opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className={`w-full max-w-md bg-[#13161D] ${colors.border} border rounded-2xl overflow-hidden`}
           >
-            <X size={20} />
-          </button>
-
-          <div className="flex items-center gap-4 mb-6 relative z-10">
-            <div className="w-14 h-14 bg-red-500/15 rounded-2xl flex items-center justify-center text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
-              <AlertTriangle size={28} />
+            {/* Header */}
+            <div className={`${colors.bg} px-5 py-4 flex items-center gap-3 border-b ${colors.border}`}>
+              <div className={`w-10 h-10 rounded-xl ${colors.badge} flex items-center justify-center flex-shrink-0`}>
+                <AlertTriangle size={20} className={colors.text} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-white font-semibold text-sm">Peringatan Burnout Terdeteksi</h3>
+                <p className={`${colors.text} text-xs font-medium`}>
+                  Risiko {plan.riskLevel.toUpperCase()} — Skor {plan.riskScore}/100
+                </p>
+              </div>
+              <button onClick={handleDismiss} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors">
+                <X size={16} className="text-white/50" />
+              </button>
             </div>
-            <div>
-              <h3 className="text-white font-black text-xl tracking-tight">Burnout Alert</h3>
-              <p className="text-red-400 text-xs font-black uppercase tracking-widest mt-1">
-                Risk Level: {burnoutData.riskLevel}
-              </p>
-            </div>
-          </div>
 
-          <p className="text-slate-300 text-sm mb-8 leading-relaxed font-medium">
-            {burnoutData.message}
-          </p>
+            {/* Content */}
+            <div className="p-5">
+              <p className="text-white/75 text-sm leading-relaxed mb-4">{plan.message}</p>
 
-          <div className="space-y-4 mb-8">
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">Immediate Recovery Steps:</p>
-            <div className="space-y-3">
-              {burnoutData.recoveryPlan?.immediate?.map((step: string, i: number) => (
-                <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  key={i} 
-                  className="flex items-start gap-3 text-sm text-slate-200 bg-white/5 p-4 rounded-2xl border border-white/5"
-                >
-                  <div className="mt-1 bg-emerald-500/20 p-0.5 rounded-full">
-                    <ChevronRight size={12} className="text-emerald-400" />
+              {/* Warning signals */}
+              {plan.warningSignals?.length > 0 && (
+                <div className="mb-4 p-3 bg-white/5 rounded-xl">
+                  <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Yang terdeteksi:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {plan.warningSignals.map((s: string, i: number) => (
+                      <span key={i} className={`text-[11px] px-2 py-0.5 ${colors.badge} ${colors.text} rounded-full`}>{s}</span>
+                    ))}
                   </div>
-                  <span className="font-medium">{step}</span>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+                </div>
+              )}
 
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="w-full py-4 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-600/20 hover:bg-indigo-500 transition-all"
-          >
-            Acknowledge & Sync Plan
-          </button>
+              {/* Today's steps */}
+              <div className="mb-3">
+                <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Lakukan sekarang:</p>
+                <div className="space-y-1.5">
+                  {plan.recoveryPlan.today.map((step: string, i: number) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="text-green-400 mt-0.5 text-xs flex-shrink-0">→</span>
+                      <span className="text-sm text-white/80">{step}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Full plan toggle */}
+              <button
+                onClick={() => setShowFull(!showFull)}
+                className="flex items-center gap-1.5 text-xs text-white/40 hover:text-white/60 transition-colors mb-4"
+              >
+                {showFull ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                {showFull ? 'Sembunyikan rencana lengkap' : 'Lihat rencana pemulihan lengkap'}
+              </button>
+
+              <AnimatePresence>
+                {showFull && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden mb-4"
+                  >
+                    <div className="space-y-3 pt-2 border-t border-white/10">
+                      <div>
+                        <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Rencana minggu ini:</p>
+                        {plan.recoveryPlan.thisWeek?.map((step: string, i: number) => (
+                          <div key={i} className="flex items-start gap-2 mb-1.5">
+                            <span className="text-blue-400 text-xs mt-0.5 flex-shrink-0">{i+1}.</span>
+                            <span className="text-sm text-white/70">{step}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {plan.shouldSeeHelp && (
+                        <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2">
+                          <Heart size={14} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-blue-300/90">Mempertimbangkan untuk berbicara dengan profesional atau orang terpercaya bisa sangat membantu pemulihan kamu.</p>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleDismiss}
+                  className="flex-1 py-2.5 bg-white/5 hover:bg-white/8 text-white/60 text-sm rounded-xl transition-colors border border-white/10"
+                >
+                  Nanti dulu
+                </button>
+                <button
+                  onClick={handleDismiss}
+                  className="flex-1 py-2.5 bg-[#6C63FF] hover:bg-[#5A52E8] text-white text-sm font-medium rounded-xl transition-colors"
+                >
+                  Saya akan jaga diri ✓
+                </button>
+              </div>
+            </div>
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
     </AnimatePresence>
   );
 };
+
+export default BurnoutAlert;

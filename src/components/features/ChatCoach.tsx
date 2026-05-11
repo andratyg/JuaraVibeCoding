@@ -34,9 +34,18 @@ export default function ChatCoach() {
       tone: profile?.settings?.aiPreferences?.coachTone || 'balanced'
     };
 
-    const response = await geminiService.chatWithCoach(userMsg, context);
-    setMessages(prev => [...prev, { role: 'coach', content: response }]);
-    setIsTyping(false);
+    try {
+      const response = await geminiService.chatWithCoach(userMsg, context);
+      setMessages(prev => [...prev, { role: 'coach', content: response }]);
+    } catch (error: any) {
+      console.error('Chat Error:', error);
+      setMessages(prev => [...prev, { 
+        role: 'coach', 
+        content: error.message || 'Maaf, aku sedang mengalami kendala teknis. Coba lagi nanti ya!' 
+      }]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (

@@ -7,12 +7,9 @@ import { useState, useEffect, createContext, useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db, handleFirestoreError, OperationType } from './config/firebase';
-import { doc, getDoc, setDoc, updateDoc, getDocFromServer } from 'firebase/firestore';
+import { doc, getDoc, setDoc, getDocFromServer } from 'firebase/firestore';
 import { UserProfile, VibeMode } from './types';
-import Sidebar from './components/layout/Sidebar';
-import TopBar from './components/layout/TopBar';
-import BottomTabBar from './components/layout/BottomTabBar';
-import ThemeWrapper from './components/layout/ThemeWrapper';
+import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
 import EnergyCheckInPage from './pages/EnergyCheckIn';
 import TaskManager from './pages/TaskManager';
@@ -22,13 +19,16 @@ import Summarizer from './pages/Summarizer';
 import Analytics from './pages/Analytics';
 import ProfilePage from './pages/Profile';
 import SettingsPage from './pages/Settings';
+import CoachPage from './pages/CoachPage';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ChatCoach from './components/features/ChatCoach';
 import WellnessNudges from './components/features/WellnessNudges';
-import { BurnoutAlert } from './components/BurnoutAlert';
+import BurnoutAlert from './components/BurnoutAlert';
 import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from './components/ErrorBoundary';
+import { useEnergyTheme } from './hooks/useEnergyTheme';
+import { useDashboardData } from './hooks/useDashboardData';
 
 interface AppContextType {
   user: User | null;
@@ -37,8 +37,6 @@ interface AppContextType {
   refreshProfile: () => Promise<void>;
   vibeMode: VibeMode;
   setVibeMode: (mode: VibeMode) => void;
-  theme: 'light' | 'dark' | 'system';
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -49,78 +47,64 @@ export const useApp = () => {
   return context;
 };
 
+const AppContent = () => {
+  const { user, profile, refreshProfile } = useApp();
+  const { data: dashboardData } = useDashboardData(user?.uid);
+  useEnergyTheme(dashboardData?.energyScore);
+
+  return (
+    <Routes>
+      <Route path="/login" element={<ProtectedRoute reverse><LoginPage /></ProtectedRoute>} />
+      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/checkin" element={<EnergyCheckInPage />} />
+        <Route path="/tasks" element={<TaskManager />} />
+        <Route path="/fitness" element={<FitnessCoach />} />
+        <Route path="/journal" element={<JournalPage />} />
+        <Route path="/summarizer" element={<Summarizer />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/coach" element={<CoachPage />} />
+      </Route>
+    </Routes>
+  );
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [vibeMode, setVibeMode] = useState<VibeMode>('balance');
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
 
   const fetchProfile = async (uid: string) => {
     try {
       const docRef = doc(db, 'users', uid);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        const data = docSnap.data();
-        setProfile({ id: uid, ...data } as UserProfile);
-        if (data.theme) setTheme(data.theme);
+        setProfile({ id: uid, ...docSnap.data() } as UserProfile);
       } else {
-        // Initialize profile
-        const newProfile: UserProfile = {
-          id: uid,
+        const newProfile: any = {
           displayName: auth.currentUser?.displayName || 'User',
-          fullName: auth.currentUser?.displayName || 'Flow Member',
           email: auth.currentUser?.email || '',
-          photoURL: auth.currentUser?.photoURL || '',
-          bio: '',
-          phoneNumber: auth.currentUser?.phoneNumber || '',
           energyScore: 5,
           vibeMode: 'balance',
           streak: 0,
-          settings: {
-            notifications: {
-              email: true,
-              push: true,
-              messages: false,
-              alerts: true
-            },
-            privacy: {
-              visibility: 'public',
-              dataSharing: true
-            },
-            aiPreferences: {
-              coachTone: 'balanced',
-              nudgeFrequency: 'normal',
-              focusAreas: ['Fitness', 'Mental Health']
-            },
-            accessibility: {
-              highContrast: false,
-              fontScale: 1,
-              reducedMotion: false
-            },
-            theme: 'light'
-          }
+          createdAt: new Date().toISOString()
         };
         await setDoc(docRef, newProfile);
-        setProfile(newProfile);
+        setProfile({ id: uid, ...newProfile } as UserProfile);
       }
-    } catch (err) {
-      handleFirestoreError(err, OperationType.GET, `users/${uid}`);
+    } catch (err: any) {
+      console.error('Error fetching profile:', err);
+      if (err.code === 'permission-denied') {
+        handleFirestoreError(err, OperationType.GET, `users/${uid}`);
+      }
     }
   };
 
   useEffect(() => {
-    async function testConnection() {
-      try {
-        await getDocFromServer(doc(db, 'system', 'connection'));
-      } catch (error) {
-        if (error instanceof Error && error.message.includes('the client is offline')) {
-          console.error("Please check your Firebase configuration.");
-        }
-      }
-    }
-    testConnection();
-
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -133,71 +117,40 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50 text-slate-900 font-black italic uppercase tracking-widest text-lg">
-        <div className="flex flex-col items-center gap-6">
-          <div className="relative">
-            <div className="h-16 w-16 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent shadow-xl shadow-indigo-100"></div>
-            <div className="absolute inset-0 flex items-center justify-center text-xs">⚡</div>
-          </div>
-          <span>FlowState Initializing...</span>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return null;
 
   return (
     <ErrorBoundary>
       <AppContext.Provider value={{ 
         user, 
         profile, 
-      loading, 
-      refreshProfile: () => fetchProfile(user?.uid || ''), 
-      vibeMode, 
-      setVibeMode,
-      theme,
-      setTheme: (t) => {
-        setTheme(t);
-        if (user) updateDoc(doc(db, 'users', user.uid), { theme: t });
-      }
-    }}>
-      <BrowserRouter>
-        <ThemeWrapper>
-          <Toaster position="top-right" />
-          <Routes>
-            <Route path="/login" element={<ProtectedRoute reverse><LoginPage /></ProtectedRoute>} />
-            <Route path="/*" element={
-              <ProtectedRoute>
-                <div className="min-h-screen bg-slate-50 transition-colors duration-500">
-                  <Sidebar />
-                  <main className="min-h-screen ml-0 md:ml-[52px] lg:ml-[220px] pb-[72px] md:pb-0 transition-all duration-300 flex flex-col">
-                    <TopBar />
-                    <div className="flex-1 px-4 md:px-6 lg:px-8 py-6 max-w-[1400px] mx-auto w-full">
-                      <ChatCoach />
-                      <WellnessNudges />
-                      {profile?.id && <BurnoutAlert userId={profile.id} />}
-                      <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/energy" element={<EnergyCheckInPage />} />
-                        <Route path="/tasks" element={<TaskManager />} />
-                        <Route path="/fitness" element={<FitnessCoach />} />
-                        <Route path="/journal" element={<JournalPage />} />
-                        <Route path="/summarizer" element={<Summarizer />} />
-                        <Route path="/analytics" element={<Analytics />} />
-                        <Route path="/profile" element={<ProfilePage />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                      </Routes>
-                    </div>
-                  </main>
-                  <BottomTabBar />
-                </div>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </ThemeWrapper>
-      </BrowserRouter>
-    </AppContext.Provider>
+        loading, 
+        refreshProfile: () => fetchProfile(user?.uid || ''), 
+        vibeMode, 
+        setVibeMode 
+      }}>
+        <BrowserRouter>
+          <Toaster 
+            position="top-right" 
+            toastOptions={{
+              duration: 3500,
+              style: {
+                background: 'var(--surface2)',
+                color: 'var(--text)',
+                border: '1px solid var(--border2)',
+                borderRadius: 'var(--r-md)',
+                fontSize: '13px',
+                padding: '12px 16px',
+                maxWidth: '380px'
+              },
+              success: { iconTheme: { primary: '#1DB97A', secondary: '#0D0F14' } },
+              error:   { iconTheme: { primary: '#FF5C5C', secondary: '#0D0F14' } },
+            }} 
+          />
+          <AppContent />
+        </BrowserRouter>
+      </AppContext.Provider>
     </ErrorBoundary>
   );
 }
+

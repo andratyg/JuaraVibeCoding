@@ -86,21 +86,25 @@
       "schema": "User",
       "description": "Root user document"
     },
-    "/users/{userId}/energyCheckIns/{id}": {
+    "/users/{userId}/checkins/{id}": {
       "schema": "EnergyCheckIn",
-      "description": "History of energy check-ins"
+      "description": "Daily energy calibration and checkin data"
     },
     "/users/{userId}/tasks/{id}": {
       "schema": "Task",
-      "description": "User task list"
+      "description": "User productivity tasks"
     },
     "/users/{userId}/workouts/{id}": {
       "schema": "Workout",
-      "description": "Generated workouts"
+      "description": "Generated fitness workouts"
     },
     "/users/{userId}/journals/{id}": {
       "schema": "Journal",
-      "description": "Daily journals"
+      "description": "User reflection journals"
+    },
+    "/users/{userId}/reflections/{id}": {
+      "schema": "Journal",
+      "description": "Nightly reflections (uses same schema as journals)"
     }
   }
 }

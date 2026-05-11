@@ -1,44 +1,49 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../App';
 import { useTranslation } from 'react-i18next';
-import { db } from '../config/firebase';
-import { collection, addDoc, doc, updateDoc, query, where, orderBy, limit, getDocs, Timestamp } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../config/firebase';
+import { doc, setDoc, query, collection, where, limit, getDocs } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
-import { Zap, ArrowRight, Loader2, MessageSquare, Brain, Target, Activity, Flame, Sparkles, CheckCircle2, HelpCircle } from 'lucide-react';
+import { Zap, ArrowRight, Loader2, Brain, Target, Activity, Flame, Sparkles, CheckCircle2, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { cn } from '../lib/utils';
+import toast from 'react-hot-toast';
+import { fadeInUp, cardHover } from '../utils/animations';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import { SkeletonPage } from '../components/ui/Skeletons';
 
 export default function EnergyCheckInPage() {
   const { t } = useTranslation();
-  const { profile, refreshProfile } = useApp();
+  const { user, profile, refreshProfile } = useApp();
   const navigate = useNavigate();
-  const [userInput, setUserInput] = useState('');
+  
+  const [energyLevel, setEnergyLevel] = useState(5);
+  const [stressLevel, setStressLevel] = useState(5);
+  const [focusLevel, setFocusLevel] = useState(5);
+  const [moodState, setMoodState] = useState('');
+  
   const [loading, setLoading] = useState(true);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [step, setStep] = useState<'intro' | 'chat' | 'result'>('intro');
   const [alreadyCalibrated, setAlreadyCalibrated] = useState(false);
 
-  const [showIntroHelp, setShowIntroHelp] = useState(false);
-
   useEffect(() => {
     const checkDailyStatus = async () => {
-      if (!profile) return;
+      if (!user) return;
       
       try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const q = query(
-          collection(db, `users/${profile.id}/energyCheckIns`),
-          where('createdAt', '>=', today.toISOString()),
-          orderBy('createdAt', 'desc'),
+        const today = new Date().toISOString().split('T')[0];
+        const docSnap = await getDocs(query(
+          collection(db, `users/${user.uid}/checkins`),
+          where('date', '==', today),
           limit(1)
-        );
+        ));
         
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) {
-          const data = snapshot.docs[0].data();
+        if (!docSnap.empty) {
+          const data = docSnap.docs[0].data();
           setResult(data);
           setStep('result');
           setAlreadyCalibrated(true);
@@ -51,267 +56,289 @@ export default function EnergyCheckInPage() {
     };
 
     checkDailyStatus();
-  }, [profile]);
+  }, [user]);
 
   const handleCalibrate = async () => {
-    if (!profile || !userInput.trim()) return;
-    setLoading(true);
+    if (!profile) return;
+    setIsAnalyzing(true);
     setStep('result');
 
     try {
-      const analysis = await geminiService.calibrateDaily(userInput);
+      const result = await geminiService.analyzeEnergyCheckIn(
+        energyLevel,
+        stressLevel,
+        focusLevel,
+        moodState || 'Normal'
+      );
       
-      const checkInData = {
-        energy: analysis.energy,
-        stress: analysis.stress,
-        focus: analysis.focus,
-        enthusiasm: analysis.enthusiasm,
-        score: analysis.score,
-        mode: analysis.mode,
-        quote: analysis.quote,
-        recommendations: analysis.recommendations,
-        explanation: analysis.explanation,
-        createdAt: new Date().toISOString(),
+      const checkinDate = new Date().toISOString().split('T')[0];
+      const checkinData = {
+        ...result,
+        energi: energyLevel,
+        stres: stressLevel,
+        fokus: focusLevel,
+        mood: moodState || 'Normal',
+        date: checkinDate,
+        createdAt: new Date().toISOString()
       };
 
-      await addDoc(collection(db, `users/${profile.id}/energyCheckIns`), checkInData);
-      await updateDoc(doc(db, 'users', profile.id), {
-        energyScore: analysis.score,
-        lastCheckIn: new Date().toISOString(),
-      });
-      
-      setResult(analysis);
+      await setDoc(doc(db, `users/${profile.id}/checkins`, checkinDate), checkinData);
+      setResult(checkinData);
+      toast.success('Energi berhasil dikalibrasi!');
       await refreshProfile();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error Calibration:', error);
+      handleFirestoreError(error, OperationType.WRITE, `users/${profile.id}/checkins`);
+      toast.error(error.message || 'Gagal kalibrasi.');
       setStep('chat');
     } finally {
-      setLoading(false);
+      setIsAnalyzing(false);
     }
   };
 
+  if (loading) return <SkeletonPage />;
+
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto min-h-screen flex flex-col items-center justify-center bg-slate-50/50">
+    <div className="max-w-4xl mx-auto py-6 space-y-8 min-h-[calc(100vh-160px)] flex flex-col items-center justify-center">
       <AnimatePresence mode="wait">
         {step === 'intro' && (
           <motion.div
             key="intro"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, y: -20 }}
+            {...fadeInUp}
             className="text-center space-y-8 max-w-lg"
           >
-            <div className="inline-flex items-center justify-center p-4 bg-indigo-100 text-indigo-600 rounded-3xl mb-4">
+            <div className="mx-auto w-24 h-24 bg-[var(--accent-bg)] text-[var(--accent-text)] rounded-[32px] flex items-center justify-center shadow-lg shadow-[var(--accent)]/10">
               <Brain size={48} className="animate-pulse" />
             </div>
-            <div className="space-y-4">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight flex items-center justify-center gap-3">
-                Daily <span className="text-indigo-600">Calibration</span>
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowIntroHelp(!showIntroHelp)}
-                    onMouseEnter={() => setShowIntroHelp(true)}
-                    onMouseLeave={() => setShowIntroHelp(false)}
-                    className="flex items-center"
-                  >
-                    <HelpCircle size={20} className="text-slate-300 cursor-help" />
-                  </button>
-                  <AnimatePresence>
-                    {showIntroHelp && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        className="absolute left-1/2 -translate-x-1/2 bottom-full mb-4 w-72 p-4 bg-slate-900 text-white text-xs font-bold rounded-2xl z-50 shadow-2xl leading-relaxed text-left border border-white/5 whitespace-normal"
-                      >
-                        {t('help.energy')}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+            <div className="space-y-3">
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
+                {t('energyCheck.title')}
               </h1>
-              <p className="text-slate-500 font-medium text-lg leading-relaxed">
-                Mari kita selaraskan energi dan fokusmu hari ini. Ceritakan perasaanmu, dan biarkan AI membantu menerjemahkannya menjadi strategi optimal.
+              <p className="text-sm md:text-lg opacity-80" style={{ color: 'var(--text2)' }}>
+                {t('energyCheck.desc')}
               </p>
             </div>
-            <button
+            <Button
+              size="lg"
+              fullWidth
               onClick={() => setStep('chat')}
-              className="group flex items-center justify-center gap-3 w-full bg-slate-900 text-white py-5 rounded-3xl font-black text-lg transition-all hover:bg-slate-800 hover:scale-[1.02]"
+              icon={ArrowRight}
             >
-              Mulai Kalibrasi <ArrowRight className="group-hover:translate-x-1 transition-transform" />
-            </button>
+              {t('energyCheck.startNow')}
+            </Button>
           </motion.div>
         )}
 
         {step === 'chat' && (
           <motion.div
             key="chat"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full space-y-8"
+            {...fadeInUp}
+            className="w-full max-w-2xl"
           >
-            <div className="bg-white p-8 md:p-12 rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden relative">
-              <div className="absolute top-0 right-0 p-8 opacity-5">
-                <MessageSquare size={120} />
-              </div>
-
-              <div className="relative z-10 space-y-8">
-                <div className="flex items-start gap-4">
-                  <div className="h-10 w-10 md:h-12 md:w-12 rounded-full bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg">
-                    <Sparkles size={24} />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="bg-slate-100 p-6 rounded-3xl rounded-tl-none inline-block">
-                      <p className="text-slate-800 font-bold leading-relaxed text-base md:text-lg">
-                         Selamat pagi, {profile?.displayName?.split(' ')[0]}! <br/>
-                         Bagaimana perasaanmu pagi ini? Ceritakan apa saja yang ada di pikiranmu, tingkat semangatmu, atau apa yang kamu rasakan secara fisik. 
-                         Jangan sungkan bercerita apa adanya.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
+            <Card className="p-8 md:p-12 space-y-10">
+              <h2 className="text-2xl font-bold">{t('energyCheck.conditionHeader')}</h2>
+              
+              <div className="space-y-8">
+                {/* Energy Slider */}
                 <div className="space-y-4">
-                  <textarea
-                    value={userInput}
-                    onChange={(e) => setUserInput(e.target.value)}
-                    placeholder="Contoh: 'Pagi ini lumayan semangat, habis olahraga lari tadi. Tapi agak kepikiran deadline nanti siang, jadi sedikit deg-degan...'"
-                    className="w-full min-h-[180px] p-8 bg-slate-50 border-2 border-transparent focus:border-indigo-500 focus:bg-white rounded-[32px] text-slate-800 font-medium text-lg outline-none transition-all resize-none shadow-inner"
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: 'var(--text3)' }}>
+                       <Zap size={16} className="text-[var(--warning)]" /> {t('energyCheck.energyLevel')}
+                    </label>
+                    <span className="text-2xl font-bold text-[var(--accent)]">{energyLevel}/10</span>
+                  </div>
+                  <input 
+                    type="range" min="1" max="10" step="1"
+                    value={energyLevel} onChange={(e) => setEnergyLevel(parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-[var(--surface)] rounded-full appearance-none cursor-pointer accent-[var(--accent)]"
                   />
-                  <button
-                    onClick={handleCalibrate}
-                    disabled={!userInput.trim() || loading}
-                    className="w-full bg-indigo-600 text-white py-5 rounded-[24px] font-black text-lg flex items-center justify-center gap-3 transition-all hover:bg-indigo-700 disabled:opacity-50 shadow-xl shadow-indigo-200"
-                  >
-                    {loading ? <Loader2 className="animate-spin" /> : <>Analisis Kondisiku <MessageSquare size={20} /></>}
-                  </button>
+                  <div className="flex justify-between text-[10px] font-bold opacity-50 uppercase">
+                    <span>{t('energyCheck.energyLemas')}</span>
+                    <span>{t('energyCheck.energyBerenergi')}</span>
+                  </div>
                 </div>
+
+                {/* Stress Slider */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: 'var(--text3)' }}>
+                       <Activity size={16} className="text-[var(--danger)]" /> {t('energyCheck.stressLevel')}
+                    </label>
+                    <span className="text-2xl font-bold text-[var(--danger)]">{stressLevel}/10</span>
+                  </div>
+                  <input 
+                    type="range" min="1" max="10" step="1"
+                    value={stressLevel} onChange={(e) => setStressLevel(parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-[var(--surface)] rounded-full appearance-none cursor-pointer accent-[var(--danger)]"
+                  />
+                  <div className="flex justify-between text-[10px] font-bold opacity-50 uppercase">
+                    <span>{t('energyCheck.stressTenang')}</span>
+                    <span>{t('energyCheck.stressBurnout')}</span>
+                  </div>
+                </div>
+
+                {/* Focus Slider */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold uppercase tracking-widest flex items-center gap-2" style={{ color: 'var(--text3)' }}>
+                       <Target size={16} className="text-[var(--accent)]" /> {t('energyCheck.focusLevel')}
+                    </label>
+                    <span className="text-2xl font-bold text-[var(--accent)]">{focusLevel}/10</span>
+                  </div>
+                  <input 
+                    type="range" min="1" max="10" step="1"
+                    value={focusLevel} onChange={(e) => setFocusLevel(parseInt(e.target.value))}
+                    className="w-full h-1.5 bg-[var(--surface)] rounded-full appearance-none cursor-pointer accent-[var(--accent)]"
+                  />
+                  <div className="flex justify-between text-[10px] font-bold opacity-50 uppercase">
+                    <span>{t('energyCheck.focusBlurry')}</span>
+                    <span>{t('energyCheck.focusLaser')}</span>
+                  </div>
+                </div>
+
+                {/* Mood Input */}
+                <Input 
+                  label={t('energyCheck.moodLabel')}
+                  value={moodState}
+                  onChange={(e) => setMoodState(e.target.value)}
+                  placeholder={t('energyCheck.moodPlaceholder')}
+                />
+
+                <Button
+                  fullWidth
+                  size="lg"
+                  loading={isAnalyzing}
+                  onClick={handleCalibrate}
+                  icon={ArrowRight}
+                >
+                  {t('energyCheck.analyzeAction')}
+                </Button>
               </div>
-            </div>
-            
-            <p className="text-center text-slate-400 text-sm font-bold uppercase tracking-widest">
-              AI akan menerjemahkan ceritamu ke dalam metrik kuantitatif
-            </p>
+            </Card>
           </motion.div>
         )}
 
         {step === 'result' && (
           <motion.div
             key="result"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="w-full max-w-3xl space-y-8"
+            {...fadeInUp}
+            className="w-full max-w-3xl space-y-6"
           >
-            {loading ? (
+            {isAnalyzing ? (
               <div className="flex flex-col items-center justify-center py-20 space-y-6">
-                <div className="relative h-24 w-24">
-                  <div className="absolute inset-0 rounded-full border-4 border-indigo-100/50 border-t-indigo-600 animate-spin" />
-                  <div className="absolute inset-4 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <div className="relative h-20 w-20">
+                  <div className="absolute inset-0 rounded-full border-4 border-[var(--border)] border-t-[var(--accent)] animate-spin" />
+                  <div className="absolute inset-2 rounded-full bg-[var(--surface)] flex items-center justify-center text-[var(--accent)]">
                     <Brain size={32} />
                   </div>
                 </div>
-                <div className="text-center space-y-2">
-                  <h3 className="text-xl font-black text-slate-900">Gemini sedang menganalisis perasaanmu...</h3>
-                  <p className="text-slate-500 font-bold uppercase text-xs tracking-[0.2em]">Menerjemahkan emosi ke angka</p>
+                <div className="text-center space-y-1">
+                  <h3 className="text-xl font-bold">{t('energyCheck.analyzing')}</h3>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: 'var(--text3)' }}>AI sedang memproses kondisimu...</p>
                 </div>
               </div>
             ) : result && (
-              <div className="space-y-8">
-                {/* Header Card */}
-                {alreadyCalibrated && (
-                  <div className="bg-emerald-500 text-white p-4 rounded-2xl flex items-center justify-center gap-3 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100">
-                    <CheckCircle2 size={14} /> Today's Calibration Protocol is Locked & Optimized
-                  </div>
-                )}
-                <div className="bg-slate-900 text-white p-8 md:p-12 rounded-[40px] shadow-2xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20" />
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
-                    <div className="space-y-4">
-                      <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-500/20 text-indigo-300 rounded-full text-xs font-black uppercase tracking-widest border border-indigo-500/30">
-                        <Zap size={14} /> {alreadyCalibrated ? 'Calibration History' : 'Daily Result'}
+              <div className="space-y-6">
+                {/* Result Hero */}
+                <Card accent className="p-8 md:p-12 relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-32 -mt-32" />
+                  <div className="relative z-10 flex flex-col md:flex-row justify-between gap-8">
+                    <div className="space-y-4 flex-1">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold uppercase tracking-widest border border-white/10">
+                        <Zap size={14} className="text-yellow-300" /> 
+                        {alreadyCalibrated ? t('energyCheck.calibrationHistory') : t('energyCheck.dailyResult')}
                       </div>
-                      <h2 className="text-5xl font-black tracking-tight">{result.mode}</h2>
-                      <p className="text-slate-400 font-bold italic text-lg leading-relaxed">
+                      <h2 className="text-4xl md:text-6xl font-bold tracking-tight">{result.mode}</h2>
+                      <p className="text-lg font-medium italic opacity-90 leading-relaxed">
                         "{result.quote}"
                       </p>
                     </div>
-                    <div className="text-center md:text-right">
-                      <div className="relative inline-block">
-                        <div className="text-7xl font-black text-indigo-400 leading-none">{result.score}</div>
-                        <div className="text-xs font-black text-indigo-200 uppercase tracking-widest mt-2">Productivity Potential</div>
-                      </div>
+                    <div className="text-center md:text-right flex flex-col justify-center">
+                      <div className="text-7xl md:text-8xl font-black leading-none">{result.energyScore}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-widest opacity-70 mt-2">Energy Score</div>
                     </div>
                   </div>
-                </div>
+                </Card>
 
-                {/* Score Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <ScoreCard 
-                      label="Energy Level" 
-                      value={result.energy} 
-                      icon={<Activity className="text-emerald-500" />} 
-                      color="emerald"
-                      desc={result.explanation.energy} 
-                    />
-                   <ScoreCard 
-                      label="Stress Level" 
-                      value={result.stress} 
-                      icon={<Flame className="text-rose-500" />} 
-                      color="rose"
-                      desc={result.explanation.stress} 
-                    />
-                   <ScoreCard 
-                      label="Focus Level" 
-                      value={result.focus} 
-                      icon={<Target className="text-blue-500" />} 
-                      color="blue"
-                      desc={result.explanation.focus} 
-                    />
-                   <ScoreCard 
-                      label="Enthusiasm" 
-                      value={result.enthusiasm} 
-                      icon={<Flame className="text-orange-500" />} 
-                      color="orange"
-                      desc={result.explanation.enthusiasm} 
-                    />
-                </div>
-
-                {/* Recommendations */}
-                <div className="bg-white p-8 md:p-10 rounded-[40px] shadow-xl border border-slate-100 flex flex-col md:flex-row gap-8">
-                  <div className="md:w-1/3 space-y-4">
-                    <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600">
-                      <Sparkles size={28} />
+                {/* Info Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <ScoreCard 
+                    label={t('energyCheck.scoreEnergy')} 
+                    value={result.energi} 
+                    icon={<Activity size={18} />} 
+                    color="var(--success)"
+                    desc={result.modeReason} 
+                  />
+                  <ScoreCard 
+                    label="Kesehatan Mental" 
+                    value={result.stres} 
+                    icon={<Flame size={18} />} 
+                    color="var(--danger)"
+                    desc="Level stres kamu saat ini. Tetap tenang dan lakukan pernapasan jika perlu." 
+                  />
+                  <ScoreCard 
+                    label={t('energyCheck.scoreFocus')} 
+                    value={result.fokus} 
+                    icon={<Target size={18} />} 
+                    color="var(--accent)"
+                    desc="Konsentrasi kamu sedang optimal untuk tugas-tugas berat." 
+                  />
+                  <Card className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-[var(--warning)]">
+                      <Sparkles size={18} />
+                      <h4 className="text-xs font-bold uppercase tracking-wider">Top Recommendation</h4>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 leading-tight">Optimal Strategy</h3>
-                    <p className="text-slate-500 font-medium">Berdasarkan kondisimu, berikut adalah langkah yang disarankan oleh AI:</p>
+                    <p className="text-sm font-medium leading-relaxed">{result.topTip}</p>
+                  </Card>
+                </div>
+
+                {/* AI Detail Card */}
+                <Card className="p-8 md:p-10 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-[var(--surface)] flex items-center justify-center text-[var(--accent)]">
+                      <Brain size={24} />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">{t('energyCheck.strategyHeader')}</h3>
+                      <p className="text-xs" style={{ color: 'var(--text3)' }}>Strategi kerja berbasis AI sesuai level energimu.</p>
+                    </div>
                   </div>
-                  <div className="md:w-2/3 space-y-4">
-                    {result.recommendations.map((rec: string, i: number) => (
-                      <div key={i} className="flex gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-100 group hover:border-indigo-200 transition-colors">
-                        <div className="h-6 w-6 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-0.5">
-                          <CheckCircle2 size={14} />
+                  
+                  {result.narasi && (
+                    <div className="text-sm bg-[var(--surface)] p-5 rounded-2xl border border-[var(--border)] leading-relaxed italic">
+                      "{result.narasi}"
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {result.workSlots?.map((slot: string, i: number) => (
+                      <div key={i} className="flex gap-3 p-4 bg-[var(--surface)] rounded-xl border border-[var(--border)] group transition-all hover:border-[var(--accent)]">
+                        <div className="w-6 h-6 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shrink-0 mt-0.5">
+                          <Zap size={12} />
                         </div>
-                        <p className="text-slate-700 font-bold text-sm md:text-base leading-relaxed">{rec}</p>
+                        <p className="text-sm font-medium">Jendela Fokus: <span className="text-[var(--accent)]">{slot}</span></p>
                       </div>
                     ))}
                   </div>
-                </div>
+                </Card>
 
                 {/* Footer Buttons */}
-                <div className="flex grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                  <Button
+                    size="lg"
                     onClick={() => navigate('/tasks')}
-                    className="flex items-center justify-center gap-3 p-6 bg-slate-900 text-white font-black rounded-[24px] text-lg shadow-xl hover:bg-slate-800 transition-all hover:scale-[1.02]"
+                    icon={ArrowRight}
                   >
-                    Action Plan <ArrowRight className="h-5 w-5" />
-                  </button>
-                  <button
+                    {t('energyCheck.actionPlan')}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
                     onClick={() => navigate('/')}
-                    className="p-6 bg-white text-slate-600 font-black rounded-[24px] text-lg border border-slate-200 transition-all hover:bg-slate-50"
+                    icon={CheckCircle2}
                   >
-                    Back to Feed
-                  </button>
+                    {t('energyCheck.backFeed')}
+                  </Button>
                 </div>
               </div>
             )}
@@ -323,40 +350,30 @@ export default function EnergyCheckInPage() {
 }
 
 function ScoreCard({ label, value, icon, color, desc }: any) {
-  const getProgressColor = (val: number, col: string) => {
-    const colors: any = {
-      emerald: 'bg-emerald-500',
-      rose: 'bg-rose-500',
-      blue: 'bg-blue-500',
-      orange: 'bg-orange-500'
-    };
-    return colors[col] || 'bg-indigo-500';
-  };
-
   return (
-    <div className="bg-white p-6 rounded-[32px] shadow-lg border border-slate-100 space-y-6 group hover:-translate-y-1 transition-all">
+    <Card className="space-y-4 h-full">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl bg-${color}-50`}>
+          <div className="p-2 rounded-lg bg-[var(--surface)]" style={{ color }}>
             {icon}
           </div>
-          <h4 className="font-black text-slate-800 uppercase tracking-widest text-[10px]">{label}</h4>
+          <h4 className="font-bold uppercase tracking-wider text-[10px]" style={{ color: 'var(--text3)' }}>{label}</h4>
         </div>
-        <div className="text-2xl font-black text-slate-900 leading-none">{value}<span className="text-slate-300 text-sm">/10</span></div>
+        <div className="text-xl font-bold">{value}<span className="text-xs opacity-30">/10</span></div>
       </div>
 
-      <div className="relative h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-1.5 w-full bg-[var(--surface)] rounded-full overflow-hidden">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${value * 10}%` }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          className={cn("absolute inset-0 h-full rounded-full transition-all", getProgressColor(value, color))}
+          className="h-full rounded-full"
+          style={{ backgroundColor: color }}
         />
       </div>
 
-      <p className="text-xs font-bold text-slate-500 leading-relaxed">
+      <p className="text-[10px] font-medium leading-relaxed" style={{ color: 'var(--text2)' }}>
         {desc}
       </p>
-    </div>
+    </Card>
   );
 }

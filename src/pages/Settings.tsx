@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   Bell, Shield, Eye, Globe, Monitor, Moon, Sun, 
   ChevronRight, Database, Trash2, AlertCircle, Loader2,
   Phone, CheckCircle, Smartphone, ShieldCheck, Mail, MessageSquare, 
-  Settings as SettingsIcon, Lock, Zap
+  Settings as SettingsIcon, Lock, Zap, ShieldCheck as ShieldCheckIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../App';
-import { auth, db } from '../config/firebase';
+import { auth, db, handleFirestoreError, OperationType } from '../config/firebase';
 import { 
-  doc, deleteDoc, updateDoc
+  doc, deleteDoc, updateDoc, collection, getDocs, query, where 
 } from 'firebase/firestore';
 import { 
   RecaptchaVerifier, 
@@ -20,49 +20,36 @@ import {
   linkWithCredential,
   sendPasswordResetEmail
 } from 'firebase/auth';
-import { cn } from '../lib/utils';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { toast } from 'react-hot-toast';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import { fadeInUp } from '../utils/animations';
 
 export default function SettingsPage() {
   const { t, i18n } = useTranslation();
   const { user, profile, theme, setTheme, refreshProfile } = useApp();
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-
+  
   // Security / A2F States
   const [phone, setPhone] = useState(user?.phoneNumber || '');
   const [verificationCode, setVerificationCode] = useState('');
   const [verificationId, setVerificationId] = useState<string | null>(null);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [mfaEnrolling, setMfaEnrolling] = useState(false);
-  const otpInputRef = React.useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (showOtpModal && otpInputRef.current) {
-      otpInputRef.current.focus();
-    }
-  }, [showOtpModal]);
+  const otpInputRef = useRef<HTMLInputElement>(null);
 
   // Local settings state
   const [notifications, setNotifications] = useState(profile?.settings?.notifications || {
-    email: true,
-    push: true,
-    messages: false,
-    alerts: true
+    email: true, push: true, messages: false, alerts: true
   });
   const [privacy, setPrivacy] = useState(profile?.settings?.privacy || {
-    visibility: 'public',
-    dataSharing: true
+    visibility: 'public', dataSharing: true
   });
   const [aiPrefs, setAiPrefs] = useState(profile?.settings?.aiPreferences || {
-    coachTone: 'balanced',
-    nudgeFrequency: 'normal',
-    focusAreas: ['Fitness', 'Mental Health']
+    coachTone: 'balanced', nudgeFrequency: 'normal', focusAreas: ['Fitness', 'Mental Health']
   });
   const [accessibility, setAccessibility] = useState(profile?.settings?.accessibility || {
-    highContrast: false,
-    fontScale: 1,
-    reducedMotion: false
+    highContrast: false, fontScale: 1, reducedMotion: false
   });
 
   useEffect(() => {
@@ -85,8 +72,9 @@ export default function SettingsPage() {
         }
       });
       await refreshProfile();
+      toast.success(t('common.success') || 'Pengaturan berhasil diperbarui');
     } catch (err) {
-      console.error(err);
+      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
     }
   };
 
@@ -131,7 +119,10 @@ export default function SettingsPage() {
   };
 
   const handleStartPhoneVerification = async () => {
-    if (!user || !phone) return;
+    if (!user || !phone) {
+        toast.error('Masukkan nomor telepon yang valid');
+        return;
+    }
     setLoading(true);
     try {
       const verifier = setupRecaptcha('recaptcha-container');
@@ -140,8 +131,7 @@ export default function SettingsPage() {
       setVerificationId(vid);
       setShowOtpModal(true);
     } catch (err: any) {
-      console.error(err);
-      setMessage({ type: 'error', text: 'Gagal mengirim SMS. Periksa format nomor (+62...).' });
+      toast.error('Gagal mengirim SMS. Periksa format nomor (+62...).');
     } finally {
       setLoading(false);
     }
@@ -155,34 +145,29 @@ export default function SettingsPage() {
       if (mfaEnrolling) {
         const phoneAuthAssertion = PhoneMultiFactorGenerator.assertion(credential);
         await multiFactor(user).enroll(phoneAuthAssertion, 'My SMS MFA');
-        setMessage({ type: 'success', text: 'A2F Berhasil Diaktifkan!' });
+        toast.success('A2F Berhasil Diaktifkan!');
       } else {
         await linkWithCredential(user, credential);
-        setMessage({ type: 'success', text: 'Nomor telepon terverifikasi!' });
+        toast.success('Nomor telepon terverifikasi!');
       }
       setShowOtpModal(false);
       setMfaEnrolling(false);
       await refreshProfile();
     } catch (err: any) {
-      console.error(err);
-      setMessage({ type: 'error', text: err.message || 'Kode salah atau expired.' });
+      toast.error(err.message || 'Kode salah atau expired.');
     } finally {
       setLoading(false);
     }
   };
-
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const handleChangePassword = async () => {
     if (!user?.email) return;
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, user.email);
-      setShowPasswordModal(true);
-      setMessage({ type: 'success', text: 'Reset link dispatched via secure channel.' });
+      toast.success('Tautan reset kata sandi telah dikirim ke email Anda.');
     } catch (err: any) {
-      console.error(err);
-      setMessage({ type: 'error', text: 'Protocol error: ' + err.message });
+      toast.error('Gagal mengirim email reset.');
     } finally {
       setLoading(false);
     }
@@ -192,30 +177,29 @@ export default function SettingsPage() {
     if (!user) return;
     setLoading(true);
     try {
-      // Collect all data
-      const collections = ['tasks', 'wellness_logs', 'energy_logs'];
+      const collectionsArr = ['tasks', 'energyCheckIns'];
       const exportData: any = { profile };
       
-      for (const col of collections) {
-        const q = query(collection(db, col), where('userId', '==', user.uid));
+      for (const col of collectionsArr) {
+        const q = query(collection(db, `users/${user.uid}/${col}`));
         const snap = await getDocs(q);
         exportData[col] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       }
 
       const dataStr = JSON.stringify(exportData, null, 2);
-      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `pulse_data_${new Date().toISOString()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       
-      const exportFileDefaultName = `pulse_data_export_${new Date().toISOString()}.json`;
-      
-      const linkElement = document.createElement('a');
-      linkElement.setAttribute('href', dataUri);
-      linkElement.setAttribute('download', exportFileDefaultName);
-      linkElement.click();
-      
-      setMessage({ type: 'success', text: 'Data berhasil diekspor!' });
+      toast.success('Data berhasil diekspor!');
     } catch (err: any) {
-      console.error(err);
-      setMessage({ type: 'error', text: 'Gagal mengekspor data: ' + err.message });
+      toast.error('Gagal mengekspor data.');
     } finally {
       setLoading(false);
     }
@@ -227,202 +211,144 @@ export default function SettingsPage() {
     try {
       await deleteDoc(doc(db, 'users', user.uid));
       await user.delete();
+      toast.success('Akun telah dihapus.');
     } catch (err) {
-      console.error(err);
+      toast.error('Gagal menghapus akun. Silakan login ulang.');
     } finally {
       setLoading(false);
     }
   };
 
-  const isMfaActive = multiFactor(user as any).enrolledFactors.length > 0;
-  const isPhoneUnverified = phone && !user?.phoneNumber;
+  const enrolledFactors = user ? multiFactor(user).enrolledFactors : [];
+  const isMfaActive = enrolledFactors.length > 0;
+
+  useEffect(() => {
+    if (showOtpModal && otpInputRef.current) {
+      otpInputRef.current.focus();
+    }
+  }, [showOtpModal]);
 
   return (
-    <div className="space-y-8 md:space-y-12 pb-24 lg:pb-12">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5 mb-2">
-            <div className="h-8 w-8 bg-slate-900 text-white rounded-xl flex items-center justify-center shadow-lg shadow-slate-200">
-              <SettingsIcon size={16} />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">System Preferences</span>
-          </div>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight">{t('profile.settings')}</h1>
-          <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-widest">Protocol configuration and security interface.</p>
+    <motion.div {... fadeInUp} className="space-y-8 pb-20">
+      <header className="space-y-2">
+        <div className="flex items-center gap-3 text-[var(--accent)] mb-2">
+            <SettingsIcon size={20} />
+            <span className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-60">System Preferences</span>
         </div>
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">{t('profile.settings')}</h1>
+        <p className="text-sm text-[var(--text2)] font-medium">Konfigurasi protokol dan antarmuka keamanan sistem Pulse Anda.</p>
       </header>
 
-      {message && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={cn(
-            "p-4 rounded-2xl flex items-center gap-3 font-bold text-sm shadow-sm",
-            message.type === 'success' ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : "bg-rose-50 text-rose-600 border border-rose-100"
-          )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Keamanan & Akses */}
+        <SettingsSection 
+          title={t('profile.security.title')} 
+          subtitle={t('profile.security.subtitle')} 
+          icon={ShieldCheckIcon}
         >
-          {message.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
-          {message.text}
-        </motion.div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        
-        {/* Security Hub - Full Width */}
-        <SectionContainer title={t('profile.security.title')} subtitle="Identity & Access" icon={<ShieldCheck size={24} />} className="md:col-span-12 border-indigo-100">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('profile.phone')}</label>
-                <div className="flex gap-3">
-                  <div className="relative flex-1">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                    <input 
-                      type="tel" 
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+62 812..."
-                      className={cn(
-                        "w-full pl-12 pr-4 py-4 bg-slate-50 border-2 rounded-2xl focus:bg-white focus:border-[var(--primary)] focus:outline-none transition-all font-bold",
-                        isPhoneUnverified ? "border-amber-200" : "border-slate-50"
-                      )}
-                    />
-                  </div>
-                  {!user?.phoneNumber && (
-                    <button 
-                      type="button"
-                      onClick={() => { setMfaEnrolling(false); handleStartPhoneVerification(); }}
-                      className="px-8 py-3 bg-indigo-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
-                    >
-                      {t('common.verify')}
-                    </button>
-                  )}
-                </div>
-                {isPhoneUnverified && (
-                  <div className="flex items-center gap-2 px-2 py-1 text-[10px] font-black text-amber-600 uppercase tracking-widest animate-pulse">
-                    <AlertCircle size={12} />
-                    Pending Verification Required
-                  </div>
-                )}
-                {user?.phoneNumber && (
-                  <div className="flex items-center gap-2 px-2 py-1 text-[10px] font-black text-emerald-600 uppercase tracking-widest">
-                    <CheckCircle size={12} />
-                    Identity Secure: {user.phoneNumber}
-                  </div>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">{t('profile.phone')}</label>
+              <div className="flex gap-3">
+                <input 
+                  type="tel" 
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+62 812..."
+                  className="flex-1 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] px-4 py-2.5 outline-none focus:border-[var(--accent)] transition-all font-medium text-sm"
+                />
+                {!user?.phoneNumber && (
+                  <Button 
+                    onClick={() => { setMfaEnrolling(false); handleStartPhoneVerification(); }}
+                    loading={loading && !mfaEnrolling}
+                    size="sm"
+                  >
+                    Verifikasi
+                  </Button>
                 )}
               </div>
-
-              <button 
-                onClick={handleChangePassword}
-                disabled={loading}
-                className="w-full text-left p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 hover:bg-slate-100 transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm border border-slate-100">
-                  <Lock size={20} />
+              {user?.phoneNumber && (
+                <div className="flex items-center gap-2 text-xs font-bold text-[var(--success)] px-1">
+                  <CheckCircle size={14} /> Tersertifikasi: {user.phoneNumber}
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs font-black text-slate-900 uppercase tracking-widest">{t('profile.changePassword')}</p>
-                  <p className="text-[10px] text-slate-400 font-bold leading-tight">Update your authentication credentials.</p>
-                </div>
-                <ChevronRight size={18} className="text-slate-300" />
-              </button>
+              )}
             </div>
 
-            <div className="bg-indigo-50/50 p-8 rounded-3xl border border-indigo-100 flex flex-col justify-between relative overflow-hidden group">
-              <Zap className="absolute -right-4 -top-4 text-indigo-100 h-24 w-24 rotate-12 group-hover:scale-125 transition-transform duration-700" />
-              <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-black text-slate-900 text-lg">{t('profile.security.twoFactor')}</h4>
-                  {isMfaActive ? (
-                    <span className="bg-emerald-500 text-white text-[8px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] shadow-sm">{t('profile.security.mfaStatusProtected')}</span>
-                  ) : (
-                    <span className="bg-white text-slate-400 text-[8px] px-3 py-1 rounded-full font-black uppercase tracking-[0.2em] border border-slate-200">{t('profile.security.mfaStatusStandard')}</span>
-                  )}
-                </div>
-                <p className="text-[11px] font-bold text-slate-500 leading-relaxed max-w-xs">
-                  {t('profile.security.mfaDesc')}
-                </p>
-              </div>
-              
-              <button
+            <div className="pt-6 border-t border-[var(--border)]">
+              <h4 className="font-bold text-sm mb-2">{t('profile.security.twoFactor')}</h4>
+              <p className="text-xs text-[var(--text2)] leading-relaxed mb-5">{t('profile.security.mfaDesc')}</p>
+              <Button
                 onClick={() => {
                   if (!user?.phoneNumber) {
-                    setMessage({ type: 'error', text: 'Verifikasi nomor telepon dulu sebelum mengaktifkan A2F.' });
+                    toast.error(t('profile.security.verifyPhone'));
                   } else {
                     setMfaEnrolling(true);
                     handleStartPhoneVerification();
                   }
                 }}
-                disabled={isMfaActive || (loading && mfaEnrolling)}
-                className={cn(
-                  "mt-6 w-full py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all flex items-center justify-center gap-3 relative overflow-hidden",
-                  isMfaActive 
-                    ? "bg-white text-emerald-500 border-2 border-emerald-100 cursor-default" 
-                    : "bg-slate-900 text-white hover:bg-black active:scale-[0.98] shadow-2xl shadow-slate-200"
+                disabled={isMfaActive}
+                variant={isMfaActive ? 'secondary' : 'primary'}
+                className="w-full h-12"
+              >
+                {isMfaActive ? (
+                    <div className="flex items-center gap-2">
+                        <ShieldCheckIcon size={18} />
+                        <span>{t('profile.security.mfaActive')}</span>
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2">
+                        <Zap size={18} />
+                        <span>{t('profile.security.mfaActivate')}</span>
+                    </div>
                 )}
-              >
-                {isMfaActive ? <ShieldCheck size={16} /> : (loading && mfaEnrolling ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} className="text-indigo-400" />)}
-                {isMfaActive ? t('profile.security.mfaActive') : t('profile.security.mfaActivate')}
-              </button>
+              </Button>
+            </div>
+
+            <div className="pt-4 border-t border-[var(--border)]">
+               <button 
+                 onClick={handleChangePassword}
+                 className="w-full flex items-center justify-between p-4 bg-[var(--surface)] rounded-[var(--r-lg)] hover:bg-[var(--surface2)] transition-all group"
+               >
+                 <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[var(--surface2)] rounded-lg text-[var(--text2)] group-hover:text-[var(--accent)] transition-colors border border-[var(--border)]">
+                        <Lock size={18} />
+                    </div>
+                    <div className="text-left">
+                        <p className="text-sm font-bold">{t('profile.changePassword')}</p>
+                        <p className="text-[10px] text-[var(--text2)]">{t('profile.security.changePasswordDesc')}</p>
+                    </div>
+                 </div>
+                 <ChevronRight size={18} className="text-[var(--text3)] group-hover:translate-x-1 transition-transform" />
+               </button>
             </div>
           </div>
-          <div id="recaptcha-container" className="hidden"></div>
-        </SectionContainer>
+          <div id="recaptcha-container"></div>
+        </SettingsSection>
 
-        {/* Appearance */}
-        <SectionContainer title={t('profile.appearance.title')} subtitle="UI/UX Styles" icon={<Eye size={24} />} className="md:col-span-6 border-sky-100">
-          <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.appearance.theme')}</label>
-            <div className="grid grid-cols-3 gap-3">
-              <ThemeButton label="Light" active={theme === 'light'} onClick={() => setTheme('light')} icon={<Sun size={14} />} />
-              <ThemeButton label="Dark" active={theme === 'dark'} onClick={() => setTheme('dark')} icon={<Moon size={14} />} />
-              <ThemeButton label="Auto" active={theme === 'system'} onClick={() => setTheme('system')} icon={<Monitor size={14} />} />
-            </div>
-          </div>
-        </SectionContainer>
-
-        {/* Language */}
-        <SectionContainer title={t('profile.language.title')} subtitle="Locales" icon={<Globe size={24} />} className="md:col-span-6 border-emerald-100">
-          <div className="space-y-4">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.language.select')}</label>
-            <div className="relative">
-              <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-              <select 
-                value={i18n.language}
-                onChange={(e) => i18n.changeLanguage(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-2xl text-sm font-black focus:bg-white focus:border-emerald-500 focus:outline-none transition-all appearance-none cursor-pointer"
-              >
-                <option value="en">English (Global)</option>
-                <option value="id">Bahasa Indonesia</option>
-              </select>
-            </div>
-          </div>
-        </SectionContainer>
-
-        {/* AI Configuration */}
-        <SectionContainer 
+        {/* AI & Persona */}
+        <SettingsSection 
           title={t('profile.ai.title')} 
           subtitle={t('profile.ai.subtitle')} 
-          icon={<Zap size={24} className="text-amber-500" />} 
-          className="md:col-span-12 lg:col-span-7 border-amber-100"
+          icon={Zap}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.ai.persona')}</label>
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">{t('profile.ai.persona')}</label>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { id: 'balanced', label: t('profile.ai.tones.balanced'), color: 'bg-slate-100' },
-                  { id: 'tough', label: t('profile.ai.tones.tough'), color: 'bg-rose-50' },
-                  { id: 'supportive', label: t('profile.ai.tones.supportive'), color: 'bg-emerald-50' },
-                  { id: 'stoic', label: t('profile.ai.tones.stoic'), color: 'bg-indigo-50' }
+                  { id: 'balanced', label: t('profile.ai.tones.balanced') },
+                  { id: 'tough', label: t('profile.ai.tones.tough') },
+                  { id: 'supportive', label: t('profile.ai.tones.supportive') },
+                  { id: 'stoic', label: t('profile.ai.tones.stoic') }
                 ].map((tone) => (
                   <button
                     key={tone.id}
                     onClick={() => handleAiPrefChange('coachTone', tone.id)}
-                    className={cn(
-                      "p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all text-center",
-                      aiPrefs.coachTone === tone.id ? "bg-slate-900 text-white shadow-lg" : "bg-slate-50 text-slate-400 hover:bg-slate-100"
-                    )}
+                    className={`p-3 rounded-[var(--r-md)] text-xs font-bold border transition-all ${
+                        aiPrefs.coachTone === tone.id 
+                        ? 'bg-[var(--accent)] border-[var(--accent)] text-white shadow-lg shadow-[var(--accent-bg)]' 
+                        : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text2)] hover:border-[var(--text3)]'
+                    }`}
                   >
                     {tone.label}
                   </button>
@@ -430,350 +356,257 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="space-y-4">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.ai.frequency')}</label>
-              <div className="flex bg-slate-100 p-1 rounded-2xl">
+            <div className="space-y-3 pt-4 border-t border-[var(--border)]">
+              <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">{t('profile.ai.frequency')}</label>
+              <div className="flex bg-[var(--surface)] p-1 rounded-[var(--r-md)] border border-[var(--border)]">
                 {['low', 'normal', 'high'].map((freq) => (
                   <button
                     key={freq}
                     onClick={() => handleAiPrefChange('nudgeFrequency', freq)}
-                    className={cn(
-                      "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
-                      aiPrefs.nudgeFrequency === freq ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                    )}
+                    className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-[var(--r-sm)] transition-all ${
+                      aiPrefs.nudgeFrequency === freq ? "bg-[var(--surface2)] text-[var(--accent)] shadow-sm border border-[var(--border)]" : "text-[var(--text3)]"
+                    }`}
                   >
                     {freq}
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] font-bold text-slate-400 leading-tight">{t('profile.ai.frequencyDesc')}</p>
+              <p className="text-[10px] text-[var(--text2)] leading-relaxed px-1">{t('profile.ai.frequencyDesc')}</p>
             </div>
           </div>
-        </SectionContainer>
+        </SettingsSection>
 
-        {/* Accessibility */}
-        <SectionContainer 
-          title={t('profile.accessibility.title')} 
-          subtitle={t('profile.accessibility.subtitle')} 
-          icon={<Monitor size={24} className="text-sky-500" />} 
-          className="md:col-span-12 lg:col-span-5 border-sky-100"
+        {/* Preferensi Sistem */}
+        <SettingsSection 
+          title={t('profile.appearance.title')}
+          subtitle="Tampilan dan Lokalisasi"
+          icon={Monitor}
         >
-          <div className="space-y-6">
-            <Toggle isOn={accessibility.highContrast} onToggle={() => handleToggleAccessibility('highContrast')} label={t('profile.accessibility.highContrast')} />
-            <Toggle isOn={accessibility.reducedMotion} onToggle={() => handleToggleAccessibility('reducedMotion')} label={t('profile.accessibility.reducedMotion')} />
-            
+          <div className="space-y-8">
             <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.accessibility.fontScale')}</label>
-                <span className="text-xs font-black text-slate-900">{Math.round(accessibility.fontScale * 100)}%</span>
+              <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">{t('profile.language.select')}</label>
+              <div className="relative">
+                <Globe className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text3)]" size={18} />
+                <select 
+                  value={i18n.language}
+                  onChange={(e) => i18n.changeLanguage(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] text-sm font-bold appearance-none cursor-pointer focus:border-[var(--accent)] outline-none transition-all"
+                >
+                  <option value="id">Bahasa Indonesia</option>
+                  <option value="en">English (US)</option>
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[var(--text3)]">
+                    <ChevronRight size={16} className="rotate-90" />
+                </div>
               </div>
-              <input 
-                type="range" 
-                min="0.8" 
-                max="1.5" 
-                step="0.1" 
-                value={accessibility.fontScale}
-                onChange={(e) => handleAiPrefChange('accessibility', { ...accessibility, fontScale: parseFloat(e.target.value) })}
-                className="w-full accent-slate-900"
+            </div>
+
+            <div className="space-y-4 pt-4 border-t border-[var(--border)]">
+              <SettingsToggle 
+                label={t('profile.accessibility.highContrast')} 
+                isOn={accessibility.highContrast} 
+                onToggle={() => handleToggleAccessibility('highContrast')} 
+              />
+              <SettingsToggle 
+                label={t('profile.accessibility.reducedMotion')} 
+                isOn={accessibility.reducedMotion} 
+                onToggle={() => handleToggleAccessibility('reducedMotion')} 
               />
             </div>
           </div>
-        </SectionContainer>
+        </SettingsSection>
 
-        {/* Notifications */}
-        <SectionContainer title={t('profile.notifications.title')} subtitle="Push & Email" icon={<Bell size={24} />} className="md:col-span-12 lg:col-span-7 border-indigo-100">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <ToggleCard 
-              label={t('profile.notifications.email')} 
-              desc="Receive weekly analytical reports." 
-              icon={<Mail size={16} />} 
-              isOn={notifications.email} 
-              onToggle={() => handleToggleNotification('email')} 
-            />
-            <ToggleCard 
-              label={t('profile.notifications.push')} 
-              desc="Real-time wellness nudges." 
-              icon={<Zap size={16} />} 
-              isOn={notifications.push} 
-              onToggle={() => handleToggleNotification('push')} 
-            />
-            <ToggleCard 
-              label={t('profile.notifications.messages')} 
-              desc="Coach feedback & mentorship." 
-              icon={<MessageSquare size={16} />} 
-              isOn={notifications.messages} 
-              onToggle={() => handleToggleNotification('messages')} 
-            />
-            <ToggleCard 
-              label={t('profile.notifications.alerts')} 
-              desc="Daily streak & goal reminders." 
-              icon={<Bell size={16} />} 
-              isOn={notifications.alerts} 
-              onToggle={() => handleToggleNotification('alerts')} 
-            />
-          </div>
-        </SectionContainer>
-
-        {/* Privacy */}
-        <SectionContainer title={t('profile.privacy.title')} subtitle="Visibility Control" icon={<Shield size={24} />} className="md:col-span-12 lg:col-span-5 border-amber-100">
-          <div className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{t('profile.privacy.visibility')}</label>
-              <div className="flex bg-slate-100 p-1 rounded-2xl">
-                {(['public', 'friends', 'private'] as const).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => handleVisibilityChange(v)}
-                    className={cn(
-                      "flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all",
-                      privacy.visibility === v ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
-                    )}
-                  >
-                    {t(`profile.privacy.${v}`)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <Toggle isOn={privacy.dataSharing} onToggle={() => handleTogglePrivacy('dataSharing')} label={t('profile.privacy.dataSharing')} />
-            <p className="text-[9px] font-bold text-slate-400 leading-tight">{t('profile.privacy.dataSharingDesc')}</p>
-          </div>
-        </SectionContainer>
-
-        {/* Data Management */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="md:col-span-12 bg-white p-10 rounded-[2.5rem] border border-rose-100 shadow-sm"
+        {/* Notifikasi & Privasi */}
+        <SettingsSection 
+          title="Notifikasi & Privasi"
+          subtitle="Manajemen Komunikasi"
+          icon={Bell}
         >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-6">
-              <div className="h-16 w-16 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center shrink-0">
-                <Database size={32} />
-              </div>
-              <div className="text-center md:text-left">
-                <h3 className="text-xl font-black text-slate-900">{t('profile.dataManagement.title')}</h3>
-                <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Account Persistence Control</p>
-              </div>
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+               <NotificationCard 
+                label="Email" 
+                isOn={notifications.email} 
+                icon={Mail} 
+                onClick={() => handleToggleNotification('email')} 
+               />
+               <NotificationCard 
+                label="Push" 
+                isOn={notifications.push} 
+                icon={Zap} 
+                onClick={() => handleToggleNotification('push')} 
+               />
             </div>
-            
-            <div className="flex flex-wrap justify-center gap-4 w-full md:w-auto">
-              <button 
-                onClick={handleExportData}
-                disabled={loading}
-                className="flex-1 md:flex-none py-5 px-10 border-2 border-slate-100 bg-white rounded-2xl text-slate-600 font-black uppercase tracking-widest text-xs hover:bg-slate-50 transition-all flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
-              >
-                {loading && !mfaEnrolling ? <Loader2 className="animate-spin" size={16} /> : <Database size={16} />}
-                {t('profile.dataManagement.export')}
-              </button>
-              <button 
-                onClick={handleDeleteAccount}
-                disabled={loading}
-                className="flex-1 md:flex-none py-5 px-10 bg-rose-600 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-rose-200 hover:bg-rose-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-95"
-              >
-                {loading && !mfaEnrolling ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                {t('profile.dataManagement.delete')}
-              </button>
+
+            <div className="pt-6 border-t border-[var(--border)] space-y-4">
+                <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">{t('profile.privacy.visibility')}</label>
+                <div className="flex bg-[var(--surface)] p-1 rounded-[var(--r-md)] border border-[var(--border)]">
+                    {(['public', 'friends', 'private'] as const).map((v) => (
+                    <button
+                        key={v}
+                        onClick={() => handleVisibilityChange(v)}
+                        className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-[var(--r-sm)] transition-all ${
+                        privacy.visibility === v ? "bg-[var(--surface2)] text-[var(--accent)] shadow-sm border border-[var(--border)]" : "text-[var(--text3)]"
+                        }`}
+                    >
+                        {t(`profile.privacy.${v}`)}
+                    </button>
+                    ))}
+                </div>
+                <SettingsToggle 
+                    label={t('profile.privacy.dataSharing')} 
+                    isOn={privacy.dataSharing} 
+                    onToggle={() => handleTogglePrivacy('dataSharing')} 
+                />
+                <p className="text-[10px] text-[var(--text2)] leading-relaxed px-1 italic">
+                    {t('profile.privacy.dataSharingDesc')}
+                </p>
             </div>
           </div>
-        </motion.div>
+        </SettingsSection>
+
+        {/* Manajemen Data */}
+        <SettingsSection 
+          title={t('profile.dataManagement.title')} 
+          subtitle={t('profile.dataManagement.subtitle')} 
+          icon={Database}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-5 bg-[var(--surface)] border-[var(--border)] flex flex-col justify-between gap-6 hover:border-[var(--accent)] transition-all group">
+              <div>
+                <h4 className="text-sm font-bold mb-1 flex items-center gap-2">
+                    <Database size={14} className="text-[var(--accent)]" />
+                    {t('profile.dataManagement.export')}
+                </h4>
+                <p className="text-[10px] text-[var(--text2)] leading-relaxed">{t('profile.dataManagement.exportDesc')}</p>
+              </div>
+              <Button onClick={handleExportData} variant="secondary" size="sm" className="w-full">
+                Ekspor JSON
+              </Button>
+            </Card>
+
+            <Card className="p-5 bg-[var(--error-bg)] border-[var(--error)]/20 flex flex-col justify-between gap-6 hover:border-[var(--error)]/40 transition-all">
+              <div>
+                <h4 className="text-sm font-bold text-[var(--error)] mb-1 flex items-center gap-2">
+                    <Trash2 size={14} />
+                    {t('profile.dataManagement.delete')}
+                </h4>
+                <p className="text-[10px] text-[var(--error)] opacity-70 leading-relaxed">{t('profile.dataManagement.deleteDesc')}</p>
+              </div>
+              <Button onClick={handleDeleteAccount} variant="danger" size="sm" className="w-full">
+                Hapus Akun
+              </Button>
+            </Card>
+          </div>
+        </SettingsSection>
       </div>
 
+      {/* OTP Modal */}
       <AnimatePresence>
-        {showPasswordModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0D0F14]/90 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[3rem] p-10 max-w-md w-full shadow-2xl relative overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 p-10 opacity-5">
-                 <Lock size={120} />
-              </div>
-              <div className="h-20 w-20 bg-indigo-50 text-indigo-600 rounded-[2rem] flex items-center justify-center mb-8 mx-auto relative z-10 border border-indigo-100">
-                <Mail size={32} />
-              </div>
-              <h3 className="text-3xl font-black text-slate-900 text-center mb-4 tracking-tight">Email Dispatched</h3>
-              <p className="text-sm font-bold text-slate-500 leading-relaxed text-center mb-8">
-                 A secure password reset protocol has been initiated. Please check your inbox at <span className="text-indigo-600 font-black">{user?.email}</span> to proceed.
-              </p>
-
-              <div className="bg-slate-50 rounded-3xl p-6 mb-8 border border-slate-100 space-y-4">
-                 <div className="flex items-center gap-3">
-                    <Shield size={16} className="text-indigo-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Security Protocol</span>
-                 </div>
-                 <ul className="space-y-2">
-                    <li className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
-                       <CheckCircle size={10} className="text-emerald-500" /> Link expires in 60 minutes
-                    </li>
-                    <li className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
-                       <CheckCircle size={10} className="text-emerald-500" /> Verify sender authenticity
-                    </li>
-                    <li className="text-[10px] font-bold text-slate-600 flex items-center gap-2">
-                       <CheckCircle size={10} className="text-emerald-500" /> Uses HTTPS secure channel
-                    </li>
-                 </ul>
-              </div>
-              
-              <button
-                onClick={() => setShowPasswordModal(false)}
-                className="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-xl hover:bg-black transition-all active:scale-[0.98]"
-              >
-                Acknowledgement
-              </button>
-            </motion.div>
-          </div>
-        )}
-
         {showOtpModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl border border-indigo-100"
+              className="bg-[var(--surface2)] rounded-[var(--r-2xl)] p-8 max-w-sm w-full shadow-2xl border border-[var(--border)]"
             >
-              <div className="h-20 w-20 bg-indigo-50 text-indigo-600 rounded-3xl flex items-center justify-center mb-8 mx-auto">
-                <Smartphone size={40} />
+              <div className="h-16 w-16 bg-[var(--accent-bg)] text-[var(--accent)] rounded-2xl flex items-center justify-center mb-6 mx-auto border border-[var(--accent)]/20">
+                <Smartphone size={32} />
               </div>
-              <h3 className="text-2xl font-black text-slate-900 text-center mb-3">
-                {mfaEnrolling ? 'Aktifkan A2F' : 'Verifikasi Nomor'}
+              <h3 className="text-xl font-bold text-center mb-2">
+                {mfaEnrolling ? t('profile.security.mfaEnroll') : t('profile.security.verifyPhone')}
               </h3>
-              <div className="bg-amber-50 rounded-2xl p-4 mb-6 border border-amber-100">
-                <p className="text-[11px] font-bold text-amber-700 leading-relaxed text-center">
-                  Kami telah mengirimkan 6 digit kode ke <span className="text-slate-900">{phone}</span>. Masukkan kode tersebut untuk melanjutkan.
-                </p>
-              </div>
+              <p className="text-xs text-[var(--text2)] text-center mb-8 font-medium">
+                {t('profile.security.mfaConfirmation', { phone })}
+              </p>
               
               <div className="space-y-6">
-                <div>
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block text-center mb-4">6-Digit Verification Code</label>
-                  <input
+                <input
                     ref={otpInputRef}
                     type="text"
                     maxLength={6}
                     value={verificationCode}
                     onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                     placeholder="000000"
-                    className="w-full text-center tracking-[0.3em] text-3xl font-black p-6 bg-slate-50 border-4 border-slate-50 rounded-[2rem] focus:border-indigo-600 focus:bg-white focus:outline-none transition-all mb-2 shadow-inner"
-                  />
-                </div>
+                    className="w-full text-center tracking-[0.4em] text-3xl font-black p-4 bg-[var(--surface)] border-2 border-[var(--border)] rounded-[var(--r-xl)] focus:border-[var(--accent)] outline-none transition-all placeholder:opacity-20"
+                />
 
-                <div className="flex flex-col gap-3">
-                  <button
+                <div className="flex flex-col gap-2">
+                  <Button
                     onClick={handleConfirmOtp}
-                    disabled={loading || verificationCode.length < 6}
-                    className="w-full py-5 bg-indigo-600 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-xs shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition-all flex items-center justify-center gap-3 disabled:opacity-50 active:scale-[0.98]"
+                    loading={loading}
+                    disabled={verificationCode.length < 6}
+                    className="w-full h-12"
                   >
-                    {loading ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
-                    {mfaEnrolling ? 'Konfirmasi & Aktifkan' : 'Verifikasi Nomor'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowOtpModal(false);
-                      setMfaEnrolling(false);
-                      setVerificationCode('');
-                    }}
-                    className="w-full py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] text-slate-400 hover:text-slate-600 transition-all"
+                    {t('profile.security.otpSubmit')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => { setShowOtpModal(false); setMfaEnrolling(false); }}
+                    className="w-full text-[10px] opacity-40 font-bold uppercase tracking-widest"
                   >
-                    Batalkan
-                  </button>
+                    {t('profile.security.otpCancel')}
+                  </Button>
                 </div>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-    </div>
-  );
-}
-
-function SectionContainer({ title, subtitle, icon, children, className }: any) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className={cn("bg-white p-10 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col space-y-8", className)}
-    >
-      <div className="flex items-center gap-4">
-        <div className="h-14 w-14 bg-slate-50 border border-slate-100 text-slate-900 rounded-3xl flex items-center justify-center shrink-0 shadow-sm">
-          {icon}
-        </div>
-        <div>
-          <h3 className="text-xl font-black text-slate-900 leading-tight">{title}</h3>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">{subtitle}</p>
-        </div>
-      </div>
-      <div className="flex-1">
-        {children}
-      </div>
     </motion.div>
   );
 }
 
-function ThemeButton({ label, active, onClick, icon }: any) {
-  return (
-    <button 
-      onClick={onClick}
-      className={cn(
-        "p-5 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all group active:scale-95",
-        active 
-          ? "bg-slate-900 border-slate-900 text-white shadow-xl shadow-slate-200" 
-          : "bg-slate-50 border-transparent text-slate-400 hover:bg-white hover:border-slate-200"
-      )}
-    >
-      <div className={cn("transition-transform group-hover:scale-125 duration-500", active ? "text-white" : "text-slate-300")}>
-        {icon}
-      </div>
-      <span className="text-[9px] font-black uppercase tracking-[0.2em]">{label}</span>
-    </button>
-  );
+// Sub-components
+function SettingsSection({ title, subtitle, icon: Icon, children }: any) {
+    return (
+        <Card className="flex flex-col h-full bg-[var(--surface2)] border-[var(--border)] p-8 space-y-8">
+             <div className="flex items-center gap-4">
+                <div className="p-3 bg-[var(--surface)] text-[var(--accent)] rounded-2xl border border-[var(--border)] shadow-sm">
+                    <Icon size={20} />
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold leading-tight">{title}</h3>
+                    <p className="text-[10px] text-[var(--text2)] font-bold uppercase tracking-[0.2em]">{subtitle}</p>
+                </div>
+            </div>
+            <div className="flex-1">
+                {children}
+            </div>
+        </Card>
+    );
 }
 
-function ToggleCard({ label, desc, icon, isOn, onToggle }: any) {
-  return (
-    <button 
-      onClick={onToggle}
-      className={cn(
-        "p-6 rounded-3xl border-2 text-left transition-all group flex flex-col justify-between gap-4 active:scale-[0.98]",
-        isOn ? "bg-white border-indigo-500 shadow-xl shadow-indigo-50" : "bg-slate-50 border-transparent hover:bg-white hover:border-slate-200"
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center transition-all", isOn ? "bg-indigo-500 text-white" : "bg-white text-slate-400 shadow-sm")}>
-          {icon}
+function SettingsToggle({ label, isOn, onToggle }: any) {
+    return (
+        <div className="flex items-center justify-between py-1 px-1">
+            <span className="text-sm font-semibold text-[var(--text)]">{label}</span>
+            <button 
+                onClick={onToggle}
+                className={`w-11 h-6 rounded-full relative transition-all duration-300 ${isOn ? 'bg-[var(--accent)] shadow-lg shadow-[var(--accent-bg)]' : 'bg-[var(--surface)] border border-[var(--border)]'}`}
+            >
+                <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm ${isOn ? 'left-6 scale-110' : 'left-1'}`} />
+            </button>
         </div>
-        <div className={cn("w-10 h-6 rounded-full relative transition-all", isOn ? "bg-indigo-500" : "bg-slate-200")}>
-          <div className={cn("absolute top-1 w-4 h-4 rounded-full bg-white transition-all shadow-sm", isOn ? "left-5" : "left-1")} />
-        </div>
-      </div>
-      <div>
-        <p className="text-xs font-black text-slate-900 tracking-tight">{label}</p>
-        <p className="text-[10px] font-bold text-slate-400 leading-tight mt-1">{desc}</p>
-      </div>
-    </button>
-  );
+    );
 }
 
-function Toggle({ label, isOn, onToggle }: any) {
-  return (
-    <div className="flex items-center justify-between group">
-      <span className="text-sm font-bold text-slate-600 group-hover:text-slate-900 transition-colors">{label}</span>
-      <button 
-        onClick={onToggle}
-        className={cn(
-          "w-12 h-6 rounded-full relative transition-all shadow-inner",
-          isOn ? "bg-emerald-500" : "bg-slate-200"
-        )}
-      >
-        <div className={cn(
-          "absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all shadow-md",
-          isOn ? "left-6.5" : "left-0.5"
-        )} />
-      </button>
-    </div>
-  );
+function NotificationCard({ label, isOn, icon: Icon, onClick }: any) {
+    return (
+        <button 
+            onClick={onClick}
+            className={`p-5 rounded-[var(--r-xl)] border transition-all duration-300 flex items-center justify-between group active:scale-[0.97] ${
+                isOn 
+                ? 'bg-[var(--accent-bg)] border-[var(--accent)] text-[var(--accent)]' 
+                : 'bg-[var(--surface)] border-[var(--border)] text-[var(--text2)] hover:border-[var(--text3)] hover:bg-[var(--surface2)] text-[var(--text2)]'
+            }`}
+        >
+            <div className="flex items-center gap-3">
+                <Icon size={18} className={isOn ? 'text-[var(--accent)]' : 'text-[var(--text2)]'} />
+                <span className={`text-[10px] font-black uppercase tracking-widest ${isOn ? 'text-[var(--accent)]' : 'text-[var(--text2)]'}`}>{label}</span>
+            </div>
+            <div className={`h-1.5 w-1.5 rounded-full transition-all ${isOn ? 'bg-[var(--accent)] shadow-[0_0_8px_var(--accent)]' : 'bg-[var(--text3)]'}`} />
+        </button>
+    );
 }

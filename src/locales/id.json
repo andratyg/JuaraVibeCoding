@@ -44,6 +44,7 @@
     },
     "notifications": {
       "title": "Preferensi Notifikasi",
+      "subtitle": "Push & Email Dispatch",
       "email": "Notifikasi Email",
       "push": "Notifikasi Push",
       "messages": "Pesan Baru",
@@ -52,6 +53,7 @@
     },
     "privacy": {
       "title": "Pengaturan Privasi",
+      "subtitle": "Kontrol Visibilitas",
       "visibility": "Visibilitas Profil",
       "public": "Publik",
       "friends": "Hanya Teman",
@@ -60,7 +62,9 @@
       "dataSharingDesc": "Bantu kami meningkatkan AI dengan berbagi pola penggunaan anonim. Identitas Anda tetap 100% pribadi."
     },
     "security": {
-      "title": "Pengaturan Keamanan",
+      "title": "Keamanan & Akses",
+      "subtitle": "Identitas & Protokol",
+      "identityAccess": "Identitas & Akses",
       "googleAuth": "Perlindungan Identitas Google",
       "activeSessions": "Sesi Aktif",
       "linkedAccounts": "Akun Tertaut",
@@ -71,19 +75,35 @@
       "googleActivate": "SINKRONISASI IDENTITAS GOOGLE",
       "googleActive": "IDENTITAS TERSINKRONISASI",
       "resetSent": "Tautan reset kata sandi telah dikirim ke email Anda.",
-      "sessionsRevoked": "Semua sesi aktif lainnya telah dibatalkan."
+      "sessionsRevoked": "Semua sesi aktif lainnya telah dibatalkan.",
+      "twoFactor": "Otentikasi Dua Faktor (2FA)",
+      "mfaDesc": "Tambahkan lapisan keamanan ekstra dengan memerlukan kode verifikasi dari ponsel Anda saat masuk.",
+      "mfaActivate": "AKTIFKAN 2FA SEKARANG",
+      "mfaActive": "2FA AKTIF & TERLINDUNGI",
+      "mfaStatusProtected": "TERPROTEKSI",
+      "mfaStatusStandard": "STANDAR",
+      "phoneDesc": "Nomor telepon Anda digunakan untuk pemulihan akun dan keamanan 2FA.",
+      "changePasswordDesc": "Perbarui kredensial autentikasi Anda secara berkala.",
+      "mfaEnroll": "Aktifkan 2FA",
+      "verifyPhone": "Verifikasi Nomor",
+      "mfaConfirmation": "Kami telah mengirimkan 6 digit kode ke {phone}. Masukkan kode tersebut untuk melanjutkan.",
+      "otpLabel": "Kode Verifikasi 6-Digit",
+      "otpSubmit": "Konfirmasi & Aktifkan",
+      "otpCancel": "Batalkan"
     },
     "appearance": {
-      "title": "Tampilan",
-      "theme": "Tema",
+      "title": "Tampilan & Antarmuka",
+      "subtitle": "Gaya Visual UI/UX",
+      "theme": "Tema Sistem",
       "light": "Terang",
       "dark": "Gelap",
-      "system": "Default Sistem",
+      "system": "Otomatis",
       "fontSize": "Ukuran Font"
     },
     "language": {
-      "title": "Bahasa",
-      "select": "Pilih Bahasa"
+      "title": "Bahasa & Wilayah",
+      "subtitle": "Lokalisasi Sistem",
+      "select": "Pilih Bahasa Utama"
     },
     "vibe": {
       "hustle": "Fokus pada produktivitas maksimal. Selesaikan banyak hal dengan cepat.",
@@ -92,7 +112,7 @@
     },
     "ai": {
       "title": "Kecerdasan Pulse AI",
-      "subtitle": "Logika & Kepribadian",
+      "subtitle": "Konfigurasi Logika",
       "persona": "Persona Coach (Nada AI)",
       "frequency": "Frekuensi Intervensi",
       "frequencyDesc": "Mengontrol seberapa sering Pulse AI akan memberikan saran atau intervensi sepanjang hari.",
@@ -105,16 +125,19 @@
     },
     "accessibility": {
       "title": "Aksesibilitas",
-      "subtitle": "Visual & Kognitif",
+      "subtitle": "Optimasi Visual & Kognitif",
       "highContrast": "Mode Kontras Tinggi",
       "reducedMotion": "Kurangi Gerakan",
       "fontScale": "Skala Font"
     },
     "dataManagement": {
       "title": "Manajemen Data",
+      "subtitle": "Kontrol Persistensi Akun",
       "export": "Ekspor Data",
+      "exportDesc": "Kumpulkan dan unduh seluruh riwayat data Pulse Anda dalam format JSON.",
       "delete": "Hapus Akun",
-      "deleteWarning": "Tindakan ini tidak dapat dibatalkan."
+      "deleteDesc": "Hapus permanen akun dan seluruh data terkait dari server Pulse.",
+      "deleteWarning": "Tindakan ini bersifat permanen dan tidak dapat dibatalkan."
     }
   },
   "tasks": {
@@ -190,16 +213,88 @@
       "invalidEmail": "Masukkan alamat email yang valid."
     }
   },
+  "nav": {
+    "dashboard": "Dashboard",
+    "checkin": "Kalibrasi",
+    "tasks": "Tugas",
+    "fitness": "Fitness",
+    "journal": "Jurnal",
+    "summarizer": "Summarizer",
+    "analytics": "Analitik",
+    "coach": "AI Coach",
+    "settings": "Pengaturan",
+    "profile": "Profil",
+    "logout": "Keluar",
+    "more": "Lainnya"
+  },
   "sidebar": {
     "dashboard": "Dashboard",
-    "energy": "Cek Energi",
+    "energy": "Energi",
     "tasks": "Tugas",
-    "fitness": "Coach Kebugaran",
+    "fitness": "Kebugaran",
     "journal": "Jurnal",
-    "summarizer": "Ringkasan",
+    "summarizer": "Summarizer",
     "analytics": "Analitik",
+    "coach": "AI Coach",
+    "settings": "Pengaturan",
     "profile": "Profil",
-    "logout": "Keluar"
+    "logout": "Keluar",
+    "more": "Lainnya",
+    "main": "Utama",
+    "tools": "Alat",
+    "search": "Cari..."
+  },
+  "journal": {
+    "title": "Refleksi Mandiri",
+    "subtitle": "Hubungkan pikiranmu, temukan polamu.",
+    "coachInsight": "Wawasan Coach",
+    "reflectionQuestion": "Pertanyaan Refleksi",
+    "logAnother": "Catat Entry Lain",
+    "dailyVibe": "Vibes Hari Ini",
+    "satisfactionRating": "Rating Kepuasan",
+    "peakMoment": "Momen Puncak",
+    "peakPlaceholder": "Apa hal terbaik hari ini?",
+    "hurdle": "Hambatan",
+    "hurdlePlaceholder": "Apa yang menghalangimu?",
+    "process": "Proses Refleksi",
+    "archive": "Arsip Refleksi",
+    "success": "Refleksi berhasil dicatat!"
+  },
+  "energyCheck": {
+    "title": "Siklus Kalibrasi",
+    "subtitle": " Morning Check-in",
+    "desc": "Ayo selaraskan energi dan fokusmu hari ini. Beritahu Pulse kondisimu, biarkan AI menentukan mode kerja terbaik.",
+    "startNow": "Mulai Kalibrasi",
+    "conditionHeader": "Kondisi Biometrik",
+    "energyLevel": "Energi Fisik",
+    "energyLemas": "Lemas",
+    "energyBerenergi": "Berenergi",
+    "stressLevel": "Stress Mental",
+    "stressTenang": "Tenang",
+    "stressBurnout": "Burnout",
+    "focusLevel": "Tingkat Fokus",
+    "focusBlurry": "Kabur",
+    "focusLaser": "Tajam",
+    "moodLabel": "Status Emosional",
+    "moodPlaceholder": "Contoh: Bersemangat, Cemas, atau Syukur...",
+    "analyzeAction": "Jalankan Analisis AI",
+    "analyzing": "Pulse sedang menganalisis biometrik...",
+    "translationDigit": "Menerjemahkan emosi ke logika",
+    "dailyProtocol": "Protokol Kalibrasi Hari Ini Terkunci & Teroptimasi",
+    "calibrationHistory": "Riwayat Kalibrasi",
+    "dailyResult": "Hasil Harian",
+    "productivityPotential": "Potensi Produktivitas",
+    "scoreEnergy": "Tingkat Energi",
+    "scoreStress": "Tingkat Stres",
+    "scoreStressDesc": "Analisis beban kognitif hari ini.",
+    "scoreFocus": "Kejernihan Fokus",
+    "scoreFocusDesc": "Analisis resolusi fokus kognitif.",
+    "topTipLabel": "Tips Implementasi",
+    "strategyHeader": "Strategi Optimal",
+    "strategyDesc": "Berdasarkan kondisimu, Pulse AI menyarankan:",
+    "focusWindow": "Jendela Fokus",
+    "actionPlan": "Rencana Aksi",
+    "backFeed": "Kembali ke Beranda"
   },
   "dashboard": {
     "welcome": "Halo",

@@ -1,201 +1,212 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../App';
-import { db } from '../config/firebase';
-import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from '../config/firebase';
+import { collection, addDoc, getDocs, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
-import { Workout } from '../types';
-import { Dumbbell, Play, CheckCircle, Loader2, Sparkles, Trophy, Zap, Clock, Activity, Brain, HelpCircle } from 'lucide-react';
+import { Workout } from '../types/index';
+import { Dumbbell, Play, CheckCircle, Loader2, Sparkles, Trophy, Zap, Clock, Activity, Brain, HelpCircle, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { fadeInUp, itemFadeIn } from '../utils/animations';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import { SkeletonPage } from '../components/ui/Skeletons';
+import toast from 'react-hot-toast';
 
 export default function FitnessCoach() {
   const { t } = useTranslation();
   const { profile } = useApp();
-  const [workout, setWorkout] = useState<Partial<Workout> | null>(null);
+  const [workout, setWorkout] = useState<Workout | null>(null);
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [showFitnessHelp, setShowFitnessHelp] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
     const fetchLatestWorkout = async () => {
-      if (!profile) return;
-      const q = query(collection(db, `users/${profile.id}/workouts`), orderBy('createdAt', 'desc'), limit(1));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        setWorkout(snapshot.docs[0].data() as Workout);
+      if (!profile?.id) return;
+      try {
+        const q = query(collection(db, `users/${profile.id}/workouts`), orderBy('createdAt', 'desc'), limit(1));
+        const snapshot = await getDocs(q);
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          setWorkout({
+              id: snapshot.docs[0].id,
+              ...data,
+              createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt)
+          } as Workout);
+        }
+      } catch (err) {
+        handleFirestoreError(err, OperationType.LIST, `users/${profile.id}/workouts`);
+      } finally {
+        setFetching(false);
       }
     };
     fetchLatestWorkout();
-  }, [profile]);
+  }, [profile?.id]);
 
   const generateWorkout = async () => {
-    if (!profile) return;
+    if (!profile?.id) return;
     setLoading(true);
     setCompleted(false);
-    const newWorkout = await geminiService.generateFitnessProgram(
-      profile.fitnessProfile || { goal: 'Bugar & Sehat', equipment: ['No equipment'] },
-      profile.energyScore,
-      profile.vibeMode
-    );
-    
-    const workoutData = {
-      ...newWorkout,
-      energyScoreAtTime: profile.energyScore,
-      completed: false,
-      createdAt: new Date(),
-    };
+    try {
+      const newWorkout = await geminiService.generateFitnessProgram(
+        profile,
+        profile.energyScore || 5
+      );
+      
+      const workoutData = {
+        ...newWorkout,
+        energyScoreAtTime: profile.energyScore,
+        completed: false,
+        createdAt: Timestamp.now(),
+      };
 
-    await addDoc(collection(db, `users/${profile.id}/workouts`), workoutData);
-    setWorkout(workoutData);
-    setLoading(false);
+      const docRef = await addDoc(collection(db, `users/${profile.id}/workouts`), workoutData);
+      setWorkout({ id: docRef.id, ...workoutData } as Workout);
+      toast.success('Program latihan berhasil dibuat!');
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `users/${profile.id}/workouts`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleComplete = () => {
     setCompleted(true);
-    // In real app, update Firestore
+    toast.success('Latihan Selesai! Pertahankan semangatmu!');
   };
 
+  if (fetching) return <SkeletonPage />;
+
   return (
-    <div className="space-y-6 md:space-y-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+    <motion.div {...fadeInUp} className="space-y-6 md:space-y-8">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">AI Fitness Coach</h1>
-            <div className="relative">
-              <button 
-                onClick={() => setShowFitnessHelp(!showFitnessHelp)}
-                onMouseEnter={() => setShowFitnessHelp(true)}
-                onMouseLeave={() => setShowFitnessHelp(false)}
-                className="flex items-center"
-              >
-                <HelpCircle size={20} className="text-slate-300 cursor-help" />
-              </button>
-              <AnimatePresence>
-                {showFitnessHelp && (
-                  <motion.div 
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute left-0 top-full mt-2 w-64 p-4 bg-slate-900 text-white text-[10px] font-bold rounded-2xl z-50 shadow-2xl leading-relaxed border border-white/5"
-                  >
-                    {t('help.fitness')}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </div>
-          <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-widest">Adaptive workouts tailored to your energy.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">AI Fitness Coach</h1>
+          <p className="text-sm" style={{ color: 'var(--text2)' }}>Program latihan adaptif yang disesuaikan dengan energimu.</p>
         </div>
-        {!workout || completed ? (
-          <button
+        {(!workout || completed) && (
+          <Button
             onClick={generateWorkout}
-            disabled={loading}
-            className="w-full md:w-auto bg-emerald-600 text-white px-6 py-4 md:py-3 rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 disabled:opacity-50"
+            loading={loading}
+            icon={Sparkles}
           >
-            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-            Generate Plan
-          </button>
-        ) : null}
-      </div>
+            Buat Rencana Latihan
+          </Button>
+        )}
+      </header>
 
       <AnimatePresence mode="wait">
         {!workout ? (
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-24 md:py-32 bg-emerald-50 rounded-[3rem] border-2 border-dashed border-emerald-100 flex flex-col items-center"
+            {...itemFadeIn}
+            className="text-center py-24 md:py-32 bg-[var(--surface)] rounded-[3rem] border border-[var(--border)] border-dashed flex flex-col items-center"
           >
-            <div className="h-20 w-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-8">
-              <Dumbbell className="h-8 w-8 text-emerald-400" />
+            <div className="h-20 w-20 bg-[var(--surface2)] rounded-full flex items-center justify-center mb-6">
+              <Dumbbell className="h-8 w-8 text-[var(--accent)]" />
             </div>
-            <h3 className="text-xl font-black text-emerald-900 mb-2">Ready to move?</h3>
-            <p className="text-emerald-700/60 max-w-sm mx-auto px-6 text-sm font-medium">Gemini will design a custom routine based on your real-time <b>Energy Level</b>.</p>
+            <h3 className="text-xl font-bold mb-2">Siap untuk bergerak?</h3>
+            <p className="max-w-sm mx-auto px-6 text-sm font-medium opacity-60">Gemini akan merancang rutinitas khusus berdasarkan <b>Tingkat Energi</b> kamu saat ini.</p>
           </motion.div>
         ) : completed ? (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-24 md:py-32 bg-slate-900 rounded-[3rem] text-white overflow-hidden relative"
+            key="complete"
+            {...itemFadeIn}
+            className="text-center py-20 px-8 bg-slate-900 rounded-[3rem] text-white relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[100px] -mr-48 -mt-48" />
-            <div className="relative z-10">
-              <div className="h-24 w-24 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center mx-auto mb-8">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl -mr-40 -mt-40" />
+            <div className="relative z-10 space-y-6">
+              <div className="h-24 w-24 bg-white/10 rounded-full flex items-center justify-center mx-auto shadow-2xl">
                 <Trophy className="h-10 w-10 text-yellow-400" />
               </div>
-              <h3 className="text-3xl md:text-4xl font-black mb-3 tracking-tight">MISSION COMPLETE</h3>
-              <p className="text-slate-400 mb-10 max-w-md mx-auto font-medium px-6">You've successfully finished your session. Your future self is thanking you already.</p>
-              <button 
+              <div className="space-y-2">
+                <h3 className="text-3xl font-bold tracking-tight">MISI SELESAI</h3>
+                <p className="text-slate-400 max-w-md mx-auto text-sm font-medium">Kamu telah berhasil menyelesaikan sesi hari ini. Dirimu di masa depan pasti berterima kasih.</p>
+              </div>
+              <Button 
                   onClick={() => setWorkout(null)}
-                  className="bg-white text-slate-900 px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-50 transition-all shadow-xl"
+                  className="bg-white text-slate-900 hover:bg-slate-100"
               >
-                  Close Session
-              </button>
+                  Tutup Sesi
+              </Button>
             </div>
           </motion.div>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12"
+            key="workout"
+            {...fadeInUp}
+            className="grid grid-cols-1 lg:grid-cols-12 gap-8"
           >
-            <div className="space-y-8">
-              <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm overflow-hidden relative">
-                <div className="relative z-10">
-                    <div className="inline-flex items-center gap-2 text-[10px] font-black text-emerald-600 bg-emerald-50 px-4 py-1.5 rounded-full uppercase mb-6 border border-emerald-100">
-                        <Zap size={12} /> Active Protocol
-                    </div>
-                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-3 tracking-tight">{workout.name}</h2>
-                    <div className="flex gap-8 mt-6">
-                        <div className="flex items-center gap-2.5 text-slate-400 font-black text-xs uppercase tracking-wider">
-                            <Clock className="h-4 w-4 text-slate-300" /> {workout.duration} Min
+            {/* Main workout header */}
+            <div className="lg:col-span-12">
+               <Card className="p-8 border-none bg-emerald-600 text-white relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                  <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/10">
+                          <Zap size={12} /> Protokol Aktif
                         </div>
-                        <div className="flex items-center gap-2.5 text-slate-400 font-black text-xs uppercase tracking-wider">
-                            <Activity className="h-4 w-4 text-emerald-400" /> Dynamic
+                      </div>
+                      <h2 className="text-3xl font-bold tracking-tight">{workout.name}</h2>
+                      <div className="flex gap-6">
+                        <div className="flex items-center gap-2 text-sm font-bold opacity-80">
+                          <Clock size={16} /> {workout.duration} Menit
                         </div>
+                        <div className="flex items-center gap-2 text-sm font-bold opacity-80">
+                          <Activity size={16} /> Intensitas Adaptif
+                        </div>
+                      </div>
                     </div>
-                    <button 
+                    <Button 
                         onClick={handleComplete}
-                        className="mt-10 bg-slate-900 text-white w-full py-5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-black transition-all shadow-2xl shadow-slate-200"
+                        className="bg-white text-emerald-600 hover:bg-white/90 shadow-2xl"
+                        icon={CheckCircle}
                     >
-                        Mark as Complete <CheckCircle className="h-5 w-5" />
-                    </button>
-                </div>
-                <div className="absolute top-0 right-0 h-40 w-40 bg-emerald-50 rounded-full -mr-20 -mt-20 blur-3xl opacity-50"></div>
-              </div>
-
-              <div className="bg-slate-900 p-8 rounded-[2rem] text-slate-300 text-sm leading-relaxed border-l-4 border-emerald-500 font-medium">
-                <div className="flex items-start gap-4">
-                  <div className="p-2 bg-white/10 rounded-lg text-emerald-400 mt-1">
-                    <Brain size={18} />
+                        Selesaikan Latihan
+                    </Button>
                   </div>
-                  <p>
-                    AI Coach: "Based on your <b>{workout.energyScoreAtTime}/10</b> Energy Score, I've adjusted this <b>{workout.duration}m</b> session to maximize movement without total exhaustion. Focus on form over speed today."
-                  </p>
-                </div>
-              </div>
+               </Card>
             </div>
 
-            <div className="space-y-6">
-              <h3 className="font-black text-slate-400 uppercase text-xs tracking-widest ml-4">Workout Sequence</h3>
-              <div className="space-y-4">
+            {/* AI Insight */}
+            <div className="lg:col-span-4 space-y-6">
+              <Card className="p-6 bg-slate-900 text-slate-300 border-l-4 border-emerald-500">
+                <div className="flex items-start gap-4">
+                  <div className="p-2 bg-white/10 rounded-xl text-emerald-400 shrink-0">
+                    <Brain size={20} />
+                  </div>
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-emerald-400">AI Coach Persona</h4>
+                    <p className="text-sm font-medium leading-relaxed italic">
+                      "Berdasarkan tingkat energi kamu hari ini (<b>{workout.energyScoreAtTime}/10</b>), saya telah menyesuaikan sesi <b>{workout.duration} menit</b> ini untuk memaksimalkan metabolisme tanpa kelelahan berlebih. Fokus pada teknik, bukan kecepatan."
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+
+            {/* Exercise Sequence */}
+            <div className="lg:col-span-8 space-y-4">
+              <h3 className="font-bold text-xs uppercase tracking-widest opacity-50 ml-2">Urutan Latihan</h3>
+              <div className="grid grid-cols-1 gap-3">
                 {workout.exercises?.map((ex: any, i: number) => (
                   <motion.div 
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
+                    {...itemFadeIn}
                     key={i} 
-                    className="bg-white p-6 rounded-[2rem] border border-slate-50 flex items-center gap-6 group hover:border-emerald-200 transition-all shadow-sm"
                   >
-                    <div className="h-14 w-14 rounded-2xl bg-slate-50 flex items-center justify-center font-black text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all text-xl shrink-0">
-                      {i + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-black text-slate-800 text-base mb-1">{ex.name}</h4>
-                      <p className="text-xs text-slate-400 font-medium line-clamp-1">{ex.description}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="text-emerald-500 font-black text-sm uppercase tracking-tighter">{ex.sets}x{ex.reps}</div>
-                    </div>
+                    <Card className="p-4 flex items-center gap-6 group hover:border-emerald-500 transition-all">
+                      <div className="h-12 w-12 rounded-xl bg-[var(--surface)] flex items-center justify-center font-bold text-[var(--text3)] group-hover:bg-emerald-500 group-hover:text-white transition-all text-lg shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-sm mb-0.5">{ex.name}</h4>
+                        <p className="text-xs opacity-60 line-clamp-1">{ex.description}</p>
+                      </div>
+                      <div className="shrink-0 px-4 py-2 bg-[var(--surface)] rounded-xl border border-[var(--border)]">
+                        <div className="text-emerald-500 font-bold text-sm">{ex.sets} x {ex.reps}</div>
+                      </div>
+                    </Card>
                   </motion.div>
                 ))}
               </div>
@@ -203,6 +214,6 @@ export default function FitnessCoach() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

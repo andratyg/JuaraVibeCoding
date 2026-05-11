@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { geminiService } from '../services/geminiService';
-import { FileText, Copy, Check, Loader2, Zap, LayoutList, CheckCircle, HelpCircle } from 'lucide-react';
+import { FileText, Copy, Check, Loader2, Zap, LayoutList, CheckCircle, HelpCircle, ArrowRight, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { fadeInUp, itemFadeIn } from '../utils/animations';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import toast from 'react-hot-toast';
 
 export default function Summarizer() {
   const { t } = useTranslation();
@@ -10,156 +14,153 @@ export default function Summarizer() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
-  const [showSummarizerHelp, setShowSummarizerHelp] = useState(false);
 
   const handleSummarize = async () => {
     if (!text.trim()) return;
     setLoading(true);
-    const res = await geminiService.summarizeDocument(text);
-    setResult(res);
-    setLoading(false);
+    try {
+      const res = await geminiService.summarizeDocument(text);
+      setResult(res);
+      toast.success('Analisis selesai!');
+    } catch (error: any) {
+      console.error('Summarize Error:', error);
+      toast.error('Gagal menganalisis dokumen.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(JSON.stringify(result, null, 2));
+    const content = `Ringkasan: ${result.summary}\n\nPoin Penting:\n${result.keyPoints.join('\n')}\n\nTindakan:\n${result.actionItems.join('\n')}`;
+    navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    toast.success('Teks disalin!');
   };
 
   return (
-    <div className="space-y-6 md:space-y-10">
-      <div className="space-y-1">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Document Summarizer</h1>
-          <div className="relative">
-            <button 
-              onClick={() => setShowSummarizerHelp(!showSummarizerHelp)}
-              onMouseEnter={() => setShowSummarizerHelp(true)}
-              onMouseLeave={() => setShowSummarizerHelp(false)}
-              className="flex items-center"
-            >
-              <HelpCircle size={20} className="text-slate-300 cursor-help" />
-            </button>
-            <AnimatePresence>
-              {showSummarizerHelp && (
-                <motion.div 
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 5 }}
-                  className="absolute left-0 top-full mt-2 w-72 p-4 bg-slate-900 text-white text-[10px] font-bold rounded-2xl z-50 shadow-2xl leading-relaxed border border-white/5"
-                >
-                  {t('help.summarizer')}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-        <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-widest">Condense complex data with AI-driven intelligence.</p>
-      </div>
+    <motion.div {...fadeInUp} className="space-y-6 md:space-y-8">
+      <header className="space-y-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Peringkas Dokumen</h1>
+        <p className="text-sm" style={{ color: 'var(--text2)' }}>Analisis dan ringkas dokumen panjang dengan kecerdasan AI.</p>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-10 items-start">
-        <div className="space-y-6">
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 md:p-8 overflow-hidden">
-            <h3 className="font-black text-slate-800 mb-6 uppercase text-xs tracking-widest px-2">Input Reservoir</h3>
-            <textarea
-              value={text}
-              onChange={e => setText(e.target.value)}
-              placeholder="Paste long emails, reports, or articles here..."
-              className="w-full h-80 bg-slate-50 border-2 border-transparent rounded-[1.5rem] p-6 text-sm font-bold focus:bg-white focus:border-slate-900 outline-none transition-all placeholder:text-slate-300 resize-none"
-            />
-            <button
-              onClick={handleSummarize}
-              disabled={loading || !text.trim()}
-              className="w-full mt-6 bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-xl hover:bg-black transition-all disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="animate-spin h-5 w-5" /> : <LayoutList className="h-5 w-5" />}
-              Generate Intelligence
-            </button>
-          </div>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Input area */}
+        <div className="lg:col-span-5 space-y-6">
+          <Card className="p-6 space-y-6">
+            <h3 className="font-bold text-lg">Input Dokumen</h3>
+            <div className="space-y-4">
+              <textarea
+                value={text}
+                onChange={e => setText(e.target.value)}
+                placeholder="Tempelkan email panjang, laporan, atau artikel di sini..."
+                className="w-full h-80 bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 text-sm md:text-base font-medium focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-20 outline-none transition-all placeholder:opacity-30 resize-none"
+              />
+              <Button
+                fullWidth
+                loading={loading}
+                disabled={!text.trim()}
+                onClick={handleSummarize}
+                icon={Brain}
+              >
+                Analisis Inteligensi
+              </Button>
+            </div>
+          </Card>
         </div>
 
-        <div className="space-y-6">
+        {/* Result area */}
+        <div className="lg:col-span-7 space-y-6">
           <AnimatePresence mode="wait">
             {!result ? (
               <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="h-full flex flex-col items-center justify-center py-20 text-slate-400 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200"
+                {...itemFadeIn}
+                className="h-full flex flex-col items-center justify-center py-32 bg-[var(--surface)] rounded-[2.5rem] border border-[var(--border)] border-dashed opacity-50"
               >
-                <Zap className="h-12 w-12 mb-4 opacity-10" />
-                <p>Hasil ringkasan akan muncul di sini.</p>
+                <div className="w-16 h-16 bg-[var(--surface2)] rounded-full flex items-center justify-center mb-4">
+                  <Zap size={32} className="text-[var(--text3)]" />
+                </div>
+                <p className="text-sm font-medium">Hasil ringkasan akan muncul di sini</p>
               </motion.div>
             ) : (
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
+                key="result"
+                {... fadeInUp}
                 className="space-y-6"
               >
-                {/* Summary Box */}
-                <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 md:p-10 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 h-40 w-40 bg-slate-50 rounded-full -mr-20 -mt-20 blur-3xl opacity-50"></div>
-                  <div className="flex justify-between items-center mb-8 relative z-10">
-                    <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">Executive Summary</h3>
-                    <button onClick={handleCopy} className="h-10 w-10 flex items-center justify-center bg-slate-50 hover:bg-slate-900 hover:text-white rounded-xl transition-all shadow-sm">
-                      {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                {/* Executive Summary */}
+                <Card className="p-8 space-y-6 border-none bg-indigo-600 text-white relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                  
+                  <div className="flex justify-between items-center relative z-10">
+                    <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/10">
+                      <LayoutList size={12} /> Ringkasan Eksekutif
+                    </div>
+                    <button 
+                      onClick={handleCopy} 
+                      className="h-10 w-10 flex items-center justify-center bg-white/10 hover:bg-white text-white hover:text-indigo-600 rounded-xl transition-all border border-white/10"
+                    >
+                      {copied ? <Check size={18} /> : <Copy size={18} />}
                     </button>
                   </div>
-                  <p className="text-slate-600 leading-relaxed text-sm font-bold mb-10 relative z-10 italic">
+
+                  <p className="text-lg font-bold leading-relaxed italic relative z-10">
                     "{result.summary}"
                   </p>
                   
-                  <div className="grid grid-cols-2 gap-4 relative z-10">
-                     <div className="p-6 bg-slate-900 rounded-3xl border border-white/10 shadow-lg">
-                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Efficiency Gain</div>
-                        <div className="text-2xl font-black text-white">{result.timeSaved}m <span className="text-xs text-slate-500 font-bold ml-1 uppercase">Saved</span></div>
+                  <div className="grid grid-cols-2 gap-4 relative z-10 pt-4">
+                     <div className="p-5 bg-white/10 rounded-2xl border border-white/10">
+                        <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">Waktu Hemat</div>
+                        <div className="text-2xl font-bold">{result.timeSaved} menit</div>
                      </div>
-                     <div className="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm">
-                        <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Confidence</div>
-                        <div className="text-2xl font-black text-slate-900">98% <span className="text-xs text-slate-500 font-bold ml-1 uppercase">Precision</span></div>
+                     <div className="p-5 bg-white/10 rounded-2xl border border-white/10">
+                        <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">Presisi AI</div>
+                        <div className="text-2xl font-bold">98%</div>
                      </div>
                   </div>
-                </div>
+                </Card>
 
                 {/* Key Points */}
-                <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className="h-10 w-10 bg-teal-50 text-teal-600 rounded-xl flex items-center justify-center">
-                        <FileText size={20} />
+                <Card className="p-8 space-y-6">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-[var(--surface2)] text-[var(--accent)] rounded-xl flex items-center justify-center">
+                        <CheckCircle size={20} />
                     </div>
-                    <h3 className="font-black text-slate-900 uppercase text-sm tracking-widest">Protocol Highlights</h3>
+                    <h3 className="font-bold text-lg">Poin Penting</h3>
                   </div>
-                  <ul className="space-y-4">
+                  <ul className="grid grid-cols-1 gap-3">
                     {result.keyPoints.map((point: string, i: number) => (
-                      <li key={i} className="flex gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-50 group hover:border-teal-200 transition-all font-bold text-sm text-slate-600">
-                        <span className="text-teal-400 shrink-0 mt-1"><Zap size={14} fill="currentColor" /></span> {point}
+                      <li key={i} className="flex gap-4 p-5 bg-[var(--surface)] rounded-2xl border border-[var(--border)] group hover:border-[var(--accent)] transition-all">
+                        <div className="text-[var(--accent)] shrink-0 mt-1"><ArrowRight size={14} /></div>
+                        <p className="text-sm font-medium leading-relaxed" style={{ color: 'var(--text2)' }}>{point}</p>
                       </li>
                     ))}
                   </ul>
-                </div>
+                </Card>
 
                 {/* Action Items */}
-                <div className="bg-slate-900 rounded-[2.5rem] shadow-2xl p-8 md:p-10 relative overflow-hidden group">
-                   <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px] -ml-32 -mb-32 group-hover:scale-125 transition-transform duration-1000" />
-                   <div className="flex items-center gap-3 mb-8 relative z-10">
-                    <div className="h-10 w-10 bg-white/10 text-emerald-400 rounded-xl flex items-center justify-center">
-                        <CheckCircle size={20} />
+                <Card className="p-8 space-y-6 bg-emerald-500/5 border-emerald-500/20">
+                   <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 bg-emerald-500/10 text-emerald-500 rounded-xl flex items-center justify-center">
+                        <Zap size={20} />
                     </div>
-                    <h3 className="font-black text-white uppercase text-sm tracking-widest">Active Commands</h3>
+                    <h3 className="font-bold text-lg text-emerald-600">Langkah Aksi</h3>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 relative z-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {result.actionItems.map((item: string, i: number) => (
-                      <div key={i} className="flex items-center gap-4 p-5 bg-white/5 border border-white/5 rounded-2xl text-xs font-bold text-slate-300 backdrop-blur-sm group/item hover:bg-white/10 transition-all">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] shrink-0"></div>
-                        {item}
+                      <div key={i} className="flex items-center gap-4 p-5 bg-[var(--surface)] border border-[var(--border)] rounded-2xl hover:border-emerald-500/50 transition-all">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500 shrink-0 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <p className="text-xs font-bold leading-relaxed">{item}</p>
                       </div>
                     ))}
                   </div>
-                </div>
+                </Card>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

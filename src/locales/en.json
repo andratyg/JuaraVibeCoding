@@ -44,6 +44,7 @@
     },
     "notifications": {
       "title": "Notification Preferences",
+      "subtitle": "Push & Email Dispatch",
       "email": "Email Notifications",
       "push": "Push Notifications",
       "messages": "New Messages",
@@ -52,6 +53,7 @@
     },
     "privacy": {
       "title": "Privacy Settings",
+      "subtitle": "Visibility Control",
       "visibility": "Profile Visibility",
       "public": "Public",
       "friends": "Friends Only",
@@ -60,7 +62,9 @@
       "dataSharingDesc": "Help us improve the AI by sharing anonymous usage patterns. Your identity remains 100% private."
     },
     "security": {
-      "title": "Security Settings",
+      "title": "Security & Access",
+      "subtitle": "Identity & Protocols",
+      "identityAccess": "Identity & Access",
       "googleAuth": "Google Identity Protection",
       "activeSessions": "Active Sessions",
       "linkedAccounts": "Linked Accounts",
@@ -71,19 +75,35 @@
       "googleActivate": "SYNC GOOGLE IDENTITY",
       "googleActive": "IDENTITY SYNCED",
       "resetSent": "Password reset link sent to your email.",
-      "sessionsRevoked": "All other active sessions have been invalidated."
+      "sessionsRevoked": "All other active sessions have been invalidated.",
+      "twoFactor": "Two-Factor Authentication (2FA)",
+      "mfaDesc": "Add an extra layer of security by requiring a verification code from your phone when you sign in.",
+      "mfaActivate": "ACTIVATE 2FA NOW",
+      "mfaActive": "2FA ACTIVE & PROTECTED",
+      "mfaStatusProtected": "PROTECTED",
+      "mfaStatusStandard": "STANDARD",
+      "phoneDesc": "Your phone number is used for account recovery and 2FA security.",
+      "changePasswordDesc": "Update your authentication credentials regularly.",
+      "mfaEnroll": "Enable 2FA",
+      "verifyPhone": "Verify Number",
+      "mfaConfirmation": "We've sent a 6-digit code to {phone}. Enter it to proceed.",
+      "otpLabel": "6-Digit Verification Code",
+      "otpSubmit": "Confirm & Activate",
+      "otpCancel": "Cancel"
     },
     "appearance": {
-      "title": "Appearance",
-      "theme": "Theme",
+      "title": "Appearance & UI",
+      "subtitle": "Visual Styles & UI/UX",
+      "theme": "System Theme",
       "light": "Light",
       "dark": "Dark",
-      "system": "System Default",
+      "system": "Automatic",
       "fontSize": "Font Size"
     },
     "language": {
-      "title": "Language",
-      "select": "Select Language"
+      "title": "Language & Region",
+      "subtitle": "System Localization",
+      "select": "Select Primary Language"
     },
     "vibe": {
       "hustle": "Focus on peak productivity. Get things done fast.",
@@ -92,7 +112,7 @@
     },
     "ai": {
       "title": "Pulse AI Intelligence",
-      "subtitle": "Logic & Personality",
+      "subtitle": "Logic Configuration",
       "persona": "Coach Persona (AI Tone)",
       "frequency": "Nudge Frequency",
       "frequencyDesc": "Controls how often Pulse AI will intervene or offer suggestions throughout your day.",
@@ -105,16 +125,19 @@
     },
     "accessibility": {
       "title": "Accessibility",
-      "subtitle": "Visual & Cognitive",
+      "subtitle": "Visual & Cognitive Optimization",
       "highContrast": "High Contrast Mode",
       "reducedMotion": "Reduced Motion",
       "fontScale": "Font Scale"
     },
     "dataManagement": {
       "title": "Data Management",
+      "subtitle": "Account Persistence Control",
       "export": "Export Data",
+      "exportDesc": "Collect and download your entire Pulse data history in JSON format.",
       "delete": "Delete Account",
-      "deleteWarning": "This action is irreversible."
+      "deleteDesc": "Permanently remove your account and all associated data from Pulse servers.",
+      "deleteWarning": "This action is permanent and irreversible."
     }
   },
   "tasks": {
@@ -190,16 +213,88 @@
       "invalidEmail": "Please enter a valid email address."
     }
   },
-  "sidebar": {
+  "nav": {
     "dashboard": "Dashboard",
-    "energy": "Energy Check",
+    "checkin": "Energy",
     "tasks": "Tasks",
-    "fitness": "Fitness Coach",
+    "fitness": "Fitness",
     "journal": "Journal",
     "summarizer": "Summarizer",
     "analytics": "Analytics",
+    "coach": "AI Coach",
+    "settings": "Settings",
     "profile": "Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "more": "More"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "energy": "Energy",
+    "tasks": "Tasks",
+    "fitness": "Fitness",
+    "journal": "Journal",
+    "summarizer": "Summarizer",
+    "analytics": "Analytics",
+    "coach": "AI Coach",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "more": "More",
+    "main": "Main",
+    "tools": "Tools",
+    "search": "Search..."
+  },
+  "journal": {
+    "title": "Self-Reflection",
+    "subtitle": "Connect your thoughts, find your patterns.",
+    "coachInsight": "Coach Insight",
+    "reflectionQuestion": "Reflection Question",
+    "logAnother": "Log Another Entry",
+    "dailyVibe": "Daily Vibes",
+    "satisfactionRating": "Satisfaction Rating",
+    "peakMoment": "Peak Moment",
+    "peakPlaceholder": "What was the highlight of your day?",
+    "hurdle": "The Hurdle",
+    "hurdlePlaceholder": "What stood in your way?",
+    "process": "Process Reflections",
+    "archive": "Reflection Archive",
+    "success": "Reflection logged successfully!"
+  },
+  "energyCheck": {
+    "title": "Calibration Cycle",
+    "subtitle": "Morning Check-in",
+    "desc": "Align your energy and focus today. Tell Pulse your condition, and let AI determine the best work mode.",
+    "startNow": "Start Calibration",
+    "conditionHeader": "Biometric Condition",
+    "energyLevel": "Physical Energy",
+    "energyLemas": "Weak",
+    "energyBerenergi": "Energetic",
+    "stressLevel": "Mental Stress",
+    "stressTenang": "Calm",
+    "stressBurnout": "Burnout",
+    "focusLevel": "Focus Level",
+    "focusBlurry": "Blurry",
+    "focusLaser": "Sharp",
+    "moodLabel": "Emotional Status",
+    "moodPlaceholder": "E.g.: Excited, Anxious, or Grateful...",
+    "analyzeAction": "Execute AI Analysis",
+    "analyzing": "Pulse is analyzing biometrics...",
+    "translationDigit": "Translating emotion to logic",
+    "dailyProtocol": "Today's Calibration Protocol is Locked & Optimized",
+    "calibrationHistory": "Calibration History",
+    "dailyResult": "Daily Result",
+    "productivityPotential": "Productivity Potential",
+    "scoreEnergy": "Energy Level",
+    "scoreStress": "Stress Level",
+    "scoreStressDesc": "Analysis of current cognitive load.",
+    "scoreFocus": "Focus Clarity",
+    "scoreFocusDesc": "Analysis of cognitive focus resolution.",
+    "topTipLabel": "Implementation Tip",
+    "strategyHeader": "Optimal Strategy",
+    "strategyDesc": "Based on your condition, Pulse AI suggests:",
+    "focusWindow": "Focus Window",
+    "actionPlan": "Action Plan",
+    "backFeed": "Back to Feed"
   },
   "dashboard": {
     "welcome": "Hello",

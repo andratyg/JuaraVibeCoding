@@ -1,97 +1,169 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../App';
-import { db } from '../config/firebase';
-import { collection, addDoc, getDocs, query, orderBy, limit } from 'firebase/firestore';
+import { useTranslation } from 'react-i18next';
+import { db, handleFirestoreError, OperationType } from '../config/firebase';
+import { collection, addDoc, getDocs, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
-import { Journal } from '../types';
-import { BookOpen, Send, Star, Loader2, Sparkles, MessageSquareQuote, Zap } from 'lucide-react';
+import { Journal } from '../types/index';
+import { BookOpen, Send, Star, Loader2, Sparkles, MessageSquareQuote, Zap, Tag, HelpCircle, Heart, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '../lib/utils';
+import { fadeInUp, itemFadeIn, stagger } from '../utils/animations';
+import { formatDateLong } from '../utils/formatters';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import { SkeletonPage } from '../components/ui/Skeletons';
+import toast from 'react-hot-toast';
 
 export default function JournalPage() {
+  const { t } = useTranslation();
   const { profile } = useApp();
   const [rating, setRating] = useState(3);
   const [highlight, setHighlight] = useState('');
   const [challenge, setChallenge] = useState('');
   const [mood, setMood] = useState('😊');
   const [loading, setLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [fetching, setFetching] = useState(true);
+  const [aiResponse, setAiResponse] = useState<any>(null);
   const [history, setHistory] = useState<Journal[]>([]);
 
   const fetchHistory = async () => {
-    if (!profile) return;
-    const q = query(collection(db, `users/${profile.id}/journals`), orderBy('createdAt', 'desc'), limit(5));
-    const snapshot = await getDocs(q);
-    setHistory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Journal)));
+    if (!profile?.id) return;
+    try {
+      const q = query(collection(db, `users/${profile.id}/journals`), orderBy('createdAt', 'desc'), limit(5));
+      const snapshot = await getDocs(q);
+      setHistory(snapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+          id: doc.id, 
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt)
+        } as Journal;
+      }));
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, `users/${profile.id}/journals`);
+    } finally {
+      setFetching(false);
+    }
   };
 
-  useEffect(() => { fetchHistory(); }, [profile]);
+  useEffect(() => { fetchHistory(); }, [profile?.id]);
 
   const handleSubmit = async () => {
-    if (!highlight || !profile) return;
+    if (!highlight || !profile?.id) return;
     setLoading(true);
     
-    const fullText = `Highlight: ${highlight}\nChallenge: ${challenge}\nMood: ${mood}`;
-    const response = await geminiService.generateJournalResponse(fullText);
-    
-    const journalData = {
-      rating,
-      highlight,
-      challenge,
-      mood,
-      aiResponse: response,
-      createdAt: new Date(),
-    };
+    try {
+      const entry = {
+        rating,
+        highlight,
+        challenge,
+        mood,
+        freeWrite: ''
+      };
+      
+      const analysis = await geminiService.generateJournalResponse(entry);
+      
+      const journalData = {
+        ...entry,
+        aiResponse: analysis,
+        createdAt: Timestamp.now(),
+      };
 
-    await addDoc(collection(db, `users/${profile.id}/journals`), journalData);
-    setAiResponse(response);
-    setLoading(false);
-    fetchHistory();
+      await addDoc(collection(db, `users/${profile.id}/journals`), journalData);
+      setAiResponse(analysis);
+      toast.success(t('journal.success'));
+      setHighlight('');
+      setChallenge('');
+      fetchHistory();
+    } catch (error: any) {
+      handleFirestoreError(error, OperationType.CREATE, `users/${profile.id}/journals`);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="space-y-6 md:space-y-10">
-      <div className="space-y-1">
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 tracking-tight">Self-Reflection</h1>
-        <p className="text-xs md:text-sm font-bold text-slate-400 md:text-slate-500 uppercase tracking-widest">Connect your thoughts, find your patterns.</p>
-      </div>
+  if (fetching) return <SkeletonPage />;
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-        <div className="space-y-8">
+  return (
+    <motion.div {...fadeInUp} className="space-y-6 md:space-y-8">
+      <header className="space-y-1">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('journal.title')}</h1>
+        <p className="text-sm" style={{ color: 'var(--text2)' }}>{t('journal.subtitle')}</p>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12 items-start">
+        <div className="space-y-6">
             <AnimatePresence mode="wait">
                 {aiResponse ? (
                     <motion.div 
+                        key="response"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-indigo-600 text-white p-8 md:p-10 rounded-[3rem] shadow-2xl relative overflow-hidden"
+                        exit={{ opacity: 0, scale: 0.95 }}
                     >
+                      <Card className="p-8 space-y-8 relative overflow-hidden group border-none bg-indigo-600 text-white">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
-                        <MessageSquareQuote className="absolute top-8 right-8 h-16 w-16 opacity-10" />
-                        <div className="inline-flex items-center gap-2 text-[10px] font-black text-indigo-200 bg-white/10 px-4 py-1.5 rounded-full uppercase mb-8 border border-white/10 backdrop-blur-md">
-                          <Sparkles size={12} /> Coach Insight
+                        
+                        <div className="flex items-center justify-between relative z-10">
+                          <div className="px-3 py-1 bg-white/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/10">
+                            <Sparkles size={12} /> {t('journal.coachInsight')}
+                          </div>
+                          <MessageSquareQuote className="opacity-20" size={32} />
                         </div>
-                        <p className="text-white text-lg md:text-xl leading-relaxed italic mb-10 relative z-10 font-bold">"{aiResponse}"</p>
-                        <button 
+                        
+                        <div className="space-y-8 relative z-10">
+                          <p className="text-xl md:text-2xl font-bold leading-relaxed italic">
+                            "{aiResponse.response}"
+                          </p>
+
+                          <div className="flex flex-wrap gap-2">
+                            {aiResponse.emotionTags?.map((tag: string) => (
+                              <span key={tag} className="px-3 py-1 bg-white/10 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                                # {tag}
+                              </span>
+                            ))}
+                          </div>
+
+                          <div className="p-6 bg-black/10 rounded-3xl border border-white/10">
+                            <div className="flex items-center gap-2 mb-3 opacity-60">
+                              <HelpCircle size={16} />
+                              <span className="text-[10px] font-bold uppercase tracking-widest">{t('journal.reflectionQuestion')}</span>
+                            </div>
+                            <p className="text-base font-medium leading-relaxed">{aiResponse.reflectionQuestion}</p>
+                          </div>
+
+                          <div className="flex items-center gap-3 text-white/80">
+                            <Heart size={20} className="fill-current text-rose-300" />
+                            <p className="text-xs font-bold uppercase tracking-widest">{aiResponse.affirmation}</p>
+                          </div>
+                        </div>
+
+                        <Button 
+                            variant="primary"
+                            fullWidth
+                            className="bg-white text-indigo-600 hover:bg-white/90"
                             onClick={() => setAiResponse(null)}
-                            className="bg-white text-indigo-600 px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:bg-indigo-50 shadow-xl"
                         >
-                            Log Another Entry
-                        </button>
+                            {t('journal.logAnother')}
+                        </Button>
+                      </Card>
                     </motion.div>
                 ) : (
                     <motion.div 
+                        key="form"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="bg-white p-8 md:p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-10"
+                        exit={{ opacity: 0 }}
                     >
+                      <Card className="p-8 space-y-8">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                            <h3 className="font-black text-slate-900 text-lg uppercase tracking-tight">Daily Vibe</h3>
-                            <div className="flex gap-4 md:gap-3 justify-center">
+                            <h3 className="font-bold text-lg">{t('journal.dailyVibe')}</h3>
+                            <div className="flex gap-2">
                                 {['😔', '😐', '😊', '🤩', '🔥'].map(m => (
                                     <button 
                                         key={m} 
                                         onClick={() => setMood(m)}
-                                        className={`text-3xl md:text-2xl transition-all ${mood === m ? 'scale-125 grayscale-0' : 'grayscale opacity-30 hover:opacity-100'}`}
+                                        className={`text-3xl p-2 rounded-xl transition-all ${mood === m ? 'bg-[var(--surface2)] scale-110 shadow-sm' : 'grayscale opacity-50 hover:opacity-100 hover:bg-[var(--surface)]'}`}
                                     >
                                         {m}
                                     </button>
@@ -100,84 +172,92 @@ export default function JournalPage() {
                         </div>
 
                         <div className="space-y-4">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Satisfaction Rating</label>
-                            <div className="flex gap-3">
+                            <label className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text3)' }}>{t('journal.satisfactionRating')}</label>
+                            <div className="flex gap-2">
                                 {[1,2,3,4,5].map(s => (
                                     <button 
                                         key={s} 
                                         onClick={() => setRating(s)}
-                                        className={`flex-1 h-12 md:h-10 rounded-2xl flex items-center justify-center transition-all ${
-                                            rating >= s ? 'bg-amber-400 text-white shadow-xl shadow-amber-100' : 'bg-slate-50 text-slate-200'
+                                        className={`flex-1 h-12 rounded-xl flex items-center justify-center transition-all ${
+                                            rating >= s ? 'bg-amber-400 text-white shadow-md' : 'bg-[var(--surface)] text-[var(--text3)] hover:bg-[var(--surface2)]'
                                         }`}
                                     >
-                                        <Star className={cn("h-5 w-5", rating >= s ? "fill-current" : "")} />
+                                        <Star size={20} className={rating >= s ? "fill-current" : ""} />
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="space-y-8">
+                        <div className="space-y-6">
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Peak Moment</label>
+                                <label className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text3)' }}>{t('journal.peakMoment')}</label>
                                 <textarea 
-                                    className="w-full bg-slate-50 border-2 border-transparent rounded-[1.5rem] p-6 text-sm font-bold focus:bg-white focus:border-indigo-600 outline-none h-32 resize-none transition-all placeholder:text-slate-300"
-                                    placeholder="What was the highlight of your day?"
+                                    className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 text-sm md:text-base font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none h-32 resize-none transition-all placeholder:opacity-30"
+                                    placeholder={t('journal.peakPlaceholder')}
                                     value={highlight}
                                     onChange={e => setHighlight(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-3">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">The Hurdle</label>
+                                <label className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text3)' }}>{t('journal.hurdle')}</label>
                                 <textarea 
-                                    className="w-full bg-slate-50 border-2 border-transparent rounded-[1.5rem] p-6 text-sm font-bold focus:bg-white focus:border-indigo-600 outline-none h-32 resize-none transition-all placeholder:text-slate-300"
-                                    placeholder="What stood in your way?"
+                                    className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 text-sm md:text-base font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none h-32 resize-none transition-all placeholder:opacity-30"
+                                    placeholder={t('journal.hurdlePlaceholder')}
                                     value={challenge}
                                     onChange={e => setChallenge(e.target.value)}
                                 />
                             </div>
                         </div>
 
-                        <button 
+                        <Button 
+                            fullWidth
+                            loading={loading}
                             onClick={handleSubmit}
-                            disabled={loading || !highlight}
-                            className="w-full bg-indigo-600 text-white py-5 rounded-[1.5rem] font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-2xl shadow-indigo-100 hover:bg-slate-900 hover:translate-y-[-2px] active:translate-y-[0] transition-all disabled:opacity-50"
+                            disabled={!highlight}
+                            icon={Sparkles}
                         >
-                            {loading ? <Loader2 className="animate-spin h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-                            Process Reflections
-                        </button>
+                            {t('journal.process')}
+                        </Button>
+                      </Card>
                     </motion.div>
                 )}
             </AnimatePresence>
         </div>
 
-        <div className="space-y-8">
-            <h3 className="font-black text-slate-400 uppercase text-xs tracking-widest ml-4">Reflection Archive</h3>
+        <div className="space-y-6">
+            <h3 className="font-bold text-xs uppercase tracking-widest opacity-50 ml-2">{t('journal.archive')}</h3>
             <div className="space-y-4">
-                {history.map((j, i) => (
+                {history.length === 0 ? (
+                  <div className="text-center py-10 opacity-30">
+                    <BookOpen size={40} className="mx-auto mb-2" />
+                    <p className="text-xs font-medium">Belum ada catatan refleksi</p>
+                  </div>
+                ) : history.map((j, i) => (
                     <motion.div 
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
+                        {...itemFadeIn}
                         key={j.id} 
-                        className="bg-white p-6 md:p-8 rounded-[2.5rem] border border-slate-50 shadow-sm flex gap-6 group hover:border-indigo-600/30 transition-all"
                     >
-                        <div className="text-4xl shrink-0 h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center shadow-sm">
+                      <Card className="p-5 flex gap-5 hover:border-[var(--accent)] transition-all cursor-pointer group">
+                        <div className="text-3xl shrink-0 h-16 w-16 bg-[var(--surface)] rounded-2xl flex items-center justify-center border border-[var(--border)] group-hover:bg-[var(--surface2)]">
                             {j.mood}
                         </div>
-                        <div className="flex-1 min-w-0 flex flex-col justify-center">
-                            <div className="flex justify-between items-center mb-2">
-                                <h4 className="font-black text-slate-800 truncate text-base">{j.highlight}</h4>
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0 ml-4">
-                                    {new Date(j.createdAt as any).toLocaleDateString()}
+                        <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex justify-between items-start gap-2">
+                                <h4 className="font-bold text-sm truncate group-hover:text-[var(--accent)] transition-colors">{j.highlight}</h4>
+                                <span className="text-[10px] font-medium opacity-40 shrink-0 flex items-center gap-1">
+                                    <Calendar size={10} /> {formatDateLong(j.createdAt)}
                                 </span>
                             </div>
-                            <p className="text-xs text-slate-400 font-bold line-clamp-2 italic leading-relaxed">"{j.aiResponse}"</p>
+                            <p className="text-xs opacity-60 line-clamp-2 italic leading-relaxed">
+                              "{typeof j.aiResponse === 'string' ? j.aiResponse : (j.aiResponse as any)?.response || 'Refleksi diproses.'}"
+                            </p>
                         </div>
+                      </Card>
                     </motion.div>
                 ))}
             </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

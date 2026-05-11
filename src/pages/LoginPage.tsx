@@ -16,6 +16,8 @@ import GoogleButton from '../components/auth/GoogleButton';
 import PasswordInput from '../components/auth/PasswordInput';
 import PasswordStrength from '../components/auth/PasswordStrength';
 
+import toast from 'react-hot-toast';
+
 export default function LoginPage() {
   const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
@@ -48,6 +50,7 @@ export default function LoginPage() {
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      toast.success(isLogin ? "Welcome back to FlowState!" : "Account created successfully!");
     } catch (err) {
       const authErr = err as AuthError;
       setError(getFirebaseErrorMessage(authErr.code));
@@ -69,6 +72,7 @@ export default function LoginPage() {
       await updateProfile(cred.user, { displayName: name });
       
       const newProfile = {
+        id: cred.user.uid,
         displayName: name,
         fullName: name,
         email: email,
@@ -85,6 +89,7 @@ export default function LoginPage() {
         }
       };
       await setDoc(doc(db, 'users', cred.user.uid), newProfile);
+      toast.success("Welcome to FlowState!");
     } catch (err) {
       const authErr = err as AuthError;
       setError(getFirebaseErrorMessage(authErr.code));
