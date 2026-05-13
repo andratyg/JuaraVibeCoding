@@ -37,6 +37,8 @@ interface AppContextType {
   refreshProfile: () => Promise<void>;
   vibeMode: VibeMode;
   setVibeMode: (mode: VibeMode) => void;
+  theme: 'dark' | 'light' | 'system';
+  setTheme: (theme: 'dark' | 'light' | 'system') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -53,22 +55,25 @@ const AppContent = () => {
   useEnergyTheme(dashboardData?.energyScore);
 
   return (
-    <Routes>
-      <Route path="/login" element={<ProtectedRoute reverse><LoginPage /></ProtectedRoute>} />
-      <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/checkin" element={<EnergyCheckInPage />} />
-        <Route path="/tasks" element={<TaskManager />} />
-        <Route path="/fitness" element={<FitnessCoach />} />
-        <Route path="/journal" element={<JournalPage />} />
-        <Route path="/summarizer" element={<Summarizer />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/coach" element={<CoachPage />} />
-      </Route>
-    </Routes>
+    <>
+      <BurnoutAlert recentCheckins={dashboardData?.recentCheckins || []} />
+      <Routes>
+        <Route path="/login" element={<ProtectedRoute reverse><LoginPage /></ProtectedRoute>} />
+        <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/checkin" element={<EnergyCheckInPage />} />
+          <Route path="/tasks" element={<TaskManager />} />
+          <Route path="/fitness" element={<FitnessCoach />} />
+          <Route path="/journal" element={<JournalPage />} />
+          <Route path="/summarizer" element={<Summarizer />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/coach" element={<CoachPage />} />
+        </Route>
+      </Routes>
+    </>
   );
 };
 
@@ -77,6 +82,7 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [vibeMode, setVibeMode] = useState<VibeMode>('balance');
+  const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
 
   const fetchProfile = async (uid: string) => {
     try {
@@ -127,7 +133,9 @@ export default function App() {
         loading, 
         refreshProfile: () => fetchProfile(user?.uid || ''), 
         vibeMode, 
-        setVibeMode 
+        setVibeMode,
+        theme,
+        setTheme
       }}>
         <BrowserRouter>
           <Toaster 
@@ -141,7 +149,7 @@ export default function App() {
                 borderRadius: 'var(--r-md)',
                 fontSize: '13px',
                 padding: '12px 16px',
-                maxWidth: '380px'
+                maxWidth: '400px'
               },
               success: { iconTheme: { primary: '#1DB97A', secondary: '#0D0F14' } },
               error:   { iconTheme: { primary: '#FF5C5C', secondary: '#0D0F14' } },

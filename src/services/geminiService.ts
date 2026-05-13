@@ -1,106 +1,110 @@
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 
 // In AI Studio, the API key is provided via process.env.GEMINI_API_KEY
-const API_KEY = process.env.GEMINI_API_KEY || '';
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+const KEY = process.env.GEMINI_API_KEY || '';
+const ai = new GoogleGenAI({ apiKey: KEY });
 const DEFAULT_MODEL = 'gemini-3-flash-preview';
 
-/**
- * Robustly call Gemini and handle JSON responses
- */
-const callGemini = async (prompt: string, systemInstruction = '', responseSchema?: any): Promise<any> => {
-  try {
-    const isJson = !!responseSchema;
-    
-    const response = await ai.models.generateContent({
-      model: DEFAULT_MODEL,
-      contents: prompt,
-      config: {
-        temperature: 0.7,
-        maxOutputTokens: 2048,
-        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
-        ...(isJson && { responseMimeType: 'application/json' }),
-        ...(responseSchema && { responseSchema }),
-        ...(systemInstruction && { systemInstruction })
-      }
-    });
+const ID  = '\n\nPENTING: Balas SELALU dalam Bahasa Indonesia yang natural dan hangat. Semua string dalam JSON harus Bahasa Indonesia.';
 
-    const text = response.text;
-    if (!text) throw new Error('AI returned an empty response.');
-    
-    if (!isJson) return text.trim();
-    
+// FIX D2, D3: Core helper dengan retry + robust JSON parsing
+const callGemini = async (prompt: string, systemInstruction = '', responseSchema?: any): Promise<any> => {
+  const isJson = !!responseSchema;
+  
+  for (let i = 0; i < 3; i++) {
     try {
-      const cleaned = text.replace(/```json\n?|```\n?/g, '').trim();
-      return JSON.parse(cleaned);
-    } catch (parseErr: any) {
-      console.error('JSON Parse Error. Raw text:', text);
-      // Attempt to fix common truncation/malformation if it's minor?
-      // For now, just throw a clearer error
-      throw new Error(`Failed to parse AI response as JSON: ${parseErr.message}`);
+      const response = await ai.models.generateContent({
+        model: DEFAULT_MODEL,
+        contents: prompt,
+        config: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          ...(isJson && { responseMimeType: 'application/json' }),
+          ...(responseSchema && { responseSchema }),
+          ...(systemInstruction && { systemInstruction })
+        }
+      });
+
+      const text = response.text;
+      if (!text) throw new Error('AI returned an empty response.');
+      
+      if (!isJson) return text.trim();
+      
+      try {
+        const cleaned = text.replace(/```json\n?|```\n?/g, '').trim();
+        return JSON.parse(cleaned);
+      } catch (parseErr: any) {
+        console.error('JSON Parse Error:', parseErr, 'Raw text:', text);
+        throw new Error(`Failed to parse AI response as JSON: ${parseErr.message}`);
+      }
+    } catch (err: any) {
+      console.error(`Gemini API Attempt ${i+1} failed:`, err);
+      if (i === 2) throw err;
+      await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i))); // exponential backoff
     }
-  } catch (err: any) {
-    console.error('Gemini API Invocation Error:', err);
-    throw err;
   }
 };
 
 export const geminiService = {
+  // 1. Morning Energy Check-in — FIX D4 (instruksi ID)
   analyzeEnergyCheckIn: async (energi: number, stres: number, fokus: number, mood: string) => {
-    const prompt = `Analisis data check-in user:
-Energi Fisik: ${energi}/10
-Stres Mental: ${stres}/10
-Fokus: ${fokus}/10
-Mood: "${mood}"
+    const prompt = `User morning check-in:
+Energi fisik: ${energi}/10, Stres mental: ${stres}/10, Fokus: ${fokus}/10, Mood: "${mood}"
 
-Berikan ringkasan energi hari ini dan mode kerja yang direkomendasikan.`;
+Analisis dan beri rekomendasi personal.`;
 
-    const systemInstruction = `Kamu adalah Pulse AI Wellness Coach yang empatik. Kamu menganalisis data energi user dan memberikan strategi harian. 
-Balas SELALU dalam Bahasa Indonesia yang natural dan hangat. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Gunakan JSON untuk menjawab.`;
+    const systemInstruction = `Kamu adalah FlowState AI Coach. Analisis kondisi user.
+Balas JSON:
+{
+  "energyScore": <1-10 rata-rata tertimbang>,
+  "mode": "<Deep Work Mode|Balance Mode|Recovery Mode>",
+  "modeReason": "<1 kalimat alasan>",
+  "narasi": "<2-3 kalimat personal, hangat, actionable>",
+  "topTip": "<1 tips spesifik hari ini>",
+  "workSlots": ["<HH:MM-HH:MM>","<HH:MM-HH:MM>"],
+  "avoidSlots": ["<waktu hindari kerja berat>"],
+  "colorTheme": "<teal|purple|amber>",
+  "emoji": "<1 emoji kondisi>",
+  "motivasiPagi": "<1 kalimat semangat>"
+}${ID}`;
 
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
-        energyScore: { type: Type.NUMBER, description: "Skor rata-rata energi (1-10)" },
-        mode: { type: Type.STRING, description: "Mode kerja (Deep Work Mode, Balance Mode, atau Recovery Mode)" },
-        modeReason: { type: Type.STRING, description: "Alasan singkat pemilihan mode" },
-        narasi: { type: Type.STRING, description: "Catatan pendek dan suportif (2-3 kalimat)" },
-        topTip: { type: Type.STRING, description: "Tips praktis untuk hari ini" },
-        workSlots: { 
-          type: Type.ARRAY, 
-          items: { type: Type.STRING },
-          description: "Daftar slot waktu produktif (misal: ['09:00-11:00', '14:00-16:00'])" 
-        },
-        avoidSlots: { 
-          type: Type.ARRAY, 
-          items: { type: Type.STRING },
-          description: "Waktu istirahat atau downtime" 
-        },
-        colorTheme: { type: Type.STRING, description: "Tema warna (teal, purple, amber)" },
-        emoji: { type: Type.STRING, description: "Emoji representasi" }
+        energyScore: { type: Type.NUMBER },
+        mode: { type: Type.STRING },
+        modeReason: { type: Type.STRING },
+        narasi: { type: Type.STRING },
+        topTip: { type: Type.STRING },
+        workSlots: { type: Type.ARRAY, items: { type: Type.STRING } },
+        avoidSlots: { type: Type.ARRAY, items: { type: Type.STRING } },
+        colorTheme: { type: Type.STRING },
+        emoji: { type: Type.STRING },
+        motivasiPagi: { type: Type.STRING }
       },
-      required: ["energyScore", "mode", "modeReason", "narasi", "topTip", "workSlots", "avoidSlots", "colorTheme", "emoji"]
+      required: ["energyScore", "mode", "modeReason", "narasi", "topTip", "workSlots", "avoidSlots", "colorTheme", "emoji", "motivasiPagi"]
     };
 
     return callGemini(prompt, systemInstruction, responseSchema);
   },
 
-  scheduleTasks: async (tasks: any[], energyScore: number, workSlots: string[] | string) => {
-    const taskList = tasks.map((t, i) =>
-      `${i + 1}. "${t.title || t.name}" — ${t.duration} menit, prioritas: ${t.priority}, kategori: ${t.category || 'general'}`
-    ).join('\n');
-    const slotsString = Array.isArray(workSlots) ? workSlots.join(', ') : workSlots;
-    const prompt = `Energy Score: ${energyScore}/10. Slot kerja: ${slotsString}.
-Tugas yang harus dijadwalkan:
-${taskList}`;
+  // 2. Task Scheduler
+  scheduleTasks: async (tasks: any[], energyScore: number, workSlots: string[]) => {
+    const taskList = tasks.map((t,i)=>`${i}. "${t.title || t.name}" (${t.duration}mnt, ${t.priority})`).join('; ');
+    const prompt = `Energy: ${energyScore}/10. Slots: ${workSlots.join(', ')}.
+Tasks: ${taskList}
 
-    const systemInstruction = `Susun jadwal kerja hari ini. Tugas berat di slot pagi/energi tinggi, tugas ringan di sore.
-Gunakan Bahasa Indonesia yang natural. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Balas dalam format JSON.`;
+Susun jadwal optimal. Task berat di puncak energi.`;
+
+    const systemInstruction = `Jadwalkan task harian.
+Balas JSON:
+{
+  "schedule": [{"taskId":"<index>","taskName":"","startTime":"HH:MM","endTime":"HH:MM","reason":""}],
+  "overloadWarning": null,
+  "suggestedBreaks": ["<HH:MM-HH:MM>"],
+  "totalMinutes": <n>
+}${ID}`;
 
     const responseSchema = {
       type: Type.OBJECT,
@@ -110,33 +114,40 @@ Balas dalam format JSON.`;
           items: {
             type: Type.OBJECT,
             properties: {
-              taskId: { type: Type.NUMBER },
+              taskId: { type: Type.STRING },
               taskName: { type: Type.STRING },
-              startTime: { type: Type.STRING, description: "HH:MM" },
-              endTime: { type: Type.STRING, description: "HH:MM" },
+              startTime: { type: Type.STRING },
+              endTime: { type: Type.STRING },
               reason: { type: Type.STRING }
-            },
-            required: ["taskId", "taskName", "startTime", "endTime"]
+            }
           }
         },
-        totalMinutes: { type: Type.NUMBER },
         overloadWarning: { type: Type.STRING, nullable: true },
-        suggestedBreaks: { type: Type.ARRAY, items: { type: Type.STRING } }
+        suggestedBreaks: { type: Type.ARRAY, items: { type: Type.STRING } },
+        totalMinutes: { type: Type.NUMBER }
       },
-      required: ["schedule", "totalMinutes", "suggestedBreaks"]
+      required: ["schedule", "suggestedBreaks", "totalMinutes"]
     };
 
     return callGemini(prompt, systemInstruction, responseSchema);
   },
 
+  // 3. Fitness Program
   generateFitnessProgram: async (profile: any, energyScore: number) => {
-    const prompt = `Profil: ${profile.height}cm, ${profile.weight}kg, Goal: ${profile.goal}, Level: ${profile.level}.
-Equipment: ${(profile.equipment || ['Bodyweight']).join(', ')}. Energy Score: ${energyScore}/10.`;
+    const prompt = `Profil: ${profile.height}cm/${profile.weight}kg, goal:${profile.goal}, level:${profile.level}, alat:${(profile.equipment||['Bodyweight']).join(',')}.
+Energy: ${energyScore}/10. E<4=15mnt ringan, E4-6=30mnt sedang, E>6=45mnt penuh.`;
 
     const systemInstruction = `Buat program latihan fitness yang sesuai dengan profil dan level energi user hari ini.
-Balas SELALU dalam Bahasa Indonesia yang natural dan hangat. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Gunakan format JSON.`;
+Balas JSON:
+{
+  "totalDuration": <mnt>,
+  "intensity": "<ringan|sedang|tinggi>",
+  "estimatedCalories": <kal>,
+  "warmup": {"duration":<mnt>,"description":""},
+  "exercises": [{"name":"","sets":<n>,"reps":"","restSeconds":<n>,"muscleGroup":"","formTip":"","modification":""}],
+  "cooldown": {"duration":<mnt>,"description":""},
+  "motivationalMessage": "<pesan semangat>"
+}${ID}`;
 
     const responseSchema = {
       type: Type.OBJECT,
@@ -149,8 +160,7 @@ Gunakan format JSON.`;
           properties: {
             duration: { type: Type.NUMBER },
             description: { type: Type.STRING }
-          },
-          required: ["duration", "description"]
+          }
         },
         exercises: {
           type: Type.ARRAY,
@@ -164,8 +174,7 @@ Gunakan format JSON.`;
               muscleGroup: { type: Type.STRING },
               formTip: { type: Type.STRING },
               modification: { type: Type.STRING }
-            },
-            required: ["name", "sets", "reps", "restSeconds", "muscleGroup", "formTip"]
+            }
           }
         },
         cooldown: {
@@ -173,8 +182,7 @@ Gunakan format JSON.`;
           properties: {
             duration: { type: Type.NUMBER },
             description: { type: Type.STRING }
-          },
-          required: ["duration", "description"]
+          }
         },
         motivationalMessage: { type: Type.STRING }
       },
@@ -184,15 +192,12 @@ Gunakan format JSON.`;
     return callGemini(prompt, systemInstruction, responseSchema);
   },
 
+  // 4. Wellness Nudge
   generateNudge: async (energyScore: number, stressLevel: number, timeOfDay: string) => {
-    const prompt = `Energy: ${energyScore}/10, Stres: ${stressLevel}/10, Waktu: ${timeOfDay}.
-User butuh micro-break 2-3 menit.`;
-
-    const systemInstruction = `Berikan aktivitas micro-break yang tepat. 
-Balas SELALU dalam Bahasa Indonesia yang natural dan hangat. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Format JSON.`;
-
+    const prompt = `Micro-break 90mnt. Energy:${energyScore}, Stres:${stressLevel}, Waktu:${timeOfDay}.`;
+    const systemInstruction = `Beri aktivitas micro-break yang tepat.
+Balas JSON: {"activity":"","type":"<breathing|stretching|movement|mindfulness>","durationMinutes":<n>,"steps":["","",""],"benefit":"","emoji":""}${ID}`;
+    
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
@@ -209,18 +214,12 @@ Format JSON.`;
     return callGemini(prompt, systemInstruction, responseSchema);
   },
 
+  // 5. Journal Response
   generateJournalResponse: async (entry: any) => {
-    const prompt = `Jurnal:
-Rating: ${entry.rating}/5
-Highlight: "${entry.highlight}"
-Tantangan: "${entry.challenge}"
-Catatan: "${entry.freeWrite || ''}"`;
-
+    const prompt = `Jurnal: rating=${entry.rating}/5, highlight="${entry.highlight}", tantangan="${entry.challenge}", catatan="${entry.freeWrite||'-'}".`;
     const systemInstruction = `Berikan respons sebagai coach yang empatik dan bijak terhadap jurnal user.
-Balas SELALU dalam Bahasa Indonesia yang hangat. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Format JSON.`;
-
+Balas JSON: {"response":"<2-3 kalimat empatik>","emotionTags":["","",""],"primaryMood":"<happy|grateful|tired|stressed|calm|excited|sad>","reflectionQuestion":"","affirmation":"","insight":""}${ID}`;
+    
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
@@ -235,18 +234,15 @@ Format JSON.`;
     };
 
     return callGemini(prompt, systemInstruction, responseSchema);
-  },  generateWeeklyInsight: async (weeklyData: any[]) => {
-    const summary = weeklyData.map(d =>
-      `${d.date}: Energi=${d.energyScore}, Task=${d.completedTasks}/${d.totalTasks}, Mood=${d.mood}`
-    ).join('\n');
-    const prompt = `Data 7 hari terakhir:
-${summary}`;
+  },
 
-    const systemInstruction = `Berikan insight performa mingguan user.
-Balas SELALU dalam Bahasa Indonesia yang informatif. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Format JSON.`;
-
+  // 6. Weekly Insight
+  generateWeeklyInsight: async (weeklyData: any[]) => {
+    const dataString = weeklyData.map(d=>`${d.date}:E=${d.energyScore},T=${d.completedTasks||0}/${d.totalTasks||0}`).join(';');
+    const prompt = `Data 7 hari: ${dataString}.`;
+    const systemInstruction = `Beri insight performa mingguan user.
+Balas JSON: {"summary":"","bestDay":"","worstDay":"","productivityPattern":"","recommendation":"","productivityScore":<1-100>,"wellnessScore":<1-100>,"nextWeekFocus":""}${ID}`;
+    
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
@@ -254,8 +250,6 @@ Format JSON.`;
         bestDay: { type: Type.STRING },
         worstDay: { type: Type.STRING },
         productivityPattern: { type: Type.STRING },
-        wellnessPattern: { type: Type.STRING },
-        topAchievement: { type: Type.STRING },
         recommendation: { type: Type.STRING },
         productivityScore: { type: Type.NUMBER },
         wellnessScore: { type: Type.NUMBER },
@@ -267,20 +261,15 @@ Format JSON.`;
     return callGemini(prompt, systemInstruction, responseSchema);
   },
 
-  checkBurnoutRisk: async (recentCheckins: any[]) => {
-    const data = recentCheckins.map(c =>
-      `${c.date}: energi=${c.energi || c.energyScore}, stres=${c.stres}, fokus=${c.fokus}, mood="${c.mood}"`
-    ).join('\n');
-    const prompt = `Data check-in:
-${data}
+  // 7. Burnout Risk — FIX C3
+  checkBurnoutRisk: async (checkins: any[]) => {
+    const dataString = checkins.map(c=>`E=${c.energi||c.energyScore||5},S=${c.stres||5}`).join(';');
+    const prompt = `Check-in ${checkins.length} hari: ${dataString}.
+Analisis risiko burnout mendalam.`;
 
-Analisis risiko burnout.`;
-
-    const systemInstruction = `Analisis risiko burnout berdasarkan tren data check-in user.
-Balas SELALU dalam Bahasa Indonesia yang empatik. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Format JSON.`;
-
+    const systemInstruction = `Analisis risiko burnout.
+Balas JSON: {"riskLevel":"<low|medium|high|critical>","riskScore":<0-100>,"trendDirection":"<improving|stable|declining>","triggers":["",""],"warningSignals":["",""],"message":"<pesan empatik ke user>","recoveryPlan":{"today":["",""],"thisWeek":["",""],"longTerm":""},"shouldSeeHelp":<true|false>,"estimatedRecoveryDays":<n>}${ID}`;
+    
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
@@ -296,8 +285,7 @@ Format JSON.`;
             today: { type: Type.ARRAY, items: { type: Type.STRING } },
             thisWeek: { type: Type.ARRAY, items: { type: Type.STRING } },
             longTerm: { type: Type.STRING }
-          },
-          required: ["today", "thisWeek", "longTerm"]
+          }
         },
         shouldSeeHelp: { type: Type.BOOLEAN },
         estimatedRecoveryDays: { type: Type.NUMBER }
@@ -308,29 +296,35 @@ Format JSON.`;
     return callGemini(prompt, systemInstruction, responseSchema);
   },
 
+  // 8. AI Coach Chat — FIX D5 (context user dikirim)
   chatWithCoach: async (message: string, context: any) => {
-    const systemInstruction = `Kamu adalah FlowState AI Life Coach — asisten wellness dan produktivitas yang sangat empatik, personal, dan actionable.
-Konteks user: Energy=${context.energyScore || '?'}/10, Task=${context.completedTasks || 0}/${context.totalTasks || 0}, Mood=${context.mood || '?'}, Nama=${context.userName || 'User'}.
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural, hangat, dan tidak kaku. Berikan saran konkret dalam Bahasa Indonesia.`;
+    const system = `Kamu adalah FlowState AI Life Coach — empatik, personal, dan actionable.
+Konteks user saat ini:
+- Nama: ${context.userName || 'Kamu'}
+- Energy Score hari ini: ${context.energyScore || 'belum check-in'}/10
+- Task: ${context.completedTasks || 0}/${context.totalTasks || 0} selesai
+- Mood: ${context.mood || 'tidak diketahui'}
+- Streak: ${context.streak || 0} hari berturut
 
-    return callGemini(message, systemInstruction);
+Panduan respons WAJIB:
+1. Gunakan nama user jika tersedia
+2. SELALU jawab dalam Bahasa Indonesia yang hangat dan tidak kaku
+3. Berikan saran konkret dan actionable — bukan hanya motivasi kosong
+4. Maksimal 150 kata per respons
+5. Jika user stres/overwhelmed, validasi perasaannya dulu sebelum saran
+6. Akhiri dengan 1 pertanyaan atau aksi konkret yang mendorong user melangkah
+7. JANGAN pernah menjawab dalam Bahasa Inggris`;
+
+    return callGemini(message, system, false);
   },
 
+  // 9. Document Summarizer
   summarizeDocument: async (text: string, format: 'bullet' | 'narrative' | 'executive' | 'qa' = 'bullet') => {
-    const formatGuides = {
-      bullet: 'poin-poin singkat',
-      narrative: 'paragraf mengalir',
-      executive: 'summary formal',
-      qa: 'tanya-jawab'
-    };
-    const prompt = `Ringkas dalam format ${formatGuides[format]}:
-${text.substring(0, 8000)}`;
-
-    const systemInstruction = `Ringkas dokumen yang diberikan sesuai format. 
-Balas SELALU dalam Bahasa Indonesia. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural dan jelas. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Format JSON.`;
-
+    const fmtMap = {bullet:'poin-poin singkat',narrative:'narasi paragraf mengalir',executive:'executive summary formal',qa:'format tanya-jawab Q&A'}
+    const prompt = `Ringkas dokumen: ${text.substring(0, 8000)}`;
+    const systemInstruction = `Ringkas dokumen berikut dalam format: ${fmtMap[format] || format}.
+Balas JSON: {"title":"","summary":"","keyPoints":["","","","",""],"actionItems":["",""],"originalWordCount":${text.split(' ').length},"readingTimeSavedMinutes":${Math.max(1,Math.round(text.split(' ').length/200)-1)},"documentType":"<laporan|artikel|email|kontrak|lainnya>"}${ID}`;
+    
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
@@ -348,12 +342,13 @@ Format JSON.`;
     return callGemini(prompt, systemInstruction, responseSchema);
   },
 
+  // 10. Email Drafter
   draftEmail: async (context: string, tone: 'professional' | 'friendly' | 'assertive' | 'apologetic' = 'professional') => {
-    const prompt = `Draft email untuk konteks: "${context}" dengan nada ${tone}.`;
-
-    const systemInstruction = `Buat draft email yang sesuai dengan nada yang diminta.
-Balas dalam Bahasa Indonesia. Format JSON.`;
-
+    const tonesMap = {professional:'formal profesional',friendly:'ramah santai sopan',assertive:'tegas langsung poin',apologetic:'meminta maaf tulus'}
+    const prompt = `Email draft untuk: "${context}".`;
+    const systemInstruction = `Buat email dengan nada ${tonesMap[tone] || tone}.
+Balas JSON: {"subject":"","greeting":"","body":"","closing":"","tone":"${tone}"}${ID}`;
+    
     const responseSchema = {
       type: Type.OBJECT,
       properties: {
@@ -361,8 +356,7 @@ Balas dalam Bahasa Indonesia. Format JSON.`;
         greeting: { type: Type.STRING },
         body: { type: Type.STRING },
         closing: { type: Type.STRING },
-        tone: { type: Type.STRING },
-        wordCount: { type: Type.STRING }
+        tone: { type: Type.STRING }
       },
       required: ["subject", "greeting", "body", "closing"]
     };
@@ -370,14 +364,12 @@ Balas dalam Bahasa Indonesia. Format JSON.`;
     return callGemini(prompt, systemInstruction, responseSchema);
   },
 
+  // 11. Daily Quote
   getDailyQuote: async (energyScore: number, mood: string) => {
-    const prompt = `Energy: ${energyScore}/10, Mood: "${mood}".`;
-
-    const systemInstruction = `Berikan quote motivasi yang tepat. 
-Balas SELALU dalam Bahasa Indonesia. 
-PENTING: Balas SELALU dalam Bahasa Indonesia yang natural. Semua teks dalam JSON (narasi, tips, pesan, dll) HARUS Bahasa Indonesia.
-Format JSON.`;
-
+    const prompt = `Energy:${energyScore}/10, Mood:"${mood}".`;
+    const systemInstruction = `Beri quote motivasi harian.
+Balas JSON: {"quote":"<dalam Bahasa Indonesia>","author":"","context":""}${ID}`;
+    
     const responseSchema = {
       type: Type.OBJECT,
       properties: {

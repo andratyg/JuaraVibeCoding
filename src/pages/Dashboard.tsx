@@ -1,17 +1,18 @@
 import { useApp } from '../App';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { 
   Zap, CheckSquare, Brain, Sparkles, ArrowRight, 
-  Activity, Calendar, FileText, TrendingUp, Trophy 
+  Activity, Calendar, FileText, TrendingUp, Trophy, Dumbbell 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from '../hooks/useDashboardData';
-import { getSalam, formatDateLong } from '../utils/formatters';
+import { getSalam, fDateLong, fNumber } from '../utils/formatters';
 import { fadeInUp, stagger, itemFadeIn } from '../utils/animations';
 import { SkeletonPage } from '../components/ui/Skeletons';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import BurnoutAlert from '../components/BurnoutAlert';
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ export default function Dashboard() {
 
   if (loading) return <SkeletonPage />;
 
-  const { todayCheckin, tasks = [], streak = 0, completedTasks = 0, totalTasks = 0 } = data || {};
+  const { todayCheckin, tasks = [], streak = 0, completedTasks = 0, totalTasks = 0, recentCheckins = [] } = data || {};
   const energyScore = todayCheckin?.energyScore ?? todayCheckin?.energi ?? 0;
   const mood = todayCheckin?.mood || (todayCheckin ? 'Netral' : t('dashboard.noCheckin'));
 
@@ -30,14 +31,16 @@ export default function Dashboard() {
       initial="initial" animate="animate" variants={stagger}
       className="space-y-8"
     >
+      <BurnoutAlert recentCheckins={recentCheckins || []} />
+
       {/* ── HEADER ── */}
       <motion.header variants={fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-[var(--text)] to-[var(--text2)] bg-clip-text text-transparent">
-            {t('dashboard.greeting', { salam: getSalam(profile?.displayName) })}
+            {getSalam(profile?.displayName)}
           </h1>
           <p className="text-sm font-medium opacity-60 uppercase tracking-widest pl-1">
-            {formatDateLong(new Date())}
+            {fDateLong(new Date())}
           </p>
         </div>
         {!todayCheckin && (
@@ -51,11 +54,11 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard 
           label={t('dashboard.energyScore')} 
-          value={energyScore} 
+          value={fNumber(energyScore)} 
           maxValue={10} 
           icon={Zap} 
           color="var(--accent)"
-          subtext={todayCheckin ? t('checkin.alreadyDone') : t('dashboard.noCheckin')}
+          subtext={todayCheckin ? 'Pulse Synced' : t('dashboard.noCheckin')}
         />
         <StatCard 
           label={t('dashboard.tasksDone')} 
@@ -64,13 +67,14 @@ export default function Dashboard() {
           icon={CheckSquare} 
           color="var(--success)"
           progress
+          subtext={`${completedTasks}/${totalTasks} Tasks`}
         />
         <StatCard 
           label={t('dashboard.streak')} 
           value={streak} 
           icon={Trophy} 
           color="var(--warning)"
-          subtext={t('fitness.days')}
+          subtext="Day Streak"
         />
         <StatCard 
           label={t('dashboard.moodToday')} 
@@ -94,7 +98,7 @@ export default function Dashboard() {
                     <div className="p-2.5 bg-[var(--accent-bg)] text-[var(--accent)] rounded-xl">
                       <Sparkles size={20} />
                     </div>
-                    <h3 className="text-xl font-bold">Insight AI Hari Ini</h3>
+                    <h3 className="text-xl font-bold">{t('dashboard.aiInsight')}</h3>
                   </div>
                   <span className="text-[10px] font-black px-3 py-1 rounded-full bg-white/10 text-white uppercase tracking-widest border border-white/5">
                     {todayCheckin.mode || 'Balance'}
@@ -102,16 +106,16 @@ export default function Dashboard() {
                 </div>
                 
                 <p className="text-lg md:text-xl font-medium leading-relaxed opacity-90 italic">
-                  "{todayCheckin.narasi || 'Siap untuk hari yang produktif?'}"
+                  "{todayCheckin.narasi || t('dashboard.readyToWork')}"
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-text)] mb-2">Pilar Utama</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--accent-text)] mb-2">{t('dashboard.mainPillar')}</p>
                     <p className="text-sm font-semibold">{todayCheckin.topTip}</p>
                   </div>
                   <div className="p-4 rounded-2xl bg-[var(--surface)] border border-[var(--border)]">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--success)] mb-2">Fokus window</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--success)] mb-2">{t('dashboard.focusWindow')}</p>
                     <p className="text-sm font-semibold">{todayCheckin.workSlots?.[0] || 'Flexible'}</p>
                   </div>
                 </div>
@@ -124,10 +128,10 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-2">
                    <h3 className="text-xl font-bold">{t('dashboard.noCheckin')}</h3>
-                   <p className="text-sm max-w-xs mx-auto opacity-50">Pulse AI butuh data kondisimu untuk memberikan strategi hari ini.</p>
+                   <p className="text-sm max-w-xs mx-auto opacity-50">{t('dashboard.needData')}</p>
                 </div>
                 <Button onClick={() => navigate('/checkin')} variant="secondary" icon={ArrowRight}>
-                   {t('checkin.startNow')}
+                   {t('dashboard.startNow')}
                 </Button>
              </Card>
           )}
@@ -184,21 +188,21 @@ export default function Dashboard() {
                 onClick={() => navigate('/tasks')}
                 icon={CheckSquare}
                 label={t('tasks.addTask')}
-                desc="Tambahkan task baru"
+                desc={t('dashboard.addNewTaskDesc')}
                 color="var(--accent)"
               />
               <ActionButton 
                 onClick={() => navigate('/journal')}
                 icon={Calendar}
                 label={t('journal.title')}
-                desc="Tulis refleksi harian"
+                desc={t('dashboard.writeReflection')}
                 color="var(--success)"
               />
               <ActionButton 
                 onClick={() => navigate('/summarizer')}
                 icon={FileText}
                 label={t('summarizer.title')}
-                desc="Ringkas dokumen panjang"
+                desc={t('dashboard.summarizeDocs')}
                 color="var(--warning)"
               />
             </div>
@@ -213,8 +217,8 @@ export default function Dashboard() {
                    <Dumbbell size={28} />
                 </div>
                 <div className="space-y-2">
-                   <h4 className="text-xl font-bold text-white leading-tight">Program Fitness AI</h4>
-                   <p className="text-xs text-indigo-100">Dapatkan latihan yang disesuaikan dengan level energimu saat ini.</p>
+                   <h4 className="text-xl font-bold text-white leading-tight">{t('fitness.programTitle')}</h4>
+                   <p className="text-xs text-indigo-100">{t('fitness.aiProgramDesc')}</p>
                 </div>
                 <Button 
                   onClick={() => navigate('/fitness')} 
@@ -279,26 +283,3 @@ function ActionButton({ onClick, icon: Icon, label, desc, color }: any) {
     </button>
   );
 }
-
-const Dumbbell = ({ size, className }: { size?: number, className?: string }) => (
-  <svg 
-    width={size} 
-    height={size} 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2.5" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
-    className={className}
-  >
-    <path d="M6.5 6.5h11" />
-    <path d="M6.5 17.5h11" />
-    <path d="M3 21v-2" />
-    <path d="M3 5V3" />
-    <path d="M21 21v-2" />
-    <path d="M21 5V3" />
-    <path d="M3 7h1v10H3a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z" />
-    <path d="M21 7h-1v10h1a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-  </svg>
-);

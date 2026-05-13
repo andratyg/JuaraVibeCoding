@@ -16,7 +16,7 @@ import { SkeletonPage } from '../components/ui/Skeletons';
 
 export default function EnergyCheckInPage() {
   const { t } = useTranslation();
-  const { user, profile, refreshProfile } = useApp();
+  const { user, profile, refreshProfile, setVibeMode } = useApp();
   const navigate = useNavigate();
   
   const [energyLevel, setEnergyLevel] = useState(5);
@@ -100,6 +100,12 @@ export default function EnergyCheckInPage() {
       await setDoc(doc(db, `users/${profile.id}/checkins`, checkinDate), checkinData);
       setResult(checkinData);
       setAlreadyCalibrated(true);
+      
+      // Update Vibe Mode — context update
+      const mode = result.mode?.toLowerCase()?.includes('fokus') || result.mode?.toLowerCase()?.includes('deep') ? 'deep-work' : 
+                   result.mode?.toLowerCase()?.includes('recovery') || result.mode?.toLowerCase()?.includes('pulih') ? 'recovery' : 'balance';
+      setVibeMode?.(mode as any);
+
       toast.success('Energi berhasil diperbarui!');
       await refreshProfile();
     } catch (error: any) {

@@ -74,6 +74,9 @@ export default function TaskManager() {
     if (!newTask.title || !profile?.id) return;
     setIsSubmitting(true);
     try {
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      
       const taskData = {
         title: newTask.title,
         duration: newTask.duration,
@@ -82,6 +85,7 @@ export default function TaskManager() {
         status: 'To-Do',
         completed: false,
         createdAt: Timestamp.now(),
+        date: today,
         deadline: newTask.deadline ? Timestamp.fromDate(new Date(newTask.deadline)) : null,
         project: newTask.project || '',
       };
@@ -182,7 +186,7 @@ export default function TaskManager() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <header className="space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('tasks.title')}</h1>
-          <p className="text-sm text-[var(--text2)]">Kelola tugas harian Anda dengan sinkronisasi energi AI.</p>
+          <p className="text-sm text-[var(--text2)]">{t('tasks.subtitle') || 'Kelola tugas harian Anda dengan sinkronisasi energi AI.'}</p>
         </header>
         <Button 
           variant="primary" 
@@ -198,7 +202,7 @@ export default function TaskManager() {
         <StatCard label="Total Tasks" value={tasks.length} color="var(--accent)" />
         <StatCard label="Pending" value={pendingCount} color="var(--warning)" />
         <StatCard label="Completed" value={completedCount} color="var(--success)" />
-        <StatCard label="Energy Ready" value={`${(profile?.energyScore || 0) * 10}%`} color="var(--accent)" />
+        <StatCard label={t('tasks.energyReady')} value={`${(profile?.energyScore || 0) * 10}%`} color="var(--accent)" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -207,7 +211,7 @@ export default function TaskManager() {
             <h3 className="font-bold text-lg">{t('tasks.addTask')}</h3>
             <div className="space-y-4">
               <Input
-                label="Task Name"
+                label={t('tasks.taskName')}
                 placeholder={t('tasks.taskNamePlaceholder')}
                 value={newTask.title}
                 onChange={e => setNewTask({ ...newTask, title: e.target.value })}
@@ -251,10 +255,10 @@ export default function TaskManager() {
                </div>
                <p className="text-sm font-medium leading-relaxed">
                   {profile?.energyScore && profile.energyScore > 7 
-                    ? "Energi tinggi dideteksi. Saatnya eksekusi tugas-tugas berat!"
+                    ? t('tasks.aiAdvantageHigh')
                     : profile?.energyScore && profile.energyScore > 4
-                    ? "Energi stabil. Fokus pada konsistensi jadwal kerja Anda."
-                    : "Energi rendah. Prioritaskan istirahat atau tugas ringan."}
+                    ? t('tasks.aiAdvantageMid')
+                    : t('tasks.aiAdvantageLow')}
                </p>
             </div>
           </Card>
@@ -354,8 +358,8 @@ function TaskItem({ task, onToggle, onDelete, onStatusChange }: any) {
                 className="bg-[var(--surface)] text-[9px] font-black uppercase tracking-widest rounded-lg border border-[var(--border)] px-3 py-2 cursor-pointer focus:outline-none focus:border-[var(--accent)] transition-all"
            >
                 <option value="To-Do">TO-DO</option>
-                <option value="In Progress">ACTIVE</option>
-                <option value="Completed">DONE</option>
+                <option value="In Progress">{t('tasks.statusActive').toUpperCase()}</option>
+                <option value="Completed">{t('tasks.statusDone').toUpperCase()}</option>
            </select>
            <button onClick={onDelete} className="p-2 text-[var(--text3)] hover:text-[var(--danger)] hover:bg-[var(--danger-bg)] rounded-xl transition-all">
                 <Trash2 size={16} />

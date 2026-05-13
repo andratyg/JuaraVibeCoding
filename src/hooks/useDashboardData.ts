@@ -1,129 +1,64 @@
-import { useState, useEffect, useCallback } from 'react';
-import { collection, doc, getDoc, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../config/firebase';
+import { useState, useEffect, useCallback } from 'react'
+import { collection, doc, getDoc, getDocs, query, orderBy, limit } from 'firebase/firestore'
+import { db } from '../config/firebase'
 
 export const useDashboardData = (userId: string | null | undefined) => {
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [data,    setData]    = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error,   setError]   = useState<string | null>(null)
 
-  const fetchData = useCallback(async () => {
-    if (!userId) { setLoading(false); return; }
-    setLoading(true);
-    setError(null);
+  const fetch = useCallback(async () => {
+    if (!userId) { setLoading(false); return }
+    setLoading(true); setError(null)
     try {
-      const now = new Date();
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const userRef = `users/${userId}`;
+      const today = new Date().toISOString().split('T')[0]
+      const base  = `users/${userId}`
 
-      // Parallel fetch all required data
-      let checkinSnap, tasksSnap, checkins7Snap, reflectionSnap;
-      
-      try {
-        console.log(`Fetching dashboard data for user: ${userId}, path: ${userRef}`);
-        
-        const fetchCheckin = getDoc(doc(db, userRef, 'checkins', today)).catch(e => { 
-          if (e.message?.includes('offline')) {
-            console.warn('Checkin fetch: client is offline, using cache if available');
-          } else {
-            console.error('Checkin fetch failed:', e);
-          }
-          if (e.code === 'permission-denied') {
-            handleFirestoreError(e, OperationType.GET, `${userRef}/checkins/${today}`);
-          }
-          return { exists: () => false, data: () => null } as any; 
-        });
+      // Parallel fetch — FIX C1: real-time dashboard from Firestore
+      const [checkinSnap, checkins7, tasksSnap] = await Promise.all([
+        getDoc(doc(db, base, 'checkins', today)),
+        getDocs(query(collection(db, base, 'checkins'), orderBy('date','desc'), limit(7))),
+        getDocs(query(collection(db, base, 'tasks'), orderBy('createdAt', 'desc'), limit(10)))
+      ])
 
-        const fetchTasks = getDocs(query(
-          collection(db, userRef, 'tasks'),
-          where('date', '==', today)
-        )).catch(e => { 
-          if (e.message?.includes('offline')) {
-            console.warn('Tasks fetch: client is offline');
-          } else {
-            console.error('Tasks fetch failed:', e);
-          }
-          if (e.code === 'permission-denied') {
-            handleFirestoreError(e, OperationType.LIST, `${userRef}/tasks`);
-          }
-          return { docs: [], empty: true } as any;
-        });
-
-        const fetchHistory = getDocs(query(
-          collection(db, userRef, 'checkins'),
-          orderBy('date', 'desc'),
-          limit(7)
-        )).catch(e => { 
-          if (e.message?.includes('offline')) {
-            console.warn('History fetch: client is offline');
-          } else {
-            console.error('History fetch failed:', e);
-          }
-          if (e.code === 'permission-denied') {
-            handleFirestoreError(e, OperationType.LIST, `${userRef}/checkins`);
-          }
-          return { docs: [], empty: true } as any;
-        });
-
-        const fetchReflection = getDoc(doc(db, userRef, 'reflections', today)).catch(e => { 
-          if (e.message?.includes('offline')) {
-            console.warn('Reflection fetch: client is offline');
-          } else {
-            console.error('Reflection fetch failed:', e);
-          }
-          if (e.code === 'permission-denied') {
-            handleFirestoreError(e, OperationType.GET, `${userRef}/reflections/${today}`);
-          }
-          return { exists: () => false, data: () => null } as any;
-        });
-
-        [checkinSnap, tasksSnap, checkins7Snap, reflectionSnap] = await Promise.all([
-          fetchCheckin, fetchTasks, fetchHistory, fetchReflection
-        ]);
-      } catch (err: any) {
-        console.error('Dashboard primary fetch failed:', err);
-        // The individual catches already handle conversion if critical
-        setError(err.message || 'Gagal memuat data dashboard');
+      // FIX C2: Streak calculation yang benar
+      const checkinDocs = checkins7.docs.map(d => ({ date: d.id, ...d.data() as any }))
+      let streak = 0
+      for (let i = 0; i < checkinDocs.length; i++) {
+        const exp = new Date(); 
+        exp.setDate(exp.getDate() - i);
+        const expStr = exp.toISOString().split('T')[0];
+        // Note: document ID is the date string
+        const found = checkinDocs.find(d => d.date === expStr);
+        if (found) streak++
+        else break
       }
 
-      // Calculate streak
-      const checkinDates = checkins7Snap.docs.map(d => d.id).sort().reverse();
-      let streak = 0;
-      for (let i = 0; i < checkinDates.length; i++) {
-        const expected = new Date();
-        expected.setDate(expected.getDate() - i);
-        const expectedStr = `${expected.getFullYear()}-${String(expected.getMonth() + 1).padStart(2, '0')}-${String(expected.getDate()).padStart(2, '0')}`;
-        if (checkinDates[i] === expectedStr) streak++;
-        else break;
-      }
-
-      const taskList = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const checkins = checkins7Snap.docs.map(d => ({ date: d.id, ...d.data() as any }));
-      const todayCheckin = checkinSnap.exists() ? checkinSnap.data() : null;
+      const today_data = checkinSnap.exists() ? checkinSnap.data() : null
+      const taskList = tasksSnap.docs.map(d => ({ id: d.id, ...d.data() as any }));
+      const todayTasks = taskList.filter((t: any) => t.date === today);
 
       setData({
-        todayCheckin,
-        hasCheckedIn: checkinSnap.exists(),
-        energyScore: todayCheckin?.energyScore ?? null,
-        mode: todayCheckin?.mode ?? null,
-        colorTheme: todayCheckin?.colorTheme ?? 'purple',
-        tasks: taskList,
-        completedTasks: taskList.filter((t: any) => t.completed).length,
-        totalTasks: taskList.length,
+        todayCheckin:   today_data,
+        hasCheckedIn:   checkinSnap.exists(),
+        energyScore:    today_data?.energyScore ?? null,
+        mode:           today_data?.mode ?? null,
+        colorTheme:     today_data?.colorTheme ?? 'purple',
+        narasi:         today_data?.narasi ?? null,
+        tasks:          taskList,
+        completedTasks: todayTasks.filter((t: any) => t.completed).length,
+        totalTasks:     todayTasks.length,
         streak,
-        recentCheckins: checkins,
-        hasReflectedToday: reflectionSnap.exists(),
-        weeklyEnergy: checkins.map((c: any) => ({ date: c.date, score: c.energyScore || 0 })).reverse()
-      });
-    } catch (err: any) {
-      console.error('Dashboard fetch error:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
+        recentCheckins: checkinDocs,
+        weeklyEnergy:   checkinDocs.map(c => ({ date: c.date, score: c.energyScore || 0 })).reverse()
+      })
+    } catch (e: any) { 
+      console.error('Dashboard fetch error:', e);
+      setError(e.message) 
     }
-  }, [userId]);
+    finally { setLoading(false) }
+  }, [userId])
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  return { data, loading, error, refetch: fetchData };
-};
+  useEffect(() => { fetch() }, [fetch])
+  return { data, loading, error, refetch: fetch }
+}

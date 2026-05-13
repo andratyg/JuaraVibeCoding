@@ -1,4 +1,4 @@
-export type VibeMode = 'hustle' | 'zen' | 'balance';
+export type VibeMode = 'deep-work' | 'recovery' | 'balance';
 
 export interface UserSettings {
   notifications: {
@@ -94,7 +94,11 @@ export interface Workout {
   name: string;
   type: string;
   exercises: Exercise[];
+  totalDuration: number;
   duration: number;
+  intensity: string;
+  estimatedCalories: number;
+  motivationalMessage: string;
   energyScoreAtTime: number;
   completed: boolean;
   createdAt: Date;
@@ -106,6 +110,7 @@ export interface Exercise {
   reps: string;
   duration?: string;
   description: string;
+  formTip?: string;
 }
 
 export interface Journal {

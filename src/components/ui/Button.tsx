@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
   fullWidth?: boolean;
@@ -12,7 +12,8 @@ const VARIANTS: Record<string, any> = {
   primary:   { background: 'var(--accent)', color: '#fff', border: 'none' },
   secondary: { background: 'var(--surface)', color: 'var(--text2)', border: '1px solid var(--border2)' },
   ghost:     { background: 'transparent', color: 'var(--text2)', border: 'none' },
-  danger:    { background: 'var(--error-bg)', color: 'var(--error)', border: '1px solid rgba(255,92,92,0.2)' }
+  danger:    { background: 'var(--error-bg)', color: 'var(--error)', border: '1px solid rgba(255,92,92,0.2)' },
+  outline:   { background: 'transparent', color: 'var(--text)', border: '1px solid var(--border)' }
 };
 
 const SIZES: Record<string, string> = {
