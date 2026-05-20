@@ -10,9 +10,10 @@ import {
 import { useApp } from '../../App';
 import { auth } from '../../config/firebase';
 import { toast } from 'react-hot-toast';
+import { cn } from '../../lib/utils';
 
 const AppLayout = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { profile, vibeMode } = useApp();
   const [profileOpen, setProfileOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);

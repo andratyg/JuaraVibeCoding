@@ -5,11 +5,11 @@ import { MessageCircle, Send, X, Bot, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function ChatCoach() {
-  const { profile } = useApp();
+  const { profile, dashboardData } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ role: 'coach' | 'user', content: string }[]>([
-    { role: 'coach', content: `Halo ${profile?.displayName}! Ada yang bisa aku bantu hari ini terkait produktivitas atau kesehatanmu?` }
+    { role: 'coach', content: `Halo ${profile?.displayName || 'Sobat'}! Ada yang bisa saya bantu hari ini terkait produktivitas atau kesejahteraanmu?` }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -28,14 +28,16 @@ export default function ChatCoach() {
     setIsTyping(true);
 
     const context = {
-      profile,
-      currentEnergy: profile?.energyScore,
-      vibe: profile?.vibeMode,
-      tone: profile?.settings?.aiPreferences?.coachTone || 'balanced'
+      energyScore: dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 'belum check-in',
+      completedTasks: dashboardData?.completedTasks || 0,
+      totalTasks: dashboardData?.totalTasks || 0,
+      mood: dashboardData?.todayCheckin?.mood || 'Belum check-in',
+      streak: dashboardData?.streak || profile?.streak || 0,
+      userName: profile?.displayName || 'User'
     };
 
     try {
-      const response = await geminiService.chatWithCoach(userMsg, context);
+      const response = await geminiService.chatWithCoach(userMsg, context, messages);
       setMessages(prev => [...prev, { role: 'coach', content: response }]);
     } catch (error: any) {
       console.error('Chat Error:', error);

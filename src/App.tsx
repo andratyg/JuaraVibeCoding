@@ -21,6 +21,7 @@ import ProfilePage from './pages/Profile';
 import SettingsPage from './pages/Settings';
 import CoachPage from './pages/CoachPage';
 import LoginPage from './pages/LoginPage';
+import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import ChatCoach from './components/features/ChatCoach';
 import WellnessNudges from './components/features/WellnessNudges';
@@ -39,6 +40,7 @@ interface AppContextType {
   setVibeMode: (mode: VibeMode) => void;
   theme: 'dark' | 'light' | 'system';
   setTheme: (theme: 'dark' | 'light' | 'system') => void;
+  dashboardData?: any;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -50,8 +52,7 @@ export const useApp = () => {
 };
 
 const AppContent = () => {
-  const { user, profile, refreshProfile } = useApp();
-  const { data: dashboardData } = useDashboardData(user?.uid);
+  const { dashboardData } = useApp();
   useEnergyTheme(dashboardData?.energyScore);
 
   return (
@@ -71,6 +72,7 @@ const AppContent = () => {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/coach" element={<CoachPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </>
@@ -83,6 +85,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [vibeMode, setVibeMode] = useState<VibeMode>('balance');
   const [theme, setTheme] = useState<'dark' | 'light' | 'system'>('dark');
+  const { data: dashboardData } = useDashboardData(user?.uid);
 
   const fetchProfile = async (uid: string) => {
     try {
@@ -135,7 +138,8 @@ export default function App() {
         vibeMode, 
         setVibeMode,
         theme,
-        setTheme
+        setTheme,
+        dashboardData
       }}>
         <BrowserRouter>
           <Toaster 

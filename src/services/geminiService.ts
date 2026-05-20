@@ -3,12 +3,12 @@ import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 // In AI Studio, the API key is provided via process.env.GEMINI_API_KEY
 const KEY = process.env.GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey: KEY });
-const DEFAULT_MODEL = 'gemini-3-flash-preview';
+const DEFAULT_MODEL = 'gemini-3.5-flash';
 
 const ID  = '\n\nMANDATORY: Always respond in Indonesian (Bahasa Indonesia) ONLY. All text in JSON fields must be in natural, helpful Indonesian. NEVER respond in English.';
 
 // FIX D2, D3: Core helper dengan retry + robust JSON parsing
-const callGemini = async (prompt: string, systemInstruction = '', responseSchema?: any): Promise<any> => {
+const callGemini = async (prompt: any, systemInstruction = '', responseSchema?: any): Promise<any> => {
   const isJson = !!responseSchema;
   
   for (let i = 0; i < 3; i++) {
@@ -19,7 +19,6 @@ const callGemini = async (prompt: string, systemInstruction = '', responseSchema
         config: {
           temperature: 0.7,
           maxOutputTokens: 2048,
-          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
           ...(isJson && { responseMimeType: 'application/json' }),
           ...(responseSchema && { responseSchema }),
           ...(systemInstruction && { systemInstruction })
@@ -297,7 +296,7 @@ Balas JSON: {"riskLevel":"<low|medium|high|critical>","riskScore":<0-100>,"trend
   },
 
   // 8. AI Coach Chat — FIX D5 (context user dikirim)
-  chatWithCoach: async (message: string, context: any) => {
+  chatWithCoach: async (message: string, context: any, history: {role: string, content: string}[] = []) => {
     const system = `Kamu adalah FlowState AI Life Coach — empatik, personal, dan actionable.
 Konteks user saat ini:
 - Nama: ${context.userName || 'Kamu'}
@@ -315,7 +314,18 @@ Panduan respons WAJIB:
 6. Akhiri dengan 1 pertanyaan atau aksi konkret yang mendorong user melangkah
 7. JANGAN pernah menjawab dalam Bahasa Inggris`;
 
-    return callGemini(message, system, false);
+    const contents = history.map(msg => ({
+      role: msg.role === 'coach' ? 'model' : 'user',
+      parts: [{ text: msg.content }]
+    }));
+
+    if (contents.length > 0 && contents[0].role === 'model') {
+      contents.unshift({ role: 'user', parts: [{ text: 'Hi, Coach!' }] });
+    }
+
+    contents.push({ role: 'user', parts: [{ text: message }] });
+
+    return callGemini(contents, system, false);
   },
 
   // 9. Document Summarizer

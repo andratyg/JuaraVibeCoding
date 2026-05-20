@@ -1,29 +1,74 @@
 {
   "nav": {
-    "dashboard":"Dashboard","checkin":"Cek Energi","tasks":"Task","fitness":"Fitness",
-    "journal":"Jurnal","analytics":"Analitik","summarizer":"Ringkasan Dokumen",
-    "coach":"AI Coach","settings":"Pengaturan","more":"Lainnya","logout":"Keluar","profile":"Profil"
+    "dashboard": "Dashboard",
+    "checkin": "Cek Energi",
+    "tasks": "Task",
+    "fitness": "Fitness",
+    "journal": "Jurnal",
+    "analytics": "Analitik",
+    "summarizer": "Ringkasan Dokumen",
+    "coach": "AI Coach",
+    "settings": "Pengaturan",
+    "more": "Lainnya",
+    "logout": "Keluar",
+    "profile": "Profil"
   },
   "common": {
-    "save":"Simpan","cancel":"Batal","delete":"Hapus","edit":"Ubah","add":"Tambah",
-    "submit":"Kirim","confirm":"Konfirmasi","back":"Kembali","next":"Selanjutnya","done":"Selesai",
-    "loading":"Memuat...","saving":"Menyimpan...","analyzing":"Menganalisis...","generating":"Membuat...",
-    "error":"Terjadi kesalahan","retry":"Coba lagi","search":"Cari...","noData":"Belum ada data",
-    "share":"Bagikan","copy":"Salin","close":"Tutup","upload":"Unggah","download":"Unduh","viewAll":"Lihat semua"
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "add": "Tambah",
+    "submit": "Kirim",
+    "confirm": "Konfirmasi",
+    "back": "Kembali",
+    "next": "Selanjutnya",
+    "done": "Selesai",
+    "loading": "Memuat...",
+    "saving": "Menyimpan...",
+    "analyzing": "Menganalisis...",
+    "generating": "Membuat...",
+    "error": "Terjadi kesalahan",
+    "retry": "Coba lagi",
+    "search": "Cari...",
+    "noData": "Belum ada data",
+    "share": "Bagikan",
+    "copy": "Salin",
+    "close": "Tutup",
+    "upload": "Unggah",
+    "download": "Unduh",
+    "viewAll": "Lihat semua",
+    "success": "Berhasil!",
+    "signIn": "Masuk",
+    "signUp": "Daftar",
+    "password": "Kata Sandi",
+    "orContinueWith": "Atau lanjutkan dengan"
   },
   "auth": {
-    "login":"Masuk","register":"Daftar","logout":"Keluar",
-    "email":"Email","password":"Kata sandi","confirmPassword":"Konfirmasi kata sandi",
-    "fullName":"Nama lengkap","forgotPassword":"Lupa kata sandi?",
-    "loginGoogle":"Masuk dengan Google","registerGoogle":"Daftar dengan Google",
-    "noAccount":"Belum punya akun?","hasAccount":"Sudah punya akun?","createAccount":"Buat Akun",
-    "emailPlaceholder":"Masukkan email kamu","passwordPlaceholder":"Masukkan kata sandi",
-    "namePlaceholder":"Nama lengkap kamu"
+    "login": "Masuk",
+    "register": "Daftar",
+    "logout": "Keluar",
+    "email": "Email",
+    "password": "Kata sandi",
+    "confirmPassword": "Konfirmasi kata sandi",
+    "fullName": "Nama lengkap",
+    "forgotPassword": "Lupa kata sandi?",
+    "loginGoogle": "Masuk dengan Google",
+    "registerGoogle": "Daftar dengan Google",
+    "noAccount": "Belum punya akun?",
+    "hasAccount": "Sudah punya akun?",
+    "createAccount": "Buat Akun",
+    "emailPlaceholder": "Masukkan email kamu",
+    "passwordPlaceholder": "Masukkan kata sandi",
+    "namePlaceholder": "Nama lengkap kamu"
   },
   "dashboard": {
-    "noCheckin":"Kamu belum cek energi hari ini","doCheckin":"Mulai Cek Energi",
-    "energyScore":"Skor Energi","tasksDone":"Task Selesai","streak":"Hari Beruntun",
-    "moodToday":"Mood Hari Ini",
+    "noCheckin": "Kamu belum cek energi hari ini",
+    "doCheckin": "Mulai Cek Energi",
+    "energyScore": "Skor Energi",
+    "tasksDone": "Task Selesai",
+    "streak": "Hari Beruntun",
+    "moodToday": "Mood Hari Ini",
     "pulseSynced": "Sinkronasi Pulse",
     "tasks": "Tugas",
     "dayStreak": "Hari Beruntun",
@@ -62,18 +107,118 @@
     "startNow": "Mulai Sekarang",
     "needData": "Pulse AI butuh data kondisimu untuk memberikan strategi hari ini."
   },
+  "energyCheck": {
+    "title": "Cek Kalibrasi Energi",
+    "desc": "60 detik kalibrasi untuk hari Anda.",
+    "startNow": "Mulai Cek Energi",
+    "conditionHeader": "Kondisi Fisik & Mental",
+    "energyLevel": "Level Energi",
+    "energyLemas": "Lemas",
+    "energyBerenergi": "Berenergi",
+    "stressLevel": "Tingkat Stres",
+    "stressTenang": "Tenang",
+    "stressBurnout": "Burnout",
+    "focusLevel": "Tingkat Fokus",
+    "focusBlurry": "Pecah",
+    "focusLaser": "Laser",
+    "moodLabel": "Mood hari ini",
+    "moodPlaceholder": "Bagaimana perasaanmu sekarang?",
+    "analyzeAction": "Analisis Data",
+    "analyzing": "Memproses Kalibrasi AI...",
+    "calibrationHistory": "Pembaruan Kalibrasi",
+    "dailyResult": "Hasil Kalibrasi Harian",
+    "scoreEnergy": "Skor Energi",
+    "scoreFocus": "Skor Fokus",
+    "strategyHeader": "Strategi Hari Ini",
+    "actionPlan": "Rencana Aksi AI"
+  },
+  "profile": {
+    "changePassword": "Ubah Kata Sandi",
+    "language": {
+      "select": "Pilih Bahasa"
+    },
+    "accessibility": {
+      "highContrast": "Kontras Tinggi",
+      "reducedMotion": "Kurangi Animasi"
+    },
+    "security": {
+      "title": "Keamanan Akses",
+      "subtitle": "Kelola kata sandi dan proteksi akun.",
+      "changePasswordDesc": "Amankan akun Anda secara rutin."
+    },
+    "ai": {
+      "title": "Persona AI",
+      "subtitle": "Atur cara AI berinteraksi dengan Anda.",
+      "persona": "Tone Persona AI",
+      "frequency": "Frekuensi Intervensi (Proaktif)",
+      "frequencyDesc": "Atur seberapa sering sistem akan memberikan nudge harian.",
+      "tones": {
+        "balanced": "Seimbang",
+        "tough": "Tegas",
+        "supportive": "Suportif",
+        "stoic": "Stoic"
+      }
+    },
+    "appearance": {
+      "title": "Tampilan UI"
+    },
+    "privacy": {
+      "visibility": "Visibilitas",
+      "dataSharing": "Berbagi Data",
+      "dataSharingDesc": "Izinkan pengumpulan analitik anonim."
+    },
+    "dataManagement": {
+      "title": "Manajemen Data",
+      "subtitle": "Impor, ekspor, atau hapus profil digital Anda.",
+      "export": "Ekspor Data AI",
+      "exportDesc": "Unduh salinan lokal dari log Anda.",
+      "delete": "Hapus Coretan",
+      "deleteDesc": "Tindakan ini tidak bisa dibatalkan.",
+      "deleteWarning": "Yakin ingin menghapus seluruh data?"
+    },
+    "tabs": {
+      "account": "Akun",
+      "security": "Keamanan",
+      "preferences": "Preferensi",
+      "activity": "Aktivitas",
+      "help": "Bantuan"
+    },
+    "activity": {
+      "title": "Aktivitas Terbaru",
+      "subtitle": "Jejak iterasi dan capaian terbaru."
+    },
+    "help": {
+      "title": "Bantuan & Layanan",
+      "faq": "Pertanyaan Umum",
+      "contact": "Hubungi Tim",
+      "docs": "Dokumentasi API"
+    }
+  },
   "checkin": {
-    "title":"Cek Energi Pagi","subtitle":"60 detik untuk kalibrasi harimu",
-    "energyLevel":"Level Energi Fisik","stressLevel":"Level Stres Mental",
-    "focusLevel":"Tingkat Fokus","moodLabel":"Mood kamu hari ini",
-    "submitBtn":"Analisis Kondisiku","analyzing":"Menganalisis kondisimu...",
-    "deepWork":"Mode Fokus Dalam","balance":"Mode Seimbang","recovery":"Mode Pemulihan"
+    "title": "Cek Energi Pagi",
+    "subtitle": "60 detik untuk kalibrasi harimu",
+    "energyLevel": "Level Energi Fisik",
+    "stressLevel": "Level Stres Mental",
+    "focusLevel": "Tingkat Fokus",
+    "moodLabel": "Mood kamu hari ini",
+    "submitBtn": "Analisis Kondisiku",
+    "analyzing": "Menganalisis kondisimu...",
+    "deepWork": "Mode Fokus Dalam",
+    "balance": "Mode Seimbang",
+    "recovery": "Mode Pemulihan"
   },
   "tasks": {
-    "title":"Task Hari Ini","addTask":"Tambah Task",
-    "taskNamePlaceholder":"Apa yang perlu dikerjakan?","duration":"Durasi (menit)",
-    "priority":"Prioritas","high":"Tinggi","medium":"Sedang","low":"Rendah",
-    "scheduleAI":"Jadwalkan dengan AI","completed":"Selesai","noTasks":"Belum ada task hari ini",
+    "title": "Task Hari Ini",
+    "addTask": "Tambah Task",
+    "taskNamePlaceholder": "Apa yang perlu dikerjakan?",
+    "duration": "Durasi (menit)",
+    "priority": "Prioritas",
+    "high": "Tinggi",
+    "medium": "Sedang",
+    "low": "Rendah",
+    "scheduleAI": "Jadwalkan dengan AI",
+    "completed": "Selesai",
+    "noTasks": "Belum ada task hari ini",
     "taskName": "Nama Task",
     "subtitle": "Kelola tugas harian Anda dengan sinkronisasi energi AI.",
     "energyReady": "Energi Siap",
@@ -84,31 +229,65 @@
     "aiAdvantageLow": "Energi rendah. Prioritaskan istirahat atau tugas ringan."
   },
   "fitness": {
-    "title":"Program Fitness","generate":"Buat Program Hari Ini",
-    "generating":"Membuat program untukmu...","warmup":"Pemanasan",
-    "cooldown":"Pendinginan","exercises":"Latihan","sets":"set","reps":"repetisi",
-    "calories":"Kalori","markDone":"Tandai Selesai","noProgram":"Belum ada program hari ini",
+    "title": "Program Fitness",
+    "generate": "Buat Program Hari Ini",
+    "generating": "Membuat program untukmu...",
+    "warmup": "Pemanasan",
+    "cooldown": "Pendinginan",
+    "exercises": "Latihan",
+    "sets": "set",
+    "reps": "repetisi",
+    "calories": "Kalori",
+    "markDone": "Tandai Selesai",
+    "noProgram": "Belum ada program hari ini",
     "programTitle": "Program Fitness AI",
-    "aiProgramDesc": "Dapatkan latihan yang disesuaikan dengan level energimu saat ini."
+    "aiProgramDesc": "Dapatkan latihan yang disesuaikan dengan level energimu saat ini.",
+    "minutes": "Menit"
   },
   "journal": {
-    "title":"Jurnal Refleksi","rateDay":"Beri nilai harimu",
-    "highlightPlaceholder":"Apa hal terbaik hari ini?",
-    "challengePlaceholder":"Apa yang terasa sulit?",
-    "freeWritePlaceholder":"Tulis apa saja yang kamu rasakan...",
-    "save":"Simpan Jurnal","aiResponse":"Respons AI Coach",
-    "noJournal":"Belum ada jurnal hari ini"
+    "title": "Jurnal Refleksi",
+    "rateDay": "Beri nilai harimu",
+    "highlightPlaceholder": "Apa hal terbaik hari ini?",
+    "challengePlaceholder": "Apa yang terasa sulit?",
+    "freeWritePlaceholder": "Tulis apa saja yang kamu rasakan...",
+    "save": "Simpan Jurnal",
+    "aiResponse": "Respons AI Coach",
+    "noJournal": "Belum ada jurnal hari ini",
+    "subtitle": "Pusat refleksi harian.",
+    "coachInsight": "Insight AI",
+    "reflectionQuestion": "Pertanyaan Refleksi",
+    "logAnother": "Catat Jurnal Baru",
+    "dailyVibe": "Vibe Hari Ini",
+    "satisfactionRating": "Tingkat Kepuasan",
+    "peakMoment": "Momen Terbaik",
+    "peakPlaceholder": "Ceritakan momen terbaik hari ini...",
+    "hurdle": "Tantangan",
+    "hurdlePlaceholder": "Apa yang sulit hari ini?",
+    "process": "Proses Jurnal",
+    "archive": "Arsip Jurnal",
+    "success": "Jurnal berhasil disimpan!"
   },
   "settings": {
-    "title":"Pengaturan","account":"Akun","appearance":"Tampilan",
-    "notifications":"Notifikasi","language":"Bahasa",
-    "indonesian":"Bahasa Indonesia","english":"English","darkMode":"Mode Gelap",
-    "privacy":"Privasi & Data","saveSuccess":"Pengaturan berhasil disimpan!"
+    "title": "Pengaturan",
+    "account": "Akun",
+    "appearance": "Tampilan",
+    "notifications": "Notifikasi",
+    "language": "Bahasa",
+    "indonesian": "Bahasa Indonesia",
+    "english": "English",
+    "darkMode": "Mode Gelap",
+    "privacy": "Privasi & Data",
+    "saveSuccess": "Pengaturan berhasil disimpan!"
   },
   "errors": {
-    "network":"Koneksi bermasalah. Periksa internetmu.",
-    "aibusy":"AI sedang sibuk. Coba lagi sebentar.",
-    "saveFailed":"Gagal menyimpan. Coba lagi.",
-    "loadFailed":"Gagal memuat data. Coba lagi."
+    "network": "Koneksi bermasalah. Periksa internetmu.",
+    "aibusy": "AI sedang sibuk. Coba lagi sebentar.",
+    "saveFailed": "Gagal menyimpan. Coba lagi.",
+    "loadFailed": "Gagal memuat data. Coba lagi."
+  },
+  "summarizer": {
+    "title": "Ringkasan Dokumen",
+    "placeholder": "Tempelkan email panjang, laporan, atau artikel di sini...",
+    "action": "Ringkas Dokumen"
   }
 }

@@ -22,7 +22,7 @@ export const getNavItems = (t: any) => [
 
 export default function Sidebar() {
   const { profile, user } = useApp();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const items = getNavItems(t);
 

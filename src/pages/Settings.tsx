@@ -161,7 +161,7 @@ export default function SettingsPage() {
             <SettingsIcon size={20} />
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-60">System Preferences</span>
         </div>
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">{t('profile.settings')}</h1>
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">{t('dashboard.profileSettings')}</h1>
         <p className="text-sm text-[var(--text2)] font-medium">Konfigurasi protokol dan antarmuka keamanan sistem Pulse Anda.</p>
       </header>
 

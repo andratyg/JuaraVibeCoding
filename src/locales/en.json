@@ -1,29 +1,74 @@
 {
   "nav": {
-    "dashboard":"Dashboard","checkin":"Check Energy","tasks":"Tasks","fitness":"Fitness",
-    "journal":"Journal","analytics":"Analytics","summarizer":"Doc Summarizer",
-    "coach":"AI Coach","settings":"Settings","more":"More","logout":"Logout","profile":"Profile"
+    "dashboard": "Dashboard",
+    "checkin": "Check Energy",
+    "tasks": "Tasks",
+    "fitness": "Fitness",
+    "journal": "Journal",
+    "analytics": "Analytics",
+    "summarizer": "Doc Summarizer",
+    "coach": "AI Coach",
+    "settings": "Settings",
+    "more": "More",
+    "logout": "Logout",
+    "profile": "Profile"
   },
   "common": {
-    "save":"Save","cancel":"Cancel","delete":"Delete","edit":"Edit","add":"Add",
-    "submit":"Submit","confirm":"Confirm","back":"Back","next":"Next","done":"Done",
-    "loading":"Loading...","saving":"Saving...","analyzing":"Analyzing...","generating":"Generating...",
-    "error":"An error occurred","retry":"Retry","search":"Search...","noData":"No data yet",
-    "share":"Share","copy":"Copy","close":"Close","upload":"Upload","download":"Download","viewAll":"View all"
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "analyzing": "Analyzing...",
+    "generating": "Generating...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "search": "Search...",
+    "noData": "No data yet",
+    "share": "Share",
+    "copy": "Copy",
+    "close": "Close",
+    "upload": "Upload",
+    "download": "Download",
+    "viewAll": "View all",
+    "success": "Success!",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "password": "Password",
+    "orContinueWith": "Or continue with"
   },
   "auth": {
-    "login":"Login","register":"Register","logout":"Logout",
-    "email":"Email","password":"Password","confirmPassword":"Confirm password",
-    "fullName":"Full name","forgotPassword":"Forgot password?",
-    "loginGoogle":"Login with Google","registerGoogle":"Register with Google",
-    "noAccount":"No account?","hasAccount":"Have an account?","createAccount":"Create Account",
-    "emailPlaceholder":"Enter your email","passwordPlaceholder":"Enter password",
-    "namePlaceholder":"Your full name"
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "fullName": "Full name",
+    "forgotPassword": "Forgot password?",
+    "loginGoogle": "Login with Google",
+    "registerGoogle": "Register with Google",
+    "noAccount": "No account?",
+    "hasAccount": "Have an account?",
+    "createAccount": "Create Account",
+    "emailPlaceholder": "Enter your email",
+    "passwordPlaceholder": "Enter password",
+    "namePlaceholder": "Your full name"
   },
   "dashboard": {
-    "noCheckin":"You haven't checked your energy today","doCheckin":"Start Energy Check",
-    "energyScore":"Energy Score","tasksDone":"Tasks Completed","streak":"Day Streak",
-    "moodToday":"Mood Today",
+    "noCheckin": "You haven't checked your energy today",
+    "doCheckin": "Start Energy Check",
+    "energyScore": "Energy Score",
+    "tasksDone": "Tasks Completed",
+    "streak": "Day Streak",
+    "moodToday": "Mood Today",
     "pulseSynced": "Pulse Synced",
     "tasks": "Tasks",
     "dayStreak": "Day Streak",
@@ -62,18 +107,118 @@
     "startNow": "Start Now",
     "needData": "Pulse AI needs your data to provide today's strategy."
   },
+  "energyCheck": {
+    "title": "Energy Calibration Check",
+    "desc": "60 seconds to calibrate your day.",
+    "startNow": "Start Energy Check",
+    "conditionHeader": "Physical & Mental Condition",
+    "energyLevel": "Energy Level",
+    "energyLemas": "Lethargic",
+    "energyBerenergi": "Energetic",
+    "stressLevel": "Stress Level",
+    "stressTenang": "Calm",
+    "stressBurnout": "Burnout",
+    "focusLevel": "Focus Level",
+    "focusBlurry": "Blurry",
+    "focusLaser": "Laser focus",
+    "moodLabel": "Mood today",
+    "moodPlaceholder": "How are you feeling?",
+    "analyzeAction": "Analyze Data",
+    "analyzing": "Processing AI Calibration...",
+    "calibrationHistory": "Calibration History",
+    "dailyResult": "Daily Calibration Result",
+    "scoreEnergy": "Energy Score",
+    "scoreFocus": "Focus Score",
+    "strategyHeader": "Strategy Today",
+    "actionPlan": "AI Action Plan"
+  },
+  "profile": {
+    "changePassword": "Change Password",
+    "language": {
+      "select": "Choose Language"
+    },
+    "accessibility": {
+      "highContrast": "High Contrast",
+      "reducedMotion": "Reduced Motion"
+    },
+    "security": {
+      "title": "Access Security",
+      "subtitle": "Manage passwords and account protection.",
+      "changePasswordDesc": "Regularly secure your account."
+    },
+    "ai": {
+      "title": "AI Persona",
+      "subtitle": "Setup how AI interacts with you.",
+      "persona": "AI Persona Tone",
+      "frequency": "Proactive Interventions",
+      "frequencyDesc": "Set how frequently system nudges you.",
+      "tones": {
+        "balanced": "Balanced",
+        "tough": "Tough",
+        "supportive": "Supportive",
+        "stoic": "Stoic"
+      }
+    },
+    "appearance": {
+      "title": "UI Appearance"
+    },
+    "privacy": {
+      "visibility": "Visibility",
+      "dataSharing": "Data Sharing",
+      "dataSharingDesc": "Allow anonymous analytics collection."
+    },
+    "dataManagement": {
+      "title": "Data Management",
+      "subtitle": "Import, export, or delete digital profile.",
+      "export": "Export AI Data",
+      "exportDesc": "Download a local copy of your logs.",
+      "delete": "Wipe Data",
+      "deleteDesc": "This action cannot be undone.",
+      "deleteWarning": "Are you sure you want to wipe all data?"
+    },
+    "tabs": {
+      "account": "Account",
+      "security": "Security",
+      "preferences": "Preferences",
+      "activity": "Activity",
+      "help": "Help"
+    },
+    "activity": {
+      "title": "Recent Activity",
+      "subtitle": "Latest iterations and milestones."
+    },
+    "help": {
+      "title": "Help & Services",
+      "faq": "FAQ",
+      "contact": "Contact Team",
+      "docs": "API Documentation"
+    }
+  },
   "checkin": {
-    "title":"Morning Energy Check","subtitle":"60 seconds to calibrate your day",
-    "energyLevel":"Physical Energy Level","stressLevel":"Mental Stress Level",
-    "focusLevel":"Focus Level","moodLabel":"Your mood today",
-    "submitBtn":"Analyze My Condition","analyzing":"Analyzing your condition...",
-    "deepWork":"Deep Work Mode","balance":"Balance Mode","recovery":"Recovery Mode"
+    "title": "Morning Energy Check",
+    "subtitle": "60 seconds to calibrate your day",
+    "energyLevel": "Physical Energy Level",
+    "stressLevel": "Mental Stress Level",
+    "focusLevel": "Focus Level",
+    "moodLabel": "Your mood today",
+    "submitBtn": "Analyze My Condition",
+    "analyzing": "Analyzing your condition...",
+    "deepWork": "Deep Work Mode",
+    "balance": "Balance Mode",
+    "recovery": "Recovery Mode"
   },
   "tasks": {
-    "title":"Today's Tasks","addTask":"Add Task",
-    "taskNamePlaceholder":"What needs to be done?","duration":"Duration (minutes)",
-    "priority":"Priority","high":"High","medium":"Medium","low":"Low",
-    "scheduleAI":"Schedule with AI","completed":"Completed","noTasks":"No tasks for today",
+    "title": "Today's Tasks",
+    "addTask": "Add Task",
+    "taskNamePlaceholder": "What needs to be done?",
+    "duration": "Duration (minutes)",
+    "priority": "Priority",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "scheduleAI": "Schedule with AI",
+    "completed": "Completed",
+    "noTasks": "No tasks for today",
     "taskName": "Task Name",
     "subtitle": "Manage your daily tasks with AI energy sync.",
     "energyReady": "Energy Ready",
@@ -84,31 +229,65 @@
     "aiAdvantageLow": "Low energy. Prioritize rest or light tasks."
   },
   "fitness": {
-    "title":"Fitness Program","generate":"Create Today's Program",
-    "generating":"Creating program for you...","warmup":"Warmup",
-    "cooldown":"Cooldown","exercises":"Exercises","sets":"sets","reps":"reps",
-    "calories":"Calories","markDone":"Mark Done","noProgram":"No program for today",
+    "title": "Fitness Program",
+    "generate": "Create Today's Program",
+    "generating": "Creating program for you...",
+    "warmup": "Warmup",
+    "cooldown": "Cooldown",
+    "exercises": "Exercises",
+    "sets": "sets",
+    "reps": "reps",
+    "calories": "Calories",
+    "markDone": "Mark Done",
+    "noProgram": "No program for today",
     "programTitle": "AI Fitness Program",
-    "aiProgramDesc": "Get workouts tailored to your current energy levels."
+    "aiProgramDesc": "Get workouts tailored to your current energy levels.",
+    "minutes": "Minutes"
   },
   "journal": {
-    "title":"Reflection Journal","rateDay":"Rate your day",
-    "highlightPlaceholder":"What was the best thing today?",
-    "challengePlaceholder":"What felt difficult?",
-    "freeWritePlaceholder":"Write whatever you are feeling...",
-    "save":"Save Journal","aiResponse":"AI Coach Response",
-    "noJournal":"No journal for today"
+    "title": "Reflection Journal",
+    "rateDay": "Rate your day",
+    "highlightPlaceholder": "What was the best thing today?",
+    "challengePlaceholder": "What felt difficult?",
+    "freeWritePlaceholder": "Write whatever you are feeling...",
+    "save": "Save Journal",
+    "aiResponse": "AI Coach Response",
+    "noJournal": "No journal for today",
+    "subtitle": "Daily reflection hub.",
+    "coachInsight": "AI Insight",
+    "reflectionQuestion": "Reflection Question",
+    "logAnother": "Log Another",
+    "dailyVibe": "Daily Vibe",
+    "satisfactionRating": "Satisfaction Level",
+    "peakMoment": "Peak Moment",
+    "peakPlaceholder": "What was the best moment today?",
+    "hurdle": "Hurdle",
+    "hurdlePlaceholder": "What was challenging?",
+    "process": "Process Journal",
+    "archive": "Journal Archive",
+    "success": "Journal saved successfully!"
   },
   "settings": {
-    "title":"Settings","account":"Account","appearance":"Appearance",
-    "notifications":"Notifications","language":"Language",
-    "indonesian":"Bahasa Indonesia","english":"English","darkMode":"Dark Mode",
-    "privacy":"Privacy & Data","saveSuccess":"Settings saved successfully!"
+    "title": "Settings",
+    "account": "Account",
+    "appearance": "Appearance",
+    "notifications": "Notifications",
+    "language": "Language",
+    "indonesian": "Bahasa Indonesia",
+    "english": "English",
+    "darkMode": "Dark Mode",
+    "privacy": "Privacy & Data",
+    "saveSuccess": "Settings saved successfully!"
   },
   "errors": {
-    "network":"Network issue. Check your internet.",
-    "aibusy":"AI is busy. Please try again in a few seconds.",
-    "saveFailed":"Failed to save. Try again.",
-    "loadFailed":"Failed to load data. Try again."
+    "network": "Network issue. Check your internet.",
+    "aibusy": "AI is busy. Please try again in a few seconds.",
+    "saveFailed": "Failed to save. Try again.",
+    "loadFailed": "Failed to load data. Try again."
+  },
+  "summarizer": {
+    "title": "Document Summarizer",
+    "placeholder": "Paste long emails, reports, or articles here...",
+    "action": "Summarize Document"
   }
 }

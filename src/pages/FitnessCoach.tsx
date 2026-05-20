@@ -15,11 +15,14 @@ import toast from 'react-hot-toast';
 
 export default function FitnessCoach() {
   const { t } = useTranslation();
-  const { profile } = useApp();
+  const { profile, dashboardData } = useApp();
   const [workout, setWorkout] = useState<Workout | null>(null);
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
   const [fetching, setFetching] = useState(true);
+
+  // current energy resolving logic
+  const currentEnergy = dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 5;
 
   useEffect(() => {
     const fetchLatestWorkout = async () => {
@@ -57,12 +60,12 @@ export default function FitnessCoach() {
     try {
       const newWorkout = await geminiService.generateFitnessProgram(
         profile,
-        profile.energyScore || 5
+        currentEnergy
       );
       
       const workoutData = {
         ...newWorkout,
-        energyScoreAtTime: profile.energyScore,
+        energyScoreAtTime: currentEnergy,
         completed: false,
         createdAt: Timestamp.now(),
       };

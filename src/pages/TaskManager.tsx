@@ -144,7 +144,7 @@ export default function TaskManager() {
     setScheduling(true);
     try {
       const pendingTasks = tasks.filter(t => t.status !== 'Completed');
-      const energyScore = dashboardData?.energyScore || profile?.energyScore || 5;
+      const energyScore = dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 5;
       const workSlots = dashboardData?.todayCheckin?.workSlots || ['09:00-12:00', '13:00-17:00'];
       
       const scheduledResult = await geminiService.scheduleTasks(pendingTasks, energyScore, workSlots);

@@ -32,22 +32,22 @@ export default function CoachPage() {
     setIsTyping(true);
 
     const context = {
-      energyScore: profile?.energyScore || 5,
+      energyScore: dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 'belum check-in',
       completedTasks: dashboardData?.completedTasks || 0,
       totalTasks: dashboardData?.totalTasks || 0,
-      mood: dashboardData?.todayCheckin?.mood || 'Normal',
-      streak: profile?.streak || 0,
+      mood: dashboardData?.todayCheckin?.mood || 'Belum check-in',
+      streak: dashboardData?.streak || profile?.streak || 0,
       userName: profile?.displayName || 'User'
     };
 
     try {
-      const response = await geminiService.chatWithCoach(userMsg, context);
+      const response = await geminiService.chatWithCoach(userMsg, context, messages);
       setMessages(prev => [...prev, { role: 'coach', content: response }]);
     } catch (error: any) {
       console.error('Chat Error:', error);
       setMessages(prev => [...prev, { 
         role: 'coach', 
-        content: 'Maaf, terjadi gangguan koneksi. Bisa tolong ulangi pesanmu?' 
+        content: `Maaf, terjadi gangguan koneksi. (${error.message || 'Unknown error'})` 
       }]);
     } finally {
       setIsTyping(false);
@@ -62,7 +62,7 @@ export default function CoachPage() {
           <p className="text-sm text-[var(--text2)]">Konsultasi produktivitas dan kesehatan berbasis energi.</p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--accent-bg)] text-[var(--accent)] rounded-lg border border-[var(--accent)]/10 text-[10px] font-bold uppercase tracking-widest">
-            <Sparkles size={14} /> AI Aktif: Gemini 2.0 Flash
+            <Sparkles size={14} /> AI Aktif: Gemini 3.5 Flash
         </div>
       </header>
 
@@ -128,7 +128,7 @@ export default function CoachPage() {
               </button>
             </div>
             <p className="mt-3 text-[10px] text-center text-[var(--text3)] uppercase tracking-widest font-bold">
-                Pulse AI dapat memberikan saran medis; konsultasikan dengan ahli jika diperlukan.
+                PULSE AI TIDAK MEMBERIKAN SARAN MEDIS; KONSULTASIKAN DENGAN AHLI PROFESIONAL JIKA PERLU.
             </p>
           </div>
         </Card>
