@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { 
   Bell, Shield, Eye, Globe, Monitor, Moon, Sun, 
   ChevronRight, Database, Trash2, AlertCircle, Loader2,
-  Phone, CheckCircle, Smartphone, ShieldCheck, Mail, MessageSquare, 
+  CheckCircle, Mail, MessageSquare, 
   Settings as SettingsIcon, Lock, Zap, ShieldCheck as ShieldCheckIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -13,11 +13,6 @@ import {
   doc, deleteDoc, updateDoc, collection, getDocs, query, where 
 } from 'firebase/firestore';
 import { 
-  RecaptchaVerifier, 
-  PhoneAuthProvider,
-  multiFactor,
-  PhoneMultiFactorGenerator,
-  linkWithCredential,
   sendPasswordResetEmail
 } from 'firebase/auth';
 import { toast } from 'react-hot-toast';
@@ -30,14 +25,6 @@ export default function SettingsPage() {
   const { user, profile, theme, setTheme, refreshProfile } = useApp();
   const [loading, setLoading] = useState(false);
   
-  // Security / A2F States
-  const [phone, setPhone] = useState(user?.phoneNumber || '');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verificationId, setVerificationId] = useState<string | null>(null);
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [mfaEnrolling, setMfaEnrolling] = useState(false);
-  const otpInputRef = useRef<HTMLInputElement>(null);
-
   // Local settings state
   const [notifications, setNotifications] = useState(profile?.settings?.notifications || {
     email: true, push: true, messages: false, alerts: true
@@ -108,58 +95,6 @@ export default function SettingsPage() {
     updateSettings({ privacy: newPrivacy });
   };
 
-  const setupRecaptcha = (containerId: string) => {
-    if ((window as any).recaptchaVerifier) return (window as any).recaptchaVerifier;
-    const verifier = new RecaptchaVerifier(auth, containerId, {
-      size: 'invisible',
-      callback: () => console.log("Recaptcha resolved")
-    });
-    (window as any).recaptchaVerifier = verifier;
-    return verifier;
-  };
-
-  const handleStartPhoneVerification = async () => {
-    if (!user || !phone) {
-        toast.error('Masukkan nomor telepon yang valid');
-        return;
-    }
-    setLoading(true);
-    try {
-      const verifier = setupRecaptcha('recaptcha-container');
-      const provider = new PhoneAuthProvider(auth);
-      const vid = await provider.verifyPhoneNumber(phone, verifier);
-      setVerificationId(vid);
-      setShowOtpModal(true);
-    } catch (err: any) {
-      toast.error('Gagal mengirim SMS. Periksa format nomor (+62...).');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleConfirmOtp = async () => {
-    if (!verificationId || !verificationCode || !user) return;
-    setLoading(true);
-    try {
-      const credential = PhoneAuthProvider.credential(verificationId, verificationCode);
-      if (mfaEnrolling) {
-        const phoneAuthAssertion = PhoneMultiFactorGenerator.assertion(credential);
-        await multiFactor(user).enroll(phoneAuthAssertion, 'My SMS MFA');
-        toast.success('A2F Berhasil Diaktifkan!');
-      } else {
-        await linkWithCredential(user, credential);
-        toast.success('Nomor telepon terverifikasi!');
-      }
-      setShowOtpModal(false);
-      setMfaEnrolling(false);
-      await refreshProfile();
-    } catch (err: any) {
-      toast.error(err.message || 'Kode salah atau expired.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleChangePassword = async () => {
     if (!user?.email) return;
     setLoading(true);
@@ -219,15 +154,6 @@ export default function SettingsPage() {
     }
   };
 
-  const enrolledFactors = user ? multiFactor(user).enrolledFactors : [];
-  const isMfaActive = enrolledFactors.length > 0;
-
-  useEffect(() => {
-    if (showOtpModal && otpInputRef.current) {
-      otpInputRef.current.focus();
-    }
-  }, [showOtpModal]);
-
   return (
     <motion.div {... fadeInUp} className="space-y-8 pb-20">
       <header className="space-y-2">
@@ -247,64 +173,7 @@ export default function SettingsPage() {
           icon={ShieldCheckIcon}
         >
           <div className="space-y-6">
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">{t('profile.phone')}</label>
-              <div className="flex gap-3">
-                <input 
-                  type="tel" 
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+62 812..."
-                  className="flex-1 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] px-4 py-2.5 outline-none focus:border-[var(--accent)] transition-all font-medium text-sm"
-                />
-                {!user?.phoneNumber && (
-                  <Button 
-                    onClick={() => { setMfaEnrolling(false); handleStartPhoneVerification(); }}
-                    loading={loading && !mfaEnrolling}
-                    size="sm"
-                  >
-                    Verifikasi
-                  </Button>
-                )}
-              </div>
-              {user?.phoneNumber && (
-                <div className="flex items-center gap-2 text-xs font-bold text-[var(--success)] px-1">
-                  <CheckCircle size={14} /> Tersertifikasi: {user.phoneNumber}
-                </div>
-              )}
-            </div>
-
-            <div className="pt-6 border-t border-[var(--border)]">
-              <h4 className="font-bold text-sm mb-2">{t('profile.security.twoFactor')}</h4>
-              <p className="text-xs text-[var(--text2)] leading-relaxed mb-5">{t('profile.security.mfaDesc')}</p>
-              <Button
-                onClick={() => {
-                  if (!user?.phoneNumber) {
-                    toast.error(t('profile.security.verifyPhone'));
-                  } else {
-                    setMfaEnrolling(true);
-                    handleStartPhoneVerification();
-                  }
-                }}
-                disabled={isMfaActive}
-                variant={isMfaActive ? 'secondary' : 'primary'}
-                className="w-full h-12"
-              >
-                {isMfaActive ? (
-                    <div className="flex items-center gap-2">
-                        <ShieldCheckIcon size={18} />
-                        <span>{t('profile.security.mfaActive')}</span>
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-2">
-                        <Zap size={18} />
-                        <span>{t('profile.security.mfaActivate')}</span>
-                    </div>
-                )}
-              </Button>
-            </div>
-
-            <div className="pt-4 border-t border-[var(--border)]">
+            <div className="pt-4">
                <button 
                  onClick={handleChangePassword}
                  className="w-full flex items-center justify-between p-4 bg-[var(--surface)] rounded-[var(--r-lg)] hover:bg-[var(--surface2)] transition-all group"
@@ -322,7 +191,6 @@ export default function SettingsPage() {
                </button>
             </div>
           </div>
-          <div id="recaptcha-container"></div>
         </SettingsSection>
 
         {/* AI & Persona */}
@@ -500,60 +368,6 @@ export default function SettingsPage() {
           </div>
         </SettingsSection>
       </div>
-
-      {/* OTP Modal */}
-      <AnimatePresence>
-        {showOtpModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[var(--surface2)] rounded-[var(--r-2xl)] p-8 max-w-sm w-full shadow-2xl border border-[var(--border)]"
-            >
-              <div className="h-16 w-16 bg-[var(--accent-bg)] text-[var(--accent)] rounded-2xl flex items-center justify-center mb-6 mx-auto border border-[var(--accent)]/20">
-                <Smartphone size={32} />
-              </div>
-              <h3 className="text-xl font-bold text-center mb-2">
-                {mfaEnrolling ? t('profile.security.mfaEnroll') : t('profile.security.verifyPhone')}
-              </h3>
-              <p className="text-xs text-[var(--text2)] text-center mb-8 font-medium">
-                {t('profile.security.mfaConfirmation', { phone })}
-              </p>
-              
-              <div className="space-y-6">
-                <input
-                    ref={otpInputRef}
-                    type="text"
-                    maxLength={6}
-                    value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
-                    placeholder="000000"
-                    className="w-full text-center tracking-[0.4em] text-3xl font-black p-4 bg-[var(--surface)] border-2 border-[var(--border)] rounded-[var(--r-xl)] focus:border-[var(--accent)] outline-none transition-all placeholder:opacity-20"
-                />
-
-                <div className="flex flex-col gap-2">
-                  <Button
-                    onClick={handleConfirmOtp}
-                    loading={loading}
-                    disabled={verificationCode.length < 6}
-                    className="w-full h-12"
-                  >
-                    {t('profile.security.otpSubmit')}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    onClick={() => { setShowOtpModal(false); setMfaEnrolling(false); }}
-                    className="w-full text-[10px] opacity-40 font-bold uppercase tracking-widest"
-                  >
-                    {t('profile.security.otpCancel')}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 }

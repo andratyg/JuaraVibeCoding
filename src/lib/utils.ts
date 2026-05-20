@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatTime(date: Date | null | undefined): string {
   if (!date) return '--:--';
-  return date.toLocaleTimeString('en-US', { 
+  return date.toLocaleTimeString('id-ID', { 
     hour: '2-digit', 
     minute: '2-digit',
     hour12: false 
@@ -15,9 +15,9 @@ export function formatTime(date: Date | null | undefined): string {
 }
 
 export function formatDate(date: Date | null | undefined): string {
-  if (!date) return 'No Date';
-  return date.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric'
+  if (!date) return 'Tanpa Tanggal';
+  return date.toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'short'
   });
 }

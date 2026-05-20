@@ -10,20 +10,21 @@ import { useApp } from '../../App';
 import { cn } from '../../lib/utils';
 import { useTranslation } from 'react-i18next';
 
-export const navItems = [
-  { path: '/', label: 'Utama', icon: LayoutDashboard, category: 'MAIN' },
-  { path: '/energy', label: 'Kalibrasi', icon: Zap, category: 'TOOLS' },
-  { path: '/tasks', label: 'Tugas', icon: CheckSquare, category: 'TOOLS' },
-  { path: '/fitness', label: 'Fitness', icon: Dumbbell, category: 'TOOLS' },
-  { path: '/journal', label: 'Jurnal', icon: BookOpen, category: 'TOOLS' },
-  { path: '/summarizer', label: 'Summary', icon: FileText, category: 'TOOLS' },
-  { path: '/analytics', label: 'Analitik', icon: BarChart3, category: 'MAIN' },
+export const getNavItems = (t: any) => [
+  { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard, category: 'MAIN' },
+  { path: '/energy', label: t('nav.checkin'), icon: Zap, category: 'TOOLS' },
+  { path: '/tasks', label: t('nav.tasks'), icon: CheckSquare, category: 'TOOLS' },
+  { path: '/fitness', label: t('nav.fitness'), icon: Dumbbell, category: 'TOOLS' },
+  { path: '/journal', label: t('nav.journal'), icon: BookOpen, category: 'TOOLS' },
+  { path: '/summarizer', label: t('nav.summarizer'), icon: FileText, category: 'TOOLS' },
+  { path: '/analytics', label: t('nav.analytics'), icon: BarChart3, category: 'MAIN' },
 ];
 
 export default function Sidebar() {
   const { profile, user } = useApp();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const items = getNavItems(t);
 
   const categories = ['MAIN', 'TOOLS'];
 
@@ -40,7 +41,7 @@ export default function Sidebar() {
           {categories.map(cat => (
             <div key={cat} className="space-y-1">
               <p className="text-[10px] font-black text-slate-300 tracking-widest uppercase px-3 mb-2">{cat}</p>
-              {navItems.filter(item => item.category === cat).map(item => (
+              {items.filter(item => item.category === cat).map(item => (
                 <NavLink 
                   key={item.path} 
                   to={item.path}
@@ -56,6 +57,23 @@ export default function Sidebar() {
             </div>
           ))}
         </nav>
+
+        <div className="px-5 py-4 border-t border-slate-50">
+          <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
+            {['id', 'en'].map(lang => (
+              <button
+                key={lang}
+                onClick={() => i18n.changeLanguage(lang)}
+                className={cn(
+                  "flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all",
+                  i18n.language === lang ? "bg-white text-[#6C63FF] shadow-sm border border-slate-100" : "text-slate-400"
+                )}
+              >
+                {lang}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex items-center gap-4 px-5 py-5 border-t border-slate-50 group/user">
           <div 
@@ -84,7 +102,7 @@ export default function Sidebar() {
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 flex flex-col items-center gap-1">
-          {navItems.map(item => (
+          {items.map(item => (
             <div key={item.path} className="relative group">
               <NavLink 
                 to={item.path}

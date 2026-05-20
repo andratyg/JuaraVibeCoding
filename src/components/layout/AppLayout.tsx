@@ -52,10 +52,10 @@ const AppLayout = () => {
 
   const currentVibe = vibeMode || 'balance';
   const vibeInfo = {
-    'deep-work': { color: '#1DB97A', label: 'DEEP FOCUS', icon: Zap },
-    'recovery':  { color: '#5296F1', label: 'RECOVERY',   icon: BookOpen },
-    'balance':   { color: '#8B5CF6', label: 'BALANCED',   icon: BarChart2 }
-  }[currentVibe] || { color: '#8B5CF6', label: 'BALANCED', icon: BarChart2 };
+    'deep-work': { color: '#1DB97A', label: t('checkin.deepWork'), icon: Zap },
+    'recovery':  { color: '#5296F1', label: t('checkin.recovery'),   icon: BookOpen },
+    'balance':   { color: '#8B5CF6', label: t('checkin.balance'),   icon: BarChart2 }
+  }[currentVibe] || { color: '#8B5CF6', label: t('checkin.balance'), icon: BarChart2 };
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] font-sans selection:bg-[var(--accent)] selection:text-white">
@@ -222,8 +222,25 @@ const AppLayout = () => {
                       <div className="p-3 bg-red-500/20 rounded-2xl text-red-500">
                         <LogOut size={20} />
                       </div>
-                      Logout
+                      {t('auth.logout')}
                   </button>
+                </div>
+
+                <div className="mt-8 pt-8 border-t border-white/5">
+                   <div className="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5">
+                      {['id', 'en'].map(lang => (
+                        <button
+                          key={lang}
+                          onClick={() => i18n.changeLanguage(lang)}
+                          className={cn(
+                            "flex-1 py-3 text-xs font-black uppercase tracking-[0.2em] rounded-xl transition-all",
+                            i18n.language === lang ? "bg-[var(--accent)] text-white shadow-lg" : "text-[var(--text3)]"
+                          )}
+                        >
+                          {lang}
+                        </button>
+                      ))}
+                   </div>
                 </div>
              </motion.div>
           </motion.div>
@@ -250,16 +267,16 @@ const AppLayout = () => {
                 <div className="space-y-2">
                   <button onClick={() => { navigate('/profile'); setProfileOpen(false); }} className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition-colors font-bold text-sm">
                     <div className="p-2 bg-[var(--surface)] border border-white/5 rounded-xl"><UserIcon size={18} /></div>
-                    Profil Akun
+                    {t('nav.profile')}
                   </button>
                   <button onClick={() => { navigate('/settings'); setProfileOpen(false); }} className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition-colors font-bold text-sm">
                     <div className="p-2 bg-[var(--surface)] border border-white/5 rounded-xl"><Settings size={18} /></div>
-                    Pengaturan
+                    {t('nav.settings')}
                   </button>
                   <div className="h-px bg-white/5 my-4" />
                   <button onClick={handleLogout} className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-red-500/10 text-red-500 transition-colors font-bold text-sm">
                     <div className="p-2 bg-red-500/10 rounded-xl"><LogOut size={18} /></div>
-                    Keluar Sekarang
+                    {t('auth.logout')}
                   </button>
                 </div>
              </motion.div>

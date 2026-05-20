@@ -3,9 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { 
   User, Mail, Camera, CheckCircle, AlertCircle, Loader2, Save,
   Shield, Bell, Monitor, Moon, Sun, ChevronRight,
-  Database, Trash2, Smartphone, ShieldCheck, Lock, Zap,
+  Database, Trash2, ShieldCheck, Lock, Zap,
   Activity, Share2, HelpCircle, ExternalLink, Github, Twitter, Linkedin,
-  MoreVertical, CreditCard, LogOut, Phone, UserCog, Sparkles, Heart
+  MoreVertical, CreditCard, LogOut, UserCog, Sparkles, Heart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../App';
@@ -34,7 +34,6 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState(profile?.displayName || '');
   const [fullName, setFullName] = useState(profile?.fullName || '');
   const [bio, setBio] = useState(profile?.bio || '');
-  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || profile?.phoneNumber || '');
 
   // --- Activity State ---
   const [activities, setActivities] = useState<any[]>([]);
@@ -44,7 +43,6 @@ export default function ProfilePage() {
       setDisplayName(profile.displayName || '');
       setFullName(profile.fullName || '');
       setBio(profile.bio || '');
-      setPhoneNumber(user?.phoneNumber || profile.phoneNumber || '');
     }
   }, [profile, user]);
 
@@ -93,8 +91,7 @@ export default function ProfilePage() {
       await updateDoc(doc(db, 'users', user.uid), {
         displayName: displayName.trim(),
         fullName: fullName.trim(),
-        bio: bio.trim(),
-        phoneNumber: phoneNumber.trim()
+        bio: bio.trim()
       });
       
       await refreshProfile();
@@ -119,11 +116,11 @@ export default function ProfilePage() {
     <motion.div {...fadeInUp} className="space-y-8 pb-20">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="space-y-1">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('profile.title')}</h1>
-          <p className="text-sm text-[var(--text2)]">Kelola identitas digital dan preferensi sistem Anda.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('dashboard.profileSettings')}</h1>
+          <p className="text-sm text-[var(--text2)]">{t('dashboard.manageAccount')}</p>
         </div>
         <Button variant="danger" size="sm" onClick={() => auth.signOut()} icon={LogOut}>
-            {t('sidebar.logout')}
+            {t('nav.logout')}
         </Button>
       </header>
 
@@ -181,8 +178,8 @@ export default function ProfilePage() {
                             <div className="flex items-center gap-4 border-b border-[var(--border)] pb-6">
                                 <UserCog className="text-[var(--accent)]" size={24} />
                                 <div>
-                                    <h3 className="text-xl font-bold">{t('profile.accountDetails')}</h3>
-                                    <p className="text-xs text-[var(--text2)]">Perbarui informasi dasar profil publik Anda.</p>
+                                    <h3 className="text-xl font-bold">{t('dashboard.accountDetails')}</h3>
+                                    <p className="text-xs text-[var(--text2)]">{t('dashboard.updateBasicInfo')}</p>
                                 </div>
                             </div>
 
@@ -230,8 +227,8 @@ export default function ProfilePage() {
                              <div className="flex items-center gap-4 border-b border-[var(--border)] pb-6">
                                 <Shield className="text-[var(--accent)]" size={24} />
                                 <div>
-                                    <h3 className="text-xl font-bold">{t('profile.security.title')}</h3>
-                                    <p className="text-xs text-[var(--text2)]">Kontrol keamanan dan identitas digital.</p>
+                                    <h3 className="text-xl font-bold">{t('dashboard.securityDetails')}</h3>
+                                    <p className="text-xs text-[var(--text2)]">{t('dashboard.manageSecurity')}</p>
                                 </div>
                             </div>
                             
@@ -242,10 +239,10 @@ export default function ProfilePage() {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-sm">Reset Kata Sandi</h4>
-                                        <p className="text-[10px] text-[var(--text2)] mt-1">Ganti kata sandi Anda melalui tautan email aman.</p>
+                                        <p className="text-[10px] text-[var(--text2)] mt-1">{t('dashboard.resetPasswordDesc')}</p>
                                     </div>
                                     <Button variant="secondary" size="sm" onClick={() => sendPasswordResetEmail(auth, user?.email || '')} className="w-full">
-                                        Kirim Tautan
+                                        {t('dashboard.sendLink')}
                                     </Button>
                                 </Card>
 
@@ -254,11 +251,11 @@ export default function ProfilePage() {
                                         <ShieldCheck size={20} />
                                     </div>
                                     <div>
-                                        <h4 className="font-bold text-sm">Otentikasi Google</h4>
-                                        <p className="text-[10px] text-[var(--text2)] mt-1">Identitas Anda terlindungi via Google Protocol.</p>
+                                        <h4 className="font-bold text-sm">{t('dashboard.googleAuth')}</h4>
+                                        <p className="text-[10px] text-[var(--text2)] mt-1">{t('dashboard.googleAuthDesc')}</p>
                                     </div>
                                     <div className="px-3 py-1.5 bg-[var(--success-bg)] text-[var(--success)] text-[10px] font-bold rounded-lg border border-[var(--success)]/20 text-center uppercase tracking-widest">
-                                        Terproteksi
+                                        {t('dashboard.protected')}
                                     </div>
                                 </Card>
                             </div>
@@ -313,7 +310,7 @@ export default function ProfilePage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-4">
-                                    <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">Bahasa Antarmuka</label>
+                                    <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">{t('dashboard.interfaceLanguage')}</label>
                                     <div className="flex bg-[var(--surface)] p-1 rounded-xl border border-[var(--border)]">
                                         {['en', 'id'].map(lang => (
                                             <button
@@ -331,11 +328,11 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">Metode Input</label>
+                                    <label className="text-xs font-bold text-[var(--text2)] uppercase tracking-wider">{t('dashboard.inputMethod')}</label>
                                     <div className="p-4 bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <Sparkles size={16} className="text-amber-500" />
-                                            <span className="text-xs font-bold">Smart Input AI</span>
+                                            <span className="text-xs font-bold">{t('dashboard.smartInput')}</span>
                                         </div>
                                         <div className="h-5 w-10 bg-[var(--accent)] rounded-full relative">
                                             <div className="absolute top-1 left-5 h-3 w-3 bg-white rounded-full shadow-sm" />
@@ -367,10 +364,10 @@ export default function ProfilePage() {
                                     <Heart size={80} className="text-[var(--accent)]" />
                                 </div>
                                 <div className="relative z-10 space-y-4">
-                                    <h4 className="font-bold text-white">Butuh bantuan personal?</h4>
-                                    <p className="text-xs text-slate-400">Tim kami siap membantu Anda menyelaraskan alur kerja dengan Pulse.</p>
+                                    <h4 className="font-bold text-white">{t('dashboard.personalAssistance')}</h4>
+                                    <p className="text-xs text-slate-400">{t('dashboard.contactSupport')}</p>
                                     <Button variant="primary" size="sm">
-                                        Hubungi Kami
+                                        {t('dashboard.contactUs')}
                                     </Button>
                                 </div>
                             </Card>

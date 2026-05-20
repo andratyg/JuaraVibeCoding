@@ -1,5 +1,8 @@
 import { useState } from 'react';
+import { useApp } from '../App';
 import { useTranslation } from 'react-i18next';
+import { db } from '../config/firebase';
+import { collection, addDoc } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { FileText, Copy, Check, Loader2, Zap, LayoutList, CheckCircle, HelpCircle, ArrowRight, Brain } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,6 +13,7 @@ import toast from 'react-hot-toast';
 
 export default function Summarizer() {
   const { t } = useTranslation();
+  const { profile } = useApp();
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -20,6 +24,13 @@ export default function Summarizer() {
     setLoading(true);
     try {
       const res = await geminiService.summarizeDocument(text);
+      if (profile?.id) {
+        await addDoc(collection(db, `users/${profile.id}/summaries`), {
+          ...res,
+          originalText: text.substring(0, 500) + '...',
+          createdAt: new Date().toISOString()
+        });
+      }
       setResult(res);
       toast.success('Analisis selesai!');
     } catch (error: any) {
@@ -41,8 +52,8 @@ export default function Summarizer() {
   return (
     <motion.div {...fadeInUp} className="space-y-6 md:space-y-8">
       <header className="space-y-1">
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Peringkas Dokumen</h1>
-        <p className="text-sm" style={{ color: 'var(--text2)' }}>Analisis dan ringkas dokumen panjang dengan kecerdasan AI.</p>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('nav.summarizer')}</h1>
+        <p className="text-sm" style={{ color: 'var(--text2)' }}>{t('dashboard.summarizeDocs')}</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -54,7 +65,7 @@ export default function Summarizer() {
               <textarea
                 value={text}
                 onChange={e => setText(e.target.value)}
-                placeholder="Tempelkan email panjang, laporan, atau artikel di sini..."
+                placeholder={t('summarizer.placeholder') || "Tempelkan email panjang, laporan, atau artikel di sini..."}
                 className="w-full h-80 bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 text-sm md:text-base font-medium focus:ring-2 focus:ring-[var(--accent)] focus:ring-opacity-20 outline-none transition-all placeholder:opacity-30 resize-none"
               />
               <Button
@@ -64,7 +75,7 @@ export default function Summarizer() {
                 onClick={handleSummarize}
                 icon={Brain}
               >
-                Analisis Inteligensi
+                {t('summarizer.action') || 'Analisis Inteligensi'}
               </Button>
             </div>
           </Card>

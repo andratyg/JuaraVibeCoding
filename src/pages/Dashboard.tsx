@@ -58,7 +58,7 @@ export default function Dashboard() {
           maxValue={10} 
           icon={Zap} 
           color="var(--accent)"
-          subtext={todayCheckin ? 'Pulse Synced' : t('dashboard.noCheckin')}
+          subtext={todayCheckin ? t('dashboard.pulseSynced') : t('dashboard.noCheckin')}
         />
         <StatCard 
           label={t('dashboard.tasksDone')} 
@@ -67,14 +67,14 @@ export default function Dashboard() {
           icon={CheckSquare} 
           color="var(--success)"
           progress
-          subtext={`${completedTasks}/${totalTasks} Tasks`}
+          subtext={`${completedTasks}/${totalTasks} ${t('dashboard.tasks')}`}
         />
         <StatCard 
           label={t('dashboard.streak')} 
           value={streak} 
           icon={Trophy} 
           color="var(--warning)"
-          subtext="Day Streak"
+          subtext={t('dashboard.dayStreak')}
         />
         <StatCard 
           label={t('dashboard.moodToday')} 

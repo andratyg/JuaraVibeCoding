@@ -5,7 +5,7 @@ const KEY = process.env.GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey: KEY });
 const DEFAULT_MODEL = 'gemini-3-flash-preview';
 
-const ID  = '\n\nPENTING: Balas SELALU dalam Bahasa Indonesia yang natural dan hangat. Semua string dalam JSON harus Bahasa Indonesia.';
+const ID  = '\n\nMANDATORY: Always respond in Indonesian (Bahasa Indonesia) ONLY. All text in JSON fields must be in natural, helpful Indonesian. NEVER respond in English.';
 
 // FIX D2, D3: Core helper dengan retry + robust JSON parsing
 const callGemini = async (prompt: string, systemInstruction = '', responseSchema?: any): Promise<any> => {

@@ -1,27 +1,29 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { LayoutDashboard, Zap, CheckSquare, BarChart3, MoreHorizontal, Dumbbell, BookOpen, FileText, Settings, User, LogOut } from 'lucide-react';
 import { auth } from '../../config/firebase';
 import { cn } from '../../lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
 
-const mainTabs = [
-  { path: '/', label: 'Feed', icon: LayoutDashboard },
-  { path: '/energy', label: 'Energy', icon: Zap },
-  { path: '/tasks', label: 'Tasks', icon: CheckSquare },
-  { path: '/analytics', label: 'Stats', icon: BarChart3 },
-];
-
-const drawerItems = [
-  { path: '/fitness', label: 'Fitness Coach', icon: Dumbbell },
-  { path: '/journal', label: 'Reflection', icon: BookOpen },
-  { path: '/summarizer', label: 'AI Summary', icon: FileText },
-  { path: '/profile', label: 'Profile', icon: User },
-  { path: '/settings', label: 'Settings', icon: Settings },
-];
-
 export default function BottomTabBar() {
+  const { t } = useTranslation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const mainTabs = [
+    { path: '/', label: t('nav.dashboard'), icon: LayoutDashboard },
+    { path: '/checkin', label: t('nav.checkin'), icon: Zap },
+    { path: '/tasks', label: t('nav.tasks'), icon: CheckSquare },
+    { path: '/analytics', label: t('nav.analytics'), icon: BarChart3 },
+  ];
+
+  const drawerItems = [
+    { path: '/fitness', label: t('nav.fitness'), icon: Dumbbell },
+    { path: '/journal', label: t('nav.journal'), icon: BookOpen },
+    { path: '/summarizer', label: t('nav.summarizer'), icon: FileText },
+    { path: '/profile', label: t('nav.profile'), icon: User },
+    { path: '/settings', label: t('nav.settings'), icon: Settings },
+  ];
 
   return (
     <>
@@ -48,8 +50,8 @@ export default function BottomTabBar() {
           onClick={() => setDrawerOpen(true)}
           className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-slate-300 hover:text-slate-900 transition-colors"
         >
-          <MoreHorizontal size={22} />
-          <span className="text-[10px] font-black uppercase tracking-tighter opacity-40">Menu</span>
+          < MoreHorizontal size={22} />
+          <span className="text-[10px] font-black uppercase tracking-tighter opacity-40">{t('nav.more')}</span>
         </button>
       </nav>
 
@@ -99,7 +101,7 @@ export default function BottomTabBar() {
                   <div className="p-2 bg-white text-rose-600 rounded-lg shadow-sm border border-rose-50">
                     <LogOut size={18} />
                   </div>
-                  System Logout
+                  {t('auth.logout')}
                 </button>
               </div>
             </motion.div>

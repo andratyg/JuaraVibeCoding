@@ -29,7 +29,6 @@ export interface UserProfile {
   displayName: string | null;
   fullName?: string;
   email: string | null;
-  phoneNumber?: string;
   photoURL: string | null;
   bio?: string;
   energyScore: number;

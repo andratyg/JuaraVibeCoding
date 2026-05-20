@@ -14,16 +14,16 @@ const BurnoutAlert = ({ recentCheckins, onDismiss }: Props) => {
   const [showFull, setShowFull] = useState(false)
 
   useEffect(() => {
-    if (!recentCheckins || recentCheckins.length < 3) return
+    if (!recentCheckins || recentCheckins.length === 0) return
     // Cek apakah sudah dismiss hari ini
     const lastDismiss = localStorage.getItem('burnout_dismiss')
     const today = new Date().toISOString().split('T')[0]
     if (lastDismiss === today) return
     
-    // Cek 3 hari terakhir
-    const last3 = recentCheckins.slice(0,3).map(c => c.energi || c.energyScore || 5)
-    const avg = last3.reduce((a, b) => a + b, 0) / 3
-    if (avg >= 4) return
+    // Cek rata-rata checkin terbaru
+    const latest = recentCheckins.slice(0,3).map(c => c.energi || c.energyScore || 5)
+    const avg = latest.reduce((a, b) => a + b, 0) / latest.length
+    if (avg > 5) return // Muncul jika energi <= 5
 
     geminiService.checkBurnoutRisk(recentCheckins)
       .then(r => { 
@@ -63,7 +63,7 @@ const BurnoutAlert = ({ recentCheckins, onDismiss }: Props) => {
             </div>
             <div className="flex-1">
               <h3 className="font-semibold text-sm" style={{ color: 'var(--text)' }}>Peringatan Burnout Terdeteksi</h3>
-              <p className="text-xs font-medium" style={{ color: mc }}>Risiko {plan.riskLevel.toUpperCase()} — Skor {plan.riskScore}/100</p>
+              <p className="text-xs font-medium" style={{ color: mc }}>Risiko {plan.riskLevel?.toUpperCase()} — Skor {plan.riskScore}/100</p>
             </div>
             <button onClick={dismiss} className="w-8 h-8 flex items-center justify-center rounded-[var(--r-sm)] hover:bg-white/10">
               <X size={16} style={{ color: 'var(--text3)' }} />

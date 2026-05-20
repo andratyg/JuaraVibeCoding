@@ -16,6 +16,7 @@ import GoogleButton from '../components/auth/GoogleButton';
 import PasswordInput from '../components/auth/PasswordInput';
 import PasswordStrength from '../components/auth/PasswordStrength';
 
+import { getFirebaseError } from '../utils/firebaseErrors';
 import toast from 'react-hot-toast';
 
 export default function LoginPage() {
@@ -31,29 +32,16 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
 
-  const getFirebaseErrorMessage = (code: string) => {
-    switch (code) {
-      case 'auth/wrong-password': return t('auth.errors.wrongPassword') || 'Incorrect password. Please try again.';
-      case 'auth/user-not-found': return t('auth.errors.userNotFound') || 'No account found with this email.';
-      case 'auth/email-already-in-use': return t('auth.errors.emailInUse') || 'This email is already registered.';
-      case 'auth/weak-password': return t('auth.errors.weakPassword') || 'Password is too weak. Use at least 6 characters.';
-      case 'auth/too-many-requests': return t('auth.errors.tooManyRequests') || 'Too many attempts. Try again later.';
-      case 'auth/network-request-failed': return t('auth.errors.networkError') || 'Network error. Check your connection.';
-      case 'auth/invalid-email': return t('auth.errors.invalidEmail') || 'Please enter a valid email address.';
-      default: return t('common.error');
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast.success(isLogin ? "Welcome back to FlowState!" : "Account created successfully!");
+      toast.success(isLogin ? "Selamat datang kembali!" : "Akun berhasil dibuat!");
     } catch (err) {
       const authErr = err as AuthError;
-      setError(getFirebaseErrorMessage(authErr.code));
+      setError(getFirebaseError(authErr.code));
     } finally {
       setLoading(false);
     }
@@ -62,7 +50,7 @@ export default function LoginPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      setError(t('common.error'));
+      setError("Konfirmasi kata sandi tidak cocok.");
       return;
     }
     setLoading(true);
@@ -89,10 +77,10 @@ export default function LoginPage() {
         }
       };
       await setDoc(doc(db, 'users', cred.user.uid), newProfile);
-      toast.success("Welcome to FlowState!");
+      toast.success("Selamat datang di FlowState!");
     } catch (err) {
       const authErr = err as AuthError;
-      setError(getFirebaseErrorMessage(authErr.code));
+      setError(getFirebaseError(authErr.code));
     } finally {
       setLoading(false);
     }
@@ -125,8 +113,8 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-12 relative z-10">
-          <FeatureItem icon={<ZapIcon size={24} />} title="Adaptive Pulse" text="Systems that synchronize with your biological energy levels." />
-          <FeatureItem icon={<BotIcon size={24} />} title="Intelligent Coach" text="AI-driven mentorship for your mental and physical wellness." />
+          <FeatureItem icon={<ZapIcon size={24} />} title="Pulse Adaptif" text="Sinkronisasi biometrik dengan level energimu secara real-time." />
+          <FeatureItem icon={<BotIcon size={24} />} title="AI Coach Pintar" text="Pendampingan berbasis AI untuk kesehatan mental dan produktivitas." />
         </div>
 
         <div className="relative z-10">
@@ -145,8 +133,8 @@ export default function LoginPage() {
       >
         <div className="w-full max-w-md bg-white p-12 rounded-[3.5rem] shadow-2xl shadow-slate-200/50 border border-slate-50">
           <div className="mb-12 text-center">
-             <h2 className="text-3xl font-black text-slate-900 tracking-tight">{isLogin ? t('common.signIn') : t('common.signUp')}</h2>
-             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-3">{isLogin ? 'Welcome Back to the Flow' : 'Join the Global Productivity Engine'}</p>
+             <h2 className="text-3xl font-black text-slate-900 tracking-tight">{isLogin ? t('auth.login') : t('auth.register')}</h2>
+             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-3">{isLogin ? 'Selamat Datang Kembali di Flow' : 'Bergabung dengan Ekosistem Produktivitas Global'}</p>
           </div>
 
           <div className="flex gap-2 mb-10 bg-slate-50 p-1.5 rounded-2xl">
@@ -157,7 +145,7 @@ export default function LoginPage() {
                   isLogin ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
               )}
             >
-              {t('common.signIn')}
+              {t('auth.login')}
             </button>
             <button
               onClick={() => { setIsLogin(false); setError(null); }}
@@ -166,7 +154,7 @@ export default function LoginPage() {
                 !isLogin ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
             )}
             >
-              {t('common.signUp')}
+              {t('auth.register')}
             </button>
           </div>
 
@@ -222,13 +210,13 @@ export default function LoginPage() {
                 <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest"><span className="bg-white px-4 text-slate-300">{t('common.orContinueWith')}</span></div>
             </div>
 
-            <GoogleButton label="Google Identity" />
+            <GoogleButton label={t('auth.loginGoogle')} />
 
             <div className="text-center mt-10">
                 <p className="text-[11px] font-bold text-slate-400">
-                    {isLogin ? t('common.noAccount') : t('common.haveAccount')}
+                    {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
                     <button type="button" onClick={() => setIsLogin(!isLogin)} className="ml-2 text-indigo-600 font-black uppercase tracking-widest hover:underline">
-                        {isLogin ? t('common.registerNow') : t('common.loginInstead')}
+                        {isLogin ? t('auth.createAccount') : t('auth.login')}
                     </button>
                 </p>
             </div>
