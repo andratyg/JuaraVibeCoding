@@ -43,7 +43,7 @@ export default function NotificationDrawer({ isOpen, onClose, notifications, onM
                 <div className="p-2 bg-indigo-50 rounded-xl text-indigo-600">
                   <Bell size={18} />
                 </div>
-                <h3 className="text-slate-900 font-black uppercase tracking-tight">Updates</h3>
+                <h3 className="text-slate-900 font-black uppercase tracking-tight">Notifikasi</h3>
               </div>
               <button 
                 onClick={onClose}
@@ -59,7 +59,7 @@ export default function NotificationDrawer({ isOpen, onClose, notifications, onM
                   <div className="h-12 w-12 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                     <Bell size={20} className="text-slate-200" />
                   </div>
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">No new updates</p>
+                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Tidak ada pembaruan</p>
                 </div>
               ) : (
                 notifications.map((n) => (
@@ -102,7 +102,7 @@ export default function NotificationDrawer({ isOpen, onClose, notifications, onM
                 onClick={onMarkAllRead}
                 className="w-full py-4 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl transition-all shadow-xl shadow-slate-100"
               >
-                Archive All
+                Tandai Semua Dibaca
               </button>
             </div>
           </motion.div>

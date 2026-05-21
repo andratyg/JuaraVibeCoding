@@ -34,7 +34,7 @@ export const getSalam = (name = '') => {
   else if (h >= 18 || h < 5) key = 'night'
   
   const s = i18n.t(`dashboard.greetings.${key}`)
-  return name ? `${s}, ${name}! 👋` : `${s}! 👋`
+  return name ? `${s}, ${name}!` : `${s}!`
 }
 
 // Keep old names for compatibility during migration if needed, but the prompt implies a total swap.

@@ -344,7 +344,7 @@ Panduan respons WAJIB:
 
     contents.push({ role: 'user', parts: [{ text: message }] });
 
-    return callGemini(contents, system, false);
+    return callGemini(contents, system);
   },
 
   // 9. Document Summarizer

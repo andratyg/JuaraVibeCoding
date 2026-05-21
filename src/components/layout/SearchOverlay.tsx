@@ -14,12 +14,20 @@ interface SearchOverlayProps {
 
 export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [dynamicResults, setDynamicResults] = useState<any[]>([]);
   const { profile } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (query.length < 2) {
+    const timeoutId = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [query]);
+
+  useEffect(() => {
+    if (debouncedQuery.length < 2) {
       setDynamicResults([]);
       return;
     }
@@ -33,7 +41,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
       const snapTasks = await getDocs(qTasks);
       snapTasks.docs.forEach(doc => {
         const d = doc.data();
-        if (d.title.toLowerCase().includes(query.toLowerCase())) {
+        if (d.title.toLowerCase().includes(debouncedQuery.toLowerCase())) {
           results.push({ title: d.title, category: 'Task', icon: <Target size={14} />, path: '/tasks' });
         }
       });
@@ -44,7 +52,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
       snapJournal.docs.forEach(doc => {
         const d = doc.data();
         const searchText = `${d.highlight || ''} ${d.challenge || ''}`.toLowerCase();
-        if (searchText.includes(query.toLowerCase())) {
+        if (searchText.includes(debouncedQuery.toLowerCase())) {
           results.push({ title: (d.highlight || d.challenge || '').substring(0, 30) + '...', category: 'Journal', icon: <Brain size={14} />, path: '/journal' });
         }
       });
@@ -52,14 +60,13 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
       setDynamicResults(results);
     };
 
-    const timeoutId = setTimeout(searchData, 300);
-    return () => clearTimeout(timeoutId);
-  }, [query, profile]);
+    searchData();
+  }, [debouncedQuery, profile]);
 
   const staticResults = [
-    { title: 'Weekly Energy Trend', category: 'Analytics', icon: <Zap size={14} />, path: '/analytics' },
-    { title: 'Fitness Coach Dashboard', category: 'Fitness', icon: <Activity size={14} />, path: '/fitness' },
-  ].filter(r => r.title.toLowerCase().includes(query.toLowerCase()));
+    { title: 'Tren Energi Mingguan', category: 'Analitik', icon: <Zap size={14} />, path: '/analytics' },
+    { title: 'Dasbor Pelatih Kebugaran', category: 'Kebugaran', icon: <Activity size={14} />, path: '/fitness' },
+  ].filter(r => r.title.toLowerCase().includes(debouncedQuery.toLowerCase()));
 
   const allResults = [...staticResults, ...dynamicResults];
 
@@ -95,7 +102,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search protocols, tasks, or insights..."
+                placeholder="Cari tugas, jurnal, atau wawasan..."
                 className="flex-1 bg-transparent border-none text-slate-900 text-lg placeholder:text-slate-300 focus:ring-0 font-bold"
               />
               <button 
@@ -108,8 +115,8 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
             <div className="p-4 max-h-[60vh] overflow-y-auto bg-white">
               <div className="mb-4 px-3 flex items-center justify-between">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Recommendations</span>
-                {query && <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{allResults.length} Result{allResults.length !== 1 ? 's' : ''}</span>}
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Rekomendasi</span>
+                {debouncedQuery && <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">{allResults.length} Hasil</span>}
               </div>
               
               <div className="space-y-1">
@@ -142,7 +149,7 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
                     <div className="h-16 w-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100 shadow-inner">
                        <SearchIcon className="text-slate-200" size={24} />
                     </div>
-                    <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">No protocols initialized</p>
+                    <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">Tidak Ada Hasil Ditemukan</p>
                   </div>
                 )}
               </div>
@@ -150,10 +157,10 @@ export default function SearchOverlay({ isOpen, onClose }: SearchOverlayProps) {
 
             <div className="p-5 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-[10px] font-black text-slate-300 uppercase tracking-widest">
               <div className="flex items-center gap-4">
-                <span className="flex items-center gap-2"><kbd className="bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-400 shadow-sm">ESC</kbd> CLOSE</span>
-                <span className="flex items-center gap-2"><kbd className="bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-400 shadow-sm">↵</kbd> EXECUTE</span>
+                <span className="flex items-center gap-2"><kbd className="bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-400 shadow-sm">ESC</kbd> TUTUP</span>
+                <span className="flex items-center gap-2"><kbd className="bg-white border border-slate-200 px-2 py-0.5 rounded text-slate-400 shadow-sm">↵</kbd> EKSEKUSI</span>
               </div>
-              <span className="flex items-center gap-2">Protocol Search <Zap size={10} className="text-indigo-600 fill-indigo-600" /></span>
+              <span className="flex items-center gap-2">Pencarian Sistem <Zap size={10} className="text-indigo-600 fill-indigo-600" /></span>
             </div>
           </motion.div>
         </div>

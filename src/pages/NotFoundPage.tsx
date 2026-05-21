@@ -23,7 +23,7 @@ export default function NotFoundPage() {
         <h2 className="text-xl font-bold mb-4">Halaman Tidak Ditemukan</h2>
         <p className="text-[var(--text2)] text-sm mb-8 leading-relaxed">
           Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan.
-          Silakan kembali ke dashboard utama sistem Pulse Anda.
+          Silakan kembali ke dashboard utama sistem Velora Anda.
         </p>
         <Link
           to="/"

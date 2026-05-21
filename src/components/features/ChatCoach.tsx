@@ -15,6 +15,16 @@ export default function ChatCoach() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
+  useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -58,9 +68,9 @@ export default function ChatCoach() {
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            className="mb-4 flex h-[500px] w-80 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200"
+            className="mb-4 flex h-[500px] w-80 flex-col overflow-hidden rounded-2xl bg-[var(--surface)] shadow-2xl border border-[var(--border)]"
           >
-            <div className="flex items-center justify-between bg-[var(--primary)] p-4 text-white">
+            <div className="flex items-center justify-between bg-[var(--accent)] p-4 text-[var(--surface)]">
               <div className="flex items-center gap-2">
                 <Bot className="h-5 w-5" />
                 <span className="font-semibold">AI Life Coach</span>
@@ -73,8 +83,8 @@ export default function ChatCoach() {
                 <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                   <div className={`max-w-[80%] rounded-2xl p-3 text-sm ${
                     m.role === 'user' 
-                    ? 'bg-[var(--primary)] text-white rounded-tr-none' 
-                    : 'bg-slate-100 text-slate-800 rounded-tl-none'
+                    ? 'bg-[var(--accent)] text-[var(--surface)] rounded-tr-none' 
+                    : 'bg-[var(--surface2)] text-[var(--text)] rounded-tl-none'
                   }`}>
                     {m.content}
                   </div>
@@ -82,23 +92,23 @@ export default function ChatCoach() {
               ))}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-slate-100 rounded-2xl p-3 animate-pulse">...</div>
+                  <div className="bg-[var(--surface2)] rounded-2xl p-3 animate-pulse">...</div>
                 </div>
               )}
             </div>
 
-            <div className="p-3 border-t border-slate-100 flex gap-2">
+            <div className="p-3 border-t border-[var(--border)] flex gap-2">
               <input
                 type="text"
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSend()}
                 placeholder="Tanya Coach..."
-                className="flex-1 bg-slate-50 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                className="flex-1 bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2 text-sm text-[var(--text)] focus:outline-none focus:border-[var(--accent)]"
               />
               <button 
                 onClick={handleSend}
-                className="bg-[var(--primary)] text-white p-2 rounded-xl"
+                className="bg-[var(--accent)] text-[var(--surface)] p-2 rounded-xl"
               >
                 <Send className="h-4 w-4" />
               </button>
@@ -109,7 +119,7 @@ export default function ChatCoach() {
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--primary)] text-white shadow-lg transition-transform hover:scale-110 active:scale-95"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--accent)] text-[var(--surface)] shadow-lg transition-transform hover:scale-110 active:scale-95"
       >
         <MessageCircle className="h-6 w-6" />
       </button>

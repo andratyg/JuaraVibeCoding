@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
+import { FirebaseError } from 'firebase/app';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -31,6 +32,42 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showForgotPassword) {
+        setShowForgotPassword(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showForgotPassword]);
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+        toast.error("Masukkan email Anda terlebih dahulu.");
+        return;
+    }
+    setResetLoading(true);
+    try {
+        await sendPasswordResetEmail(auth, resetEmail);
+        toast.success("Tautan reset kata sandi Velora telah dikirim ke email Anda.");
+        setShowForgotPassword(false);
+    } catch (err: unknown) {
+        if (err instanceof FirebaseError) {
+          toast.error(getFirebaseError(err.code));
+        } else {
+          toast.error("Gagal mengirim tautan reset.");
+        }
+    } finally {
+        setResetLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,9 +76,12 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       toast.success(isLogin ? "Selamat datang kembali!" : "Akun berhasil dibuat!");
-    } catch (err) {
-      const authErr = err as AuthError;
-      setError(getFirebaseError(authErr.code));
+    } catch (err: unknown) {
+      if (err instanceof FirebaseError) {
+        setError(getFirebaseError(err.code));
+      } else {
+        setError("Terjadi kesalahan sistem saat masuk.");
+      }
     } finally {
       setLoading(false);
     }
@@ -77,10 +117,13 @@ export default function LoginPage() {
         }
       };
       await setDoc(doc(db, 'users', cred.user.uid), newProfile);
-      toast.success("Selamat datang di FlowState!");
-    } catch (err) {
-      const authErr = err as AuthError;
-      setError(getFirebaseError(authErr.code));
+      toast.success("Selamat datang di Velora!");
+    } catch (err: unknown) {
+      if (err instanceof FirebaseError) {
+        setError(getFirebaseError(err.code));
+      } else {
+        setError("Terjadi kesalahan sistem saat mendaftar.");
+      }
     } finally {
       setLoading(false);
     }
@@ -105,7 +148,7 @@ export default function LoginPage() {
             <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-indigo-500 text-white shadow-2xl shadow-indigo-500/20">
                 <ZapIcon size={32} />
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-white italic">FlowState</h1>
+            <h1 className="text-4xl font-black tracking-tight text-white italic">Velora</h1>
           </div>
           <p className="mt-10 text-2xl text-slate-300 leading-relaxed font-medium max-w-sm">
             "Your digital sanctuary for peak focus and recovery."
@@ -113,7 +156,7 @@ export default function LoginPage() {
         </div>
 
         <div className="space-y-12 relative z-10">
-          <FeatureItem icon={<ZapIcon size={24} />} title="Pulse Adaptif" text="Sinkronisasi biometrik dengan level energimu secara real-time." />
+          <FeatureItem icon={<ZapIcon size={24} />} title="Velora Adaptif" text="Sinkronisasi biometrik dengan level energimu secara real-time." />
           <FeatureItem icon={<BotIcon size={24} />} title="AI Coach Pintar" text="Pendampingan berbasis AI untuk kesehatan mental dan produktivitas." />
         </div>
 
@@ -131,10 +174,57 @@ export default function LoginPage() {
         animate={{ opacity: 1, scale: 1 }}
         className="flex flex-1 items-center justify-center p-8 relative z-10"
       >
-        <div className="w-full max-w-md bg-white p-12 rounded-[3.5rem] shadow-2xl shadow-slate-200/50 border border-slate-50">
+        <div className="w-full max-w-md bg-white p-6 sm:p-12 md:p-12 rounded-[2rem] sm:rounded-[3.5rem] shadow-2xl shadow-slate-200/50 border border-slate-50 relative overflow-hidden">
+        
+          <AnimatePresence>
+            {showForgotPassword && (
+              <motion.div 
+                initial={{ opacity: 0, x: '100%' }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: '100%' }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="absolute inset-0 bg-white z-20 flex flex-col justify-center p-6 sm:p-12 overflow-y-auto"
+              >
+                <div className="mb-8">
+                  <button onClick={() => setShowForgotPassword(false)} className="mb-6 flex items-center min-h-[44px] text-xs font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors">
+                    <ArrowRight className="rotate-180 mr-2" size={16} /> {t('common.back', 'Kembali')}
+                  </button>
+                  <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">{t('auth.forgotPassword')}</h2>
+                  <p className="text-slate-500 text-sm font-medium">{t('auth.resetPasswordDesc', 'Masukkan email yang terdaftar untuk menerima tautan reset kata sandi Anda.')}</p>
+                </div>
+                
+                <form onSubmit={handleForgotPassword} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('auth.email')}</label>
+                    <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" size={18} />
+                        <input 
+                            type="email" 
+                            value={resetEmail} 
+                            onChange={(e) => setResetEmail(e.target.value)} 
+                            required 
+                            placeholder={t('auth.emailPlaceholder')}
+                            className="w-full pl-12 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-[1.5rem] focus:bg-white focus:border-slate-900 focus:outline-none transition-all font-bold" 
+                        />
+                    </div>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    disabled={resetLoading}
+                    className="w-full py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-[0.2em] rounded-2xl text-[10px] shadow-xl shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {resetLoading ? <Loader2 className="animate-spin" size={18} /> : <Mail size={18} />}
+                    {t('auth.sendResetLink', 'Kirim Tautan Reset')}
+                  </button>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <div className="mb-12 text-center">
              <h2 className="text-3xl font-black text-slate-900 tracking-tight">{isLogin ? t('auth.login') : t('auth.register')}</h2>
-             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-3">{isLogin ? 'Selamat Datang Kembali di Flow' : 'Bergabung dengan Ekosistem Produktivitas Global'}</p>
+             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-3">{isLogin ? t('auth.welcomeBack', 'Selamat Datang Kembali di Flow') : t('auth.joinGlobal', 'Bergabung dengan Ekosistem Produktivitas Global')}</p>
           </div>
 
           <div className="flex gap-2 mb-10 bg-slate-50 p-1.5 rounded-2xl">
@@ -185,13 +275,20 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('common.password')}</label>
+                <div className="flex justify-between items-center px-1">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t('common.password')}</label>
+                    {isLogin && (
+                        <button type="button" onClick={() => setShowForgotPassword(true)} className="text-[10px] min-h-[44px] px-2 font-black text-indigo-500 hover:text-indigo-600 tracking-widest uppercase transition-colors">
+                            {t('auth.forgotPassword')}
+                        </button>
+                    )}
+                </div>
                 <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             
             {!isLogin && (
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Confirm Password</label>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">{t('auth.confirmPassword')}</label>
                 <PasswordInput value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
               </div>
             )}
@@ -215,7 +312,7 @@ export default function LoginPage() {
             <div className="text-center mt-10">
                 <p className="text-[11px] font-bold text-slate-400">
                     {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
-                    <button type="button" onClick={() => setIsLogin(!isLogin)} className="ml-2 text-indigo-600 font-black uppercase tracking-widest hover:underline">
+                    <button type="button" onClick={() => setIsLogin(!isLogin)} className="ml-2 min-h-[44px] px-2 text-indigo-600 font-black uppercase tracking-widest hover:underline">
                         {isLogin ? t('auth.createAccount') : t('auth.login')}
                     </button>
                 </p>
@@ -230,7 +327,7 @@ export default function LoginPage() {
 function FeatureItem({ icon, title, text }: { icon: React.ReactNode, title: string, text: string }) {
   return (
     <div className="flex items-start gap-4">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-[var(--primary)] text-white backdrop-blur-md">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-[var(--accent)] backdrop-blur-md">
         {icon}
       </div>
       <div>

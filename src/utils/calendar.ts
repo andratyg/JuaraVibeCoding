@@ -3,7 +3,7 @@ export function exportTasksToICS(tasks: any[]) {
 
     let icsContent = `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//FlowState//Task Manager//EN
+PRODID:-//Velora//Task Manager//EN
 `;
 
     // Function to format date to iCal standard (YYYYMMDDTHHMMSSZ)
@@ -28,7 +28,7 @@ PRODID:-//FlowState//Task Manager//EN
         }
 
         icsContent += `BEGIN:VEVENT
-UID:${task.id || Math.random().toString(36).substring(7)}@flowstate.app
+UID:${task.id || Math.random().toString(36).substring(7)}@velora.app
 DTSTAMP:${formatDate(now)}
 DTSTART:${formatDate(start)}
 DTEND:${formatDate(end)}
@@ -44,7 +44,7 @@ END:VEVENT
     const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
-    link.setAttribute('download', 'flowstate-tasks.ics');
+    link.setAttribute('download', 'velora-tasks.ics');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

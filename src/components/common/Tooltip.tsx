@@ -14,7 +14,7 @@ export function InfoTooltip({ content }: TooltipProps) {
       <button
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
-        className="text-slate-300 hover:text-[var(--primary)] transition-colors focus:outline-none"
+        className="text-[var(--text3)] hover:text-[var(--accent)] transition-colors focus:outline-none"
         type="button"
       >
         <HelpCircle size={14} />

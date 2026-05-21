@@ -105,14 +105,14 @@ export default function FocusTimer({ energyScore }: { energyScore: number }) {
         {/* Adaptive Description */}
         <p className="text-[10px] uppercase font-bold text-[var(--text3)] flex items-center justify-center gap-1">
             <Zap size={12} className="text-[var(--accent)]" />
-            Adaptive {getInitialMinutes()}m focus based on energy ({energyScore}/10)
+            {t('tasks.adaptiveFocus', `Fokus adaptif ${getInitialMinutes()}m (Energi: ${energyScore}/10)`, { minutes: getInitialMinutes(), energy: energyScore })}
         </p>
 
         <div className="flex items-center gap-3 pt-4">
-            <Button onClick={toggleTimer} variant="primary" icon={isActive ? Pause : Play} className="w-24">
-                {isActive ? 'Pause' : 'Start'}
+            <Button onClick={toggleTimer} variant="primary" icon={isActive ? Pause : Play} className="w-32 min-h-[44px]">
+                {isActive ? t('common.pause', 'Jeda') : t('common.start', 'Mulai')}
             </Button>
-            <Button onClick={resetTimer} variant="secondary" icon={Square} className="px-4" aria-label="Reset" />
+            <Button onClick={resetTimer} variant="secondary" icon={Square} className="px-4 min-w-[44px] min-h-[44px]" aria-label="Reset" />
         </div>
       </div>
     </Card>

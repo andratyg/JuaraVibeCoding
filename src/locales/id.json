@@ -69,7 +69,7 @@
     "tasksDone": "Task Selesai",
     "streak": "Hari Beruntun",
     "moodToday": "Mood Hari Ini",
-    "pulseSynced": "Sinkronasi Pulse",
+    "pulseSynced": "Sinkronasi Velora",
     "tasks": "Tugas",
     "dayStreak": "Hari Beruntun",
     "quickActions": "Aksi Cepat",
@@ -99,13 +99,13 @@
     "inputMethod": "Metode Input",
     "smartInput": "Smart Input AI",
     "personalAssistance": "Butuh bantuan personal?",
-    "contactSupport": "Tim kami siap membantu Anda menyelaraskan alur kerja dengan Pulse.",
+    "contactSupport": "Tim kami siap membantu Anda menyelaraskan alur kerja dengan Velora.",
     "contactUs": "Hubungi Kami",
     "addNewTaskDesc": "Tambahkan task baru",
     "writeReflection": "Tulis refleksi harian",
     "summarizeDocs": "Ringkas dokumen panjang",
     "startNow": "Mulai Sekarang",
-    "needData": "Pulse AI butuh data kondisimu untuk memberikan strategi hari ini."
+    "needData": "Velora butuh data kondisimu untuk memberikan strategi hari ini."
   },
   "energyCheck": {
     "title": "Cek Kalibrasi Energi",
@@ -133,6 +133,11 @@
     "actionPlan": "Rencana Aksi AI"
   },
   "profile": {
+    "fullName": "Nama Lengkap",
+    "username": "Nama Pengguna",
+    "bio": "Bio",
+    "email": "Email",
+    "saveChanges": "Simpan Perubahan",
     "changePassword": "Ubah Kata Sandi",
     "language": {
       "select": "Pilih Bahasa"

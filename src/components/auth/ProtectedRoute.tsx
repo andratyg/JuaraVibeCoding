@@ -8,9 +8,9 @@ export default function ProtectedRoute({ children, reverse = false }: { children
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full flex-col items-center justify-center bg-white">
-        <h1 className="mb-4 text-3xl font-black text-[var(--primary)]">FlowState</h1>
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--primary)]" />
+      <div className="flex h-screen w-full flex-col items-center justify-center bg-[var(--bg)]">
+        <h1 className="mb-4 text-4xl font-black tracking-tight text-[var(--accent)] uppercase">Velora</h1>
+        <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
       </div>
     );
   }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '../App';
 import { useTranslation } from 'react-i18next';
 import { db, handleFirestoreError, OperationType } from '../config/firebase';
-import { doc, setDoc, query, collection, where, limit, getDocs } from 'firebase/firestore';
+import { doc, setDoc, query, collection, where, limit, getDocs, updateDoc } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { Zap, ArrowRight, Loader2, Brain, Target, Activity, Flame, Sparkles, CheckCircle2, ChevronRight } from 'lucide-react';
@@ -89,6 +89,7 @@ export default function EnergyCheckInPage() {
       const checkinDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const checkinData = {
         ...result,
+        energyScore: energyLevel,
         energi: energyLevel,
         stres: stressLevel,
         fokus: focusLevel,
@@ -98,6 +99,13 @@ export default function EnergyCheckInPage() {
       };
 
       await setDoc(doc(db, `users/${profile.id}/checkins`, checkinDate), checkinData);
+      
+      // Update energyScore on the user's profile so it cascades to other modules (TaskManager, FocusTimer, etc)
+      await updateDoc(doc(db, `users`, profile.id), {
+        energyScore: checkinData.energyScore,
+        lastCheckInDate: checkinDate
+      });
+
       setResult(checkinData);
       setAlreadyCalibrated(true);
       

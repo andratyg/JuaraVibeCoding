@@ -39,6 +39,8 @@ export default function ProfilePage() {
   // --- Activity State ---
   const [activities, setActivities] = useState<any[]>([]);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (profile) {
       setDisplayName(profile.displayName || '');
@@ -46,6 +48,36 @@ export default function ProfilePage() {
       setBio(profile.bio || '');
     }
   }, [profile, user]);
+
+  const handleUploadClick = () => {
+    if (window.confirm("Izinkan Velora untuk mengakses kamera atau galeri file Anda untuk mengubah foto profil?")) {
+        fileInputRef.current?.click();
+    }
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+        const result = event.target?.result as string;
+        try {
+            setLoading(true);
+            if (user) {
+                await updateProfile(user, { photoURL: result });
+                await updateDoc(doc(db, 'users', user.uid), { photoURL: result });
+            }
+            await refreshProfile();
+            toast.success(t('common.success') || "Foto profil berhasil diperbarui");
+        } catch (err: any) {
+             toast.error(t('common.error') || "Gagal mengunggah foto.");
+        } finally {
+            setLoading(false);
+        }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const fetchActivityPulse = async () => {
     if (!user) return;
@@ -78,6 +110,22 @@ export default function ProfilePage() {
   useEffect(() => {
     if (activeTab === 'activity') fetchActivityPulse();
   }, [activeTab]);
+
+  const handlePasswordReset = async () => {
+    if (!user?.email) return;
+    try {
+      await sendPasswordResetEmail(auth, user.email);
+      toast.success("Tautan reset kata sandi telah dikirim ke email Anda.");
+    } catch (err: unknown) {
+      import('firebase/app').then(({ FirebaseError }) => {
+        if (err instanceof FirebaseError) {
+          toast.error(`Gagal: ${err.code}`);
+        } else {
+          toast.error("Gagal mengirim email.");
+        }
+      });
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,18 +177,25 @@ export default function ProfilePage() {
         {/* Sidebar Nav */}
         <div className="lg:col-span-3 space-y-6">
             <Card className="p-6 flex flex-col items-center text-center space-y-4">
-                <div className="relative group">
-                    <div className="h-24 w-24 rounded-full bg-[var(--surface)] border-2 border-[var(--border)] overflow-hidden flex items-center justify-center shadow-inner">
-                        {user?.photoURL ? (
-                            <img src={user.photoURL} alt="Avatar" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
-                        ) : (
-                            <User size={32} className="text-[var(--text3)]" />
-                        )}
-                    </div>
-                    <button className="absolute bottom-0 right-0 p-1.5 bg-[var(--accent)] text-white rounded-full border-4 border-[var(--surface2)] shadow-lg hover:scale-110 transition-transform">
-                        <Camera size={14} />
-                    </button>
-                </div>
+                            <div className="relative group">
+                                <div className="h-24 w-24 rounded-full bg-[var(--surface)] border-2 border-[var(--border)] overflow-hidden flex items-center justify-center shadow-inner">
+                                    {user?.photoURL ? (
+                                        <img src={user.photoURL} alt="Avatar" referrerPolicy="no-referrer" className="h-full w-full object-cover" />
+                                    ) : (
+                                        <User size={32} className="text-[var(--text3)]" />
+                                    )}
+                                </div>
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    hidden 
+                                    ref={fileInputRef} 
+                                    onChange={handlePhotoChange} 
+                                />
+                                <button type="button" onClick={handleUploadClick} className="absolute bottom-0 right-0 p-1.5 bg-[var(--accent)] text-white rounded-full border-4 border-[var(--surface2)] shadow-lg hover:scale-110 transition-transform">
+                                    <Camera size={14} />
+                                </button>
+                            </div>
                 <div>
                    <h2 className="font-bold text-lg">{profile?.fullName || user?.displayName || 'User'}</h2>
                    <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)]">Pro Member</p>
@@ -192,6 +247,7 @@ export default function ProfilePage() {
                                             type="text"
                                             value={fullName}
                                             onChange={(e) => setFullName(e.target.value)}
+                                            placeholder="Andra Indra"
                                             className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] px-4 py-3 outline-none focus:border-[var(--accent)] transition-all font-medium"
                                         />
                                     </div>
@@ -201,6 +257,7 @@ export default function ProfilePage() {
                                             type="text"
                                             value={displayName}
                                             onChange={(e) => setDisplayName(e.target.value)}
+                                            placeholder="andra.indra"
                                             className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] px-4 py-3 outline-none focus:border-[var(--accent)] transition-all font-medium"
                                         />
                                     </div>
@@ -212,6 +269,7 @@ export default function ProfilePage() {
                                         value={bio}
                                         onChange={(e) => setBio(e.target.value)}
                                         rows={3}
+                                        placeholder="Tuliskan sedikit tentang diri Anda..."
                                         className="w-full bg-[var(--surface)] border border-[var(--border)] rounded-[var(--r-md)] px-4 py-3 outline-none focus:border-[var(--accent)] transition-all font-medium resize-none"
                                     />
                                 </div>
@@ -242,7 +300,7 @@ export default function ProfilePage() {
                                         <h4 className="font-bold text-sm">Reset Kata Sandi</h4>
                                         <p className="text-[10px] text-[var(--text2)] mt-1">{t('dashboard.resetPasswordDesc')}</p>
                                     </div>
-                                    <Button variant="secondary" size="sm" onClick={() => sendPasswordResetEmail(auth, user?.email || '')} className="w-full">
+                                    <Button variant="secondary" size="sm" onClick={handlePasswordReset} className="w-full">
                                         {t('dashboard.sendLink')}
                                     </Button>
                                 </Card>

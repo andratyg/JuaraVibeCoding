@@ -13,7 +13,7 @@ export default function CoachPage() {
   const { data: dashboardData } = useDashboardData(profile?.id);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<{ role: 'coach' | 'user', content: string }[]>([
-    { role: 'coach', content: `Halo ${profile?.displayName || 'Sobat Pulse'}! Saya AI Coach pribadimu. Hari ini energi skormu berada di angka ${profile?.energyScore || '?'}/10. Ada yang ingin kamu diskusikan atau perlu bantuan menjadwalkan hari?` }
+    { role: 'coach', content: `Halo ${profile?.displayName || 'Sobat Velora'}! Saya AI Coach pribadimu. Hari ini energi skormu berada di angka ${profile?.energyScore || '?'}/10. Ada yang ingin kamu diskusikan atau perlu bantuan menjadwalkan hari?` }
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -128,7 +128,7 @@ export default function CoachPage() {
               </button>
             </div>
             <p className="mt-3 text-[10px] text-center text-[var(--text3)] uppercase tracking-widest font-bold">
-                PULSE AI TIDAK MEMBERIKAN SARAN MEDIS; KONSULTASIKAN DENGAN AHLI PROFESIONAL JIKA PERLU.
+                VELORA TIDAK MEMBERIKAN SARAN MEDIS; KONSULTASIKAN DENGAN AHLI PROFESIONAL JIKA PERLU.
             </p>
           </div>
         </Card>

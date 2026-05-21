@@ -138,7 +138,7 @@ export default function FitnessCoach() {
               <DumbbellIcon className="h-8 w-8 text-[var(--accent)]" />
             </div>
             <h3 className="text-xl font-bold mb-2">Siap untuk bergerak?</h3>
-            <p className="max-w-sm mx-auto px-6 text-sm font-medium opacity-60">Pulse AI akan merancang rutinitas khusus berdasarkan <b>Tingkat Energi</b> kamu hari ini.</p>
+            <p className="max-w-sm mx-auto px-6 text-sm font-medium opacity-60">Velora akan merancang rutinitas khusus berdasarkan <b>Tingkat Energi</b> kamu hari ini.</p>
           </motion.div>
         ) : completed ? (
           <motion.div 

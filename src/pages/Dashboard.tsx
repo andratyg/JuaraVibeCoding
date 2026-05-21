@@ -23,7 +23,7 @@ export default function Dashboard() {
   if (loading) return <SkeletonPage />;
 
   const { todayCheckin, tasks = [], streak = 0, completedTasks = 0, totalTasks = 0, recentCheckins = [] } = data || {};
-  const energyScore = todayCheckin?.energyScore ?? 0;
+  const energyScore = todayCheckin?.energyScore ?? profile?.energyScore ?? 0;
   const mood = todayCheckin?.mood || (todayCheckin ? 'Netral' : t('dashboard.noCheckin'));
 
   return (
@@ -36,8 +36,10 @@ export default function Dashboard() {
       {/* ── HEADER ── */}
       <motion.header variants={fadeInUp} className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-[var(--text)] to-[var(--text2)] bg-clip-text text-transparent">
-            {getSalam(profile?.displayName)}
+          <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
+            <span className="bg-gradient-to-r from-[var(--text)] to-[var(--text2)] bg-clip-text text-transparent">
+              {getSalam(profile?.displayName)}
+            </span>
           </h1>
           <p className="text-sm font-medium opacity-60 uppercase tracking-widest pl-1">
             {fDateLong(new Date())}

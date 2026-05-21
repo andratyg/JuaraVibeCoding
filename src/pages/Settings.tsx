@@ -15,6 +15,7 @@ import {
 import { 
   sendPasswordResetEmail
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { toast } from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -101,8 +102,12 @@ export default function SettingsPage() {
     try {
       await sendPasswordResetEmail(auth, user.email);
       toast.success('Tautan reset kata sandi telah dikirim ke email Anda.');
-    } catch (err: any) {
-      toast.error('Gagal mengirim email reset.');
+    } catch (err: unknown) {
+      if (err instanceof FirebaseError) {
+        toast.error(`Gagal: ${err.code}`);
+      } else {
+        toast.error('Gagal mengirim email reset.');
+      }
     } finally {
       setLoading(false);
     }
@@ -126,7 +131,7 @@ export default function SettingsPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `pulse_data_${new Date().toISOString()}.json`;
+      link.download = `velora_data_${new Date().toISOString()}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -162,7 +167,7 @@ export default function SettingsPage() {
             <span className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-60">System Preferences</span>
         </div>
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight">{t('dashboard.profileSettings')}</h1>
-        <p className="text-sm text-[var(--text2)] font-medium">Konfigurasi protokol dan antarmuka keamanan sistem Pulse Anda.</p>
+        <p className="text-sm text-[var(--text2)] font-medium">Konfigurasi protokol dan antarmuka keamanan sistem Velora Anda.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

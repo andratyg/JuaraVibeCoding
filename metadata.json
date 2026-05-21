@@ -1,5 +1,5 @@
 {
-  "name": "FlowState",
+  "name": "Velora",
   "description": "Platform AI terpadu yang menggabungkan Wellness Coach dan Productivity Assistant untuk remote worker Indonesia.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

@@ -69,7 +69,7 @@
     "tasksDone": "Tasks Completed",
     "streak": "Day Streak",
     "moodToday": "Mood Today",
-    "pulseSynced": "Pulse Synced",
+    "pulseSynced": "Velora Synced",
     "tasks": "Tasks",
     "dayStreak": "Day Streak",
     "quickActions": "Quick Actions",
@@ -105,7 +105,7 @@
     "writeReflection": "Write daily reflection",
     "summarizeDocs": "Summarize long documents",
     "startNow": "Start Now",
-    "needData": "Pulse AI needs your data to provide today's strategy."
+    "needData": "Velora needs your data to provide today's strategy."
   },
   "energyCheck": {
     "title": "Energy Calibration Check",
@@ -133,6 +133,11 @@
     "actionPlan": "AI Action Plan"
   },
   "profile": {
+    "fullName": "Full Name",
+    "username": "Username",
+    "bio": "Bio",
+    "email": "Email",
+    "saveChanges": "Save Changes",
     "changePassword": "Change Password",
     "language": {
       "select": "Choose Language"

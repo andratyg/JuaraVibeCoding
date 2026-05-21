@@ -11,6 +11,48 @@
 
 @layer base {
   :root {
+    /* DEFAULT TO LIGHT MODE */
+    /* Background */
+    --bg:        #F3F4F6; /* Gray 100 for main background */
+    --surface:   #FFFFFF; /* Pure white for cards */
+    --surface2:  #F9FAFB; /* Gray 50 for secondary surface */
+    --surface3:  #E5E7EB; /* Gray 200 for tertiary */
+
+    /* Border */
+    --border:    #E5E7EB; /* Clear visible border */
+    --border2:   #D1D5DB; /* Stronger border */
+
+    /* Text */
+    --text:      #111827; /* Dark gray for good readability */
+    --text2:     #4B5563; /* Medium gray */
+    --text3:     #9CA3AF; /* Light gray */
+
+    /* Accent — default purple (WCAG AA compliant contrast against light) */
+    --accent:      #5B52ED;      
+    --accent-bg:   rgba(91,82,237,0.12);
+    --accent-text: #4138D9;
+
+    /* Status */
+    --success:    #15803D;
+    --success-bg: rgba(21,128,61,0.12);
+    --warning:    #B45309;
+    --warning-bg: rgba(180,83,9,0.12);
+    --error:      #DC2626;
+    --error-bg:   rgba(220,38,38,0.12);
+
+    /* Radius KONSISTEN */
+    --r-xs:   6px;    /* chip, tag kecil */
+    --r-sm:   8px;    /* badge */
+    --r-md:   12px;   /* button, input */
+    --r-lg:   16px;   /* card kecil */
+    --r-xl:   20px;   /* card besar */
+    --r-2xl:  24px;   /* modal, drawer */
+    --r-full: 9999px; /* pill, avatar */
+
+    --ease: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
     /* Background */
     --bg:        #0D0F14;
     --surface:   #13161D;
@@ -38,38 +80,46 @@
     --warning-bg: rgba(239,159,39,0.12);
     --error:      #FF5C5C;
     --error-bg:   rgba(255,92,92,0.12);
-
-    /* Radius KONSISTEN */
-    --r-xs:   6px;    /* chip, tag kecil */
-    --r-sm:   8px;    /* badge */
-    --r-md:   12px;   /* button, input */
-    --r-lg:   16px;   /* card kecil */
-    --r-xl:   20px;   /* card besar */
-    --r-2xl:  24px;   /* modal, drawer */
-    --r-full: 9999px; /* pill, avatar */
-
-    --ease: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* Mood-aware themes */
+  /* Mood-aware themes for light mode */
   [data-theme="teal"] {
+    --accent:      #0F766E;
+    --accent-bg:   rgba(15,118,110,0.12);
+    --accent-text: #115E59;
+  }
+  [data-theme="amber"] {
+    --accent:      #D97706;
+    --accent-bg:   rgba(217,119,6,0.12);
+    --accent-text: #B45309;
+  }
+  [data-theme="purple"] {
+    --accent:      #5B52ED;
+    --accent-bg:   rgba(91,82,237,0.12);
+    --accent-text: #4138D9;
+  }
+
+  /* Mood-aware themes for dark mode */
+  .dark[data-theme="teal"] {
     --accent:      #1DB97A;
     --accent-bg:   rgba(29,185,122,0.12);
     --accent-text: #4DD9A0;
   }
-  [data-theme="amber"] {
+  .dark[data-theme="amber"] {
     --accent:      #EF9F27;
     --accent-bg:   rgba(239,159,39,0.12);
     --accent-text: #F5BC6A;
   }
-  [data-theme="purple"] {
+  .dark[data-theme="purple"] {
     --accent:      #6C63FF;
     --accent-bg:   rgba(108,99,255,0.12);
     --accent-text: #A89BFF;
   }
 
   body {
-    @apply bg-[#0D0F14] text-[#F0F2F7] antialiased;
+    background-color: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
     font-family: var(--font-sans);
     overflow-x: hidden;
     max-width: 100vw;
@@ -88,7 +138,9 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10;
+    background-color: var(--surface2);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border);
   }
 }
 

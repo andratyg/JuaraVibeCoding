@@ -146,7 +146,6 @@ export default function TaskManager() {
     setScheduling(true);
     try {
       const pendingTasks = tasks.filter(t => t.status !== 'Completed');
-      const energyScore = dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 5;
       const workSlots = dashboardData?.todayCheckin?.workSlots || ['09:00-12:00', '13:00-17:00'];
       
       const scheduledResult = await geminiService.scheduleTasks(pendingTasks, energyScore, workSlots);
@@ -182,6 +181,7 @@ export default function TaskManager() {
 
   const pendingCount = tasks.filter(t => t.status !== 'Completed').length;
   const completedCount = tasks.filter(t => t.status === 'Completed').length;
+  const energyScore = dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 5;
 
   return (
     <motion.div {...fadeInUp} className="space-y-6 md:space-y-8 pb-20">
@@ -216,7 +216,7 @@ export default function TaskManager() {
         <StatCard label="Total Tasks" value={tasks.length} color="var(--accent)" />
         <StatCard label="Pending" value={pendingCount} color="var(--warning)" />
         <StatCard label="Completed" value={completedCount} color="var(--success)" />
-        <StatCard label={t('tasks.energyReady')} value={`${(profile?.energyScore || 0) * 10}%`} color="var(--accent)" />
+        <StatCard label={t('tasks.energyReady')} value={`${energyScore * 10}%`} color="var(--accent)" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -257,7 +257,7 @@ export default function TaskManager() {
             </div>
           </Card>
           
-          <FocusTimer energyScore={profile?.energyScore || 5} />
+          <FocusTimer energyScore={energyScore} />
         </div>
 
         <div className="lg:col-span-8 space-y-6">
@@ -267,12 +267,12 @@ export default function TaskManager() {
             </div>
             <div className="relative z-10 space-y-3">
                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-indigo-200">
-                  <Sparkles size={12} /> Pulse AI Assistant
+                  <Sparkles size={12} /> Velora Assistant
                </div>
                <p className="text-sm font-medium leading-relaxed">
-                  {profile?.energyScore && profile.energyScore > 7 
+                  {energyScore > 7 
                     ? t('tasks.aiAdvantageHigh')
-                    : profile?.energyScore && profile.energyScore > 4
+                    : energyScore > 4
                     ? t('tasks.aiAdvantageMid')
                     : t('tasks.aiAdvantageLow')}
                </p>
