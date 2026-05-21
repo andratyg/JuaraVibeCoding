@@ -1,11 +1,12 @@
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
+import { jsonrepair } from 'jsonrepair';
 
 // In AI Studio, the API key is provided via process.env.GEMINI_API_KEY
 const KEY = process.env.GEMINI_API_KEY || '';
 const ai = new GoogleGenAI({ apiKey: KEY });
-const DEFAULT_MODEL = 'gemini-3.5-flash';
+const DEFAULT_MODEL = 'gemini-2.5-flash';
 
-const ID  = '\n\nMANDATORY: Always respond in Indonesian (Bahasa Indonesia) ONLY. All text in JSON fields must be in natural, helpful Indonesian. NEVER respond in English.';
+const ID  = '\n\nMANDATORY: Always respond in Indonesian (Bahasa Indonesia) ONLY. All text in JSON fields must be in natural, helpful Indonesian. NEVER respond in English. IMPORTANT: Ensure all JSON strings are properly escaped (use \\n for newlines, avoid unescaped characters).';
 
 // FIX D2, D3: Core helper dengan retry + robust JSON parsing
 const callGemini = async (prompt: any, systemInstruction = '', responseSchema?: any): Promise<any> => {
@@ -18,7 +19,7 @@ const callGemini = async (prompt: any, systemInstruction = '', responseSchema?: 
         contents: prompt,
         config: {
           temperature: 0.7,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 8192,
           ...(isJson && { responseMimeType: 'application/json' }),
           ...(responseSchema && { responseSchema }),
           ...(systemInstruction && { systemInstruction })
@@ -31,14 +32,31 @@ const callGemini = async (prompt: any, systemInstruction = '', responseSchema?: 
       if (!isJson) return text.trim();
       
       try {
-        const cleaned = text.replace(/```json\n?|```\n?/g, '').trim();
-        return JSON.parse(cleaned);
+        let cleaned = text.trim();
+        if (cleaned.startsWith('```')) {
+          cleaned = cleaned.replace(/^```[a-z]*\s*/i, '').replace(/\s*```$/i, '').trim();
+        }
+        try {
+          return JSON.parse(cleaned);
+        } catch (initialErr: any) {
+          try {
+            const fixed = jsonrepair(cleaned);
+            return JSON.parse(fixed);
+          } catch (secondErr: any) {
+            throw initialErr; 
+          }
+        }
       } catch (parseErr: any) {
         console.error('JSON Parse Error:', parseErr, 'Raw text:', text);
         throw new Error(`Failed to parse AI response as JSON: ${parseErr.message}`);
       }
     } catch (err: any) {
-      console.error(`Gemini API Attempt ${i+1} failed:`, err);
+      console.error(`Gemini API Attempt ${i+1} failed:`, err.message || err);
+      if (err.status === 429 || (err.message && err.message.includes('429'))) {
+        if (i === 2) throw new Error("Terlalu banyak permintaan AI. Silakan coba lagi sebentar lagi.");
+        await new Promise(r => setTimeout(r, 6000)); // wait 6s if rate limited
+        continue;
+      }
       if (i === 2) throw err;
       await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i))); // exponential backoff
     }
@@ -96,11 +114,11 @@ Tasks: ${taskList}
 
 Susun jadwal optimal. Task berat di puncak energi.`;
 
-    const systemInstruction = `Jadwalkan task harian.
+    const systemInstruction = `Jadwalkan task harian secara ringkas.
 Balas JSON:
 {
-  "schedule": [{"taskId":"<index>","taskName":"","startTime":"HH:MM","endTime":"HH:MM","reason":""}],
-  "overloadWarning": null,
+  "schedule": [{"taskId":"<index>","taskName":"","startTime":"HH:MM","endTime":"HH:MM","reason":"<singkat maks 1 kalimat>"}],
+  "overloadWarning": "<singkat, nullable>",
   "suggestedBreaks": ["<HH:MM-HH:MM>"],
   "totalMinutes": <n>
 }${ID}`;
@@ -134,18 +152,18 @@ Balas JSON:
   // 3. Fitness Program
   generateFitnessProgram: async (profile: any, energyScore: number) => {
     const prompt = `Profil: ${profile.height}cm/${profile.weight}kg, goal:${profile.goal}, level:${profile.level}, alat:${(profile.equipment||['Bodyweight']).join(',')}.
-Energy: ${energyScore}/10. E<4=15mnt ringan, E4-6=30mnt sedang, E>6=45mnt penuh.`;
+Energy: ${energyScore}/10. E<4=15mnt ringan, E4-6=30mnt sedang, E>6=45mnt penuh. Buat maksimal 5 jenis gerakan latihan agar ringkas.`;
 
-    const systemInstruction = `Buat program latihan fitness yang sesuai dengan profil dan level energi user hari ini.
+    const systemInstruction = `Buat program latihan fitness yang sesuai dengan profil dan level energi user hari ini. Jangan terlalu panjang.
 Balas JSON:
 {
   "totalDuration": <mnt>,
   "intensity": "<ringan|sedang|tinggi>",
   "estimatedCalories": <kal>,
-  "warmup": {"duration":<mnt>,"description":""},
-  "exercises": [{"name":"","sets":<n>,"reps":"","restSeconds":<n>,"muscleGroup":"","formTip":"","modification":""}],
-  "cooldown": {"duration":<mnt>,"description":""},
-  "motivationalMessage": "<pesan semangat>"
+  "warmup": {"duration":<mnt>,"description":"<singkat>"},
+  "exercises": [{"name":"","sets":<n>,"reps":"","restSeconds":<n>,"muscleGroup":"","formTip":"<singkat>","modification":"<singkat>"}],
+  "cooldown": {"duration":<mnt>,"description":"<singkat>"},
+  "motivationalMessage": "<pesan singkat>"
 }${ID}`;
 
     const responseSchema = {
@@ -237,10 +255,11 @@ Balas JSON: {"response":"<2-3 kalimat empatik>","emotionTags":["","",""],"primar
 
   // 6. Weekly Insight
   generateWeeklyInsight: async (weeklyData: any[]) => {
-    const dataString = weeklyData.map(d=>`${d.date}:E=${d.energyScore},T=${d.completedTasks||0}/${d.totalTasks||0}`).join(';');
-    const prompt = `Data 7 hari: ${dataString}.`;
-    const systemInstruction = `Beri insight performa mingguan user.
-Balas JSON: {"summary":"","bestDay":"","worstDay":"","productivityPattern":"","recommendation":"","productivityScore":<1-100>,"wellnessScore":<1-100>,"nextWeekFocus":""}${ID}`;
+    const dataString = weeklyData.map(d=>`${d.day||d.date}:E=${Math.round(d.score||0)},T=${d.tasks||0}`).join(';');
+    const prompt = `Data 7 hari: ${dataString}.
+Tulis insight mingguan yang sangat ringkas dan padat.`;
+    const systemInstruction = `Beri insight performa mingguan user. Maksimal 3 kalimat per bagian agar respons cepat.
+Balas JSON: {"summary":"<singkat, max 3 kalimat>","bestDay":"","worstDay":"","productivityPattern":"<singkat>","recommendation":"<singkat>","productivityScore":<1-100>,"wellnessScore":<1-100>,"nextWeekFocus":"<singkat>"}${ID}`;
     
     const responseSchema = {
       type: Type.OBJECT,
@@ -264,10 +283,10 @@ Balas JSON: {"summary":"","bestDay":"","worstDay":"","productivityPattern":"","r
   checkBurnoutRisk: async (checkins: any[]) => {
     const dataString = checkins.map(c=>`E=${c.energi||c.energyScore||5},S=${c.stres||5}`).join(';');
     const prompt = `Check-in ${checkins.length} hari: ${dataString}.
-Analisis risiko burnout mendalam.`;
+Analisis risiko burnout mendalam namun sangat ringkas.`;
 
-    const systemInstruction = `Analisis risiko burnout.
-Balas JSON: {"riskLevel":"<low|medium|high|critical>","riskScore":<0-100>,"trendDirection":"<improving|stable|declining>","triggers":["",""],"warningSignals":["",""],"message":"<pesan empatik ke user>","recoveryPlan":{"today":["",""],"thisWeek":["",""],"longTerm":""},"shouldSeeHelp":<true|false>,"estimatedRecoveryDays":<n>}${ID}`;
+    const systemInstruction = `Analisis risiko burnout. Maksimal 1 kalimat untuk setiap elemen array/string panjang.
+Balas JSON: {"riskLevel":"<low|medium|high|critical>","riskScore":<0-100>,"trendDirection":"<improving|stable|declining>","triggers":["<pendek>","<pendek>"],"warningSignals":["<pendek>","<pendek>"],"message":"<pesan empatik, max 2 kalimat>","recoveryPlan":{"today":["<pendek>"],"thisWeek":["<pendek>"],"longTerm":"<pendek>"},"shouldSeeHelp":<true|false>,"estimatedRecoveryDays":<n>}${ID}`;
     
     const responseSchema = {
       type: Type.OBJECT,
@@ -331,9 +350,9 @@ Panduan respons WAJIB:
   // 9. Document Summarizer
   summarizeDocument: async (text: string, format: 'bullet' | 'narrative' | 'executive' | 'qa' = 'bullet') => {
     const fmtMap = {bullet:'poin-poin singkat',narrative:'narasi paragraf mengalir',executive:'executive summary formal',qa:'format tanya-jawab Q&A'}
-    const prompt = `Ringkas dokumen: ${text.substring(0, 8000)}`;
-    const systemInstruction = `Ringkas dokumen berikut dalam format: ${fmtMap[format] || format}.
-Balas JSON: {"title":"","summary":"","keyPoints":["","","","",""],"actionItems":["",""],"originalWordCount":${text.split(' ').length},"readingTimeSavedMinutes":${Math.max(1,Math.round(text.split(' ').length/200)-1)},"documentType":"<laporan|artikel|email|kontrak|lainnya>"}${ID}`;
+    const prompt = `Ringkas dokumen: ${text.substring(0, 8000)}. Batasi respons agar sangat padat dan ringkas (maksimal 300 kata total secara keseluruhan).`;
+    const systemInstruction = `Ringkas dokumen berikut dalam format: ${fmtMap[format] || format}. Jangan terlalu panjang, pastikan output JSON tidak terpotong.
+Balas JSON: {"title":"<singkat>","summary":"<singkat>","keyPoints":["<pendek>","<pendek>"],"actionItems":["<pendek>","<pendek>"],"originalWordCount":${text.split(' ').length},"readingTimeSavedMinutes":${Math.max(1,Math.round(text.split(' ').length/200)-1)},"documentType":"<jenis dokumen>"}${ID}`;
     
     const responseSchema = {
       type: Type.OBJECT,

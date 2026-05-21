@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useMemo, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth, db, handleFirestoreError, OperationType } from './config/firebase';
@@ -13,23 +13,24 @@ import AppLayout from './components/layout/AppLayout';
 import Dashboard from './pages/Dashboard';
 import EnergyCheckInPage from './pages/EnergyCheckIn';
 import TaskManager from './pages/TaskManager';
-import FitnessCoach from './pages/FitnessCoach';
-import JournalPage from './pages/Journal';
-import Summarizer from './pages/Summarizer';
 import Analytics from './pages/Analytics';
 import ProfilePage from './pages/Profile';
 import SettingsPage from './pages/Settings';
-import CoachPage from './pages/CoachPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import ChatCoach from './components/features/ChatCoach';
-import WellnessNudges from './components/features/WellnessNudges';
 import BurnoutAlert from './components/BurnoutAlert';
 import { Toaster } from 'react-hot-toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useEnergyTheme } from './hooks/useEnergyTheme';
 import { useDashboardData } from './hooks/useDashboardData';
+import { SkeletonPage } from './components/ui/Skeletons';
+
+// Lazy loading features
+const FitnessCoach = lazy(() => import('./pages/FitnessCoach'));
+const Summarizer = lazy(() => import('./pages/Summarizer'));
+const JournalPage = lazy(() => import('./pages/Journal'));
+const CoachPage = lazy(() => import('./pages/CoachPage'));
 
 interface AppContextType {
   user: User | null;
@@ -65,13 +66,13 @@ const AppContent = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/checkin" element={<EnergyCheckInPage />} />
           <Route path="/tasks" element={<TaskManager />} />
-          <Route path="/fitness" element={<FitnessCoach />} />
-          <Route path="/journal" element={<JournalPage />} />
-          <Route path="/summarizer" element={<Summarizer />} />
+          <Route path="/fitness" element={<Suspense fallback={<SkeletonPage />}><FitnessCoach /></Suspense>} />
+          <Route path="/journal" element={<Suspense fallback={<SkeletonPage />}><JournalPage /></Suspense>} />
+          <Route path="/summarizer" element={<Suspense fallback={<SkeletonPage />}><Summarizer /></Suspense>} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/coach" element={<CoachPage />} />
+          <Route path="/coach" element={<Suspense fallback={<SkeletonPage />}><CoachPage /></Suspense>} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
@@ -107,9 +108,7 @@ export default function App() {
       }
     } catch (err: any) {
       console.error('Error fetching profile:', err);
-      if (err.code === 'permission-denied') {
-        handleFirestoreError(err, OperationType.GET, `users/${uid}`);
-      }
+      handleFirestoreError(err, OperationType.GET, `users/${uid}`);
     }
   };
 
@@ -126,21 +125,23 @@ export default function App() {
     return unsubscribe;
   }, []);
 
+  const contextValue = useMemo(() => ({
+    user, 
+    profile, 
+    loading, 
+    refreshProfile: () => fetchProfile(user?.uid || ''), 
+    vibeMode, 
+    setVibeMode,
+    theme,
+    setTheme,
+    dashboardData
+  }), [user, profile, loading, vibeMode, theme, dashboardData]);
+
   if (loading) return null;
 
   return (
     <ErrorBoundary>
-      <AppContext.Provider value={{ 
-        user, 
-        profile, 
-        loading, 
-        refreshProfile: () => fetchProfile(user?.uid || ''), 
-        vibeMode, 
-        setVibeMode,
-        theme,
-        setTheme,
-        dashboardData
-      }}>
+      <AppContext.Provider value={contextValue}>
         <BrowserRouter>
           <Toaster 
             position="top-right" 

@@ -20,12 +20,13 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { fadeInUp, stagger, fadeIn } from '../utils/animations';
 import { toast } from 'react-hot-toast';
+import Badges from '../components/features/Badges';
 
 type ProfileTab = 'account' | 'security' | 'preferences' | 'activity' | 'social' | 'help';
 
 export default function ProfilePage() {
   const { t, i18n } = useTranslation();
-  const { user, profile, refreshProfile } = useApp();
+  const { user, profile, refreshProfile, dashboardData } = useApp();
   
   const [activeTab, setActiveTab] = useState<ProfileTab>('account');
   const [loading, setLoading] = useState(false);
@@ -272,7 +273,10 @@ export default function ProfilePage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
+                            <Badges streak={profile?.streak || 0} completedTasks={dashboardData?.completedTasks || 0} />
+
+                            <div className="space-y-4 pt-4 border-t border-[var(--border)]">
+                                <h4 className="font-bold text-sm text-[var(--text2)] uppercase tracking-wider mb-2">Recent Logs</h4>
                                 {activities.length > 0 ? activities.map(act => (
                                     <div key={act.id} className="flex items-center justify-between p-4 bg-[var(--surface)] border border-[var(--border)] rounded-2xl group hover:border-[var(--accent)] transition-all">
                                         <div className="flex items-center gap-4">

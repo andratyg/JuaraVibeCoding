@@ -1,6 +1,7 @@
 import React from 'react';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { motion } from 'framer-motion';
 
 const THEME = { baseColor: '#1A1E28', highlightColor: '#252A35' };
 
@@ -39,11 +40,17 @@ export const SkeletonChart: React.FC = () => (
 );
 
 export const SkeletonPage: React.FC = () => (
-  <div className="space-y-4">
+  <motion.div 
+    initial={{ opacity: 0 }} 
+    animate={{ opacity: 1 }} 
+    exit={{ opacity: 0 }} 
+    transition={{ duration: 0.3 }}
+    className="space-y-4"
+  >
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {[...Array(4)].map((_, i) => <SkeletonStatCard key={i} />)}
     </div>
     <SkeletonChart />
     {[...Array(3)].map((_, i) => <SkeletonListItem key={i} />)}
-  </div>
+  </motion.div>
 );

@@ -58,10 +58,32 @@ export default function FitnessCoach() {
     setLoading(true);
     setCompleted(false);
     try {
-      const newWorkout = await geminiService.generateFitnessProgram(
-        profile,
-        currentEnergy
-      );
+      let newWorkout;
+      try {
+        newWorkout = await geminiService.generateFitnessProgram(
+          profile,
+          currentEnergy
+        );
+        if (!newWorkout.exercises || newWorkout.exercises.length === 0) {
+          throw new Error('Gemini returned empty exercises list');
+        }
+      } catch (geminiError) {
+        console.error('Gemini fallback activated due to error:', geminiError);
+        newWorkout = {
+          totalDuration: currentEnergy > 6 ? 45 : currentEnergy > 4 ? 30 : 15,
+          intensity: currentEnergy > 6 ? 'Tinggi' : currentEnergy > 4 ? 'Sedang' : 'Rendah',
+          estimatedCalories: currentEnergy > 6 ? 300 : currentEnergy > 4 ? 200 : 100,
+          warmup: { duration: 5, description: "Pemanasan ringan, putar sendi dan peregangan dinamis." },
+          exercises: [
+            { name: "Jumping Jacks", sets: 3, reps: "15-20", restSeconds: 30, muscleGroup: "Cardio", formTip: "Jaga ritme dan nafas teratur", modification: "Step jacks jika tidak bisa melompat" },
+            { name: "Bodyweight Squats", sets: 3, reps: "12-15", restSeconds: 45, muscleGroup: "Legs", formTip: "Punggung lurus, lutut tidak melebihi jari kaki", modification: "Squat setengah jika terasa berat" },
+            { name: "Push Ups", sets: 3, reps: "8-12", restSeconds: 45, muscleGroup: "Chest", formTip: "Jaga dada sejajar, bokong tidak naik", modification: "Gunakan lutut sebagai tumpuan" },
+            { name: "Plank", sets: 3, reps: "30-45 detik", restSeconds: 30, muscleGroup: "Core", formTip: "Kencangkan perut, punggung lurus", modification: "Plank di lutut" }
+          ].slice(0, currentEnergy > 6 ? 4 : currentEnergy > 4 ? 3 : 2),
+          cooldown: { duration: 5, description: "Peregangan statis dan pendinginan nafas." },
+          motivationalMessage: "Kamu bisa melakukannya! Lakukan yang terbaik sesuai energi hari ini."
+        };
+      }
       
       const workoutData = {
         ...newWorkout,
@@ -94,13 +116,14 @@ export default function FitnessCoach() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('fitness.title')}</h1>
           <p className="text-sm" style={{ color: 'var(--text2)' }}>Program latihan adaptif yang disesuaikan dengan energimu.</p>
         </div>
-        {(!workout || completed) && (
+        {(!completed) && (
           <Button
             onClick={generateWorkout}
             loading={loading}
             icon={Sparkles}
+            variant={workout ? 'outline' : 'primary'}
           >
-            {t('fitness.generate')}
+            {workout ? 'Generate Ulang' : t('fitness.generate')}
           </Button>
         )}
       </header>
@@ -199,7 +222,9 @@ export default function FitnessCoach() {
             <div className="lg:col-span-8 space-y-4">
               <h3 className="font-bold text-xs uppercase tracking-widest opacity-50 ml-2">{t('fitness.exercises')}</h3>
               <div className="grid grid-cols-1 gap-3">
-                {workout.exercises?.map((ex: any, i: number) => (
+                {(!workout.exercises || workout.exercises.length === 0) ? (
+                    <Card className="p-6 text-center text-sm opacity-60">Tidak ada latihan yang ditemukan atau sesi gagal dimuat sepenuhnya. Ketuk tombol Generate Ulang untuk mendapat program baru.</Card>
+                ) : workout.exercises.map((ex: any, i: number) => (
                   <motion.div 
                     {...itemFadeIn}
                     key={i} 

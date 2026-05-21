@@ -23,7 +23,7 @@ export default function Dashboard() {
   if (loading) return <SkeletonPage />;
 
   const { todayCheckin, tasks = [], streak = 0, completedTasks = 0, totalTasks = 0, recentCheckins = [] } = data || {};
-  const energyScore = todayCheckin?.energyScore ?? todayCheckin?.energi ?? 0;
+  const energyScore = todayCheckin?.energyScore ?? 0;
   const mood = todayCheckin?.mood || (todayCheckin ? 'Netral' : t('dashboard.noCheckin'));
 
   return (

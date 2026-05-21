@@ -164,6 +164,9 @@
     },
     "privacy": {
       "visibility": "Visibilitas",
+      "public": "Publik",
+      "friends": "Teman Saja",
+      "private": "Privat",
       "dataSharing": "Berbagi Data",
       "dataSharingDesc": "Izinkan pengumpulan analitik anonim."
     },

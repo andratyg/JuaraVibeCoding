@@ -29,6 +29,20 @@ export default function Analytics() {
   });
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [insight, setInsight] = useState('');
+  const [loadingInsight, setLoadingInsight] = useState(false);
+
+  const getInsight = async () => {
+    setLoadingInsight(true);
+    try {
+      const res = await (await import('../services/geminiService')).geminiService.generateWeeklyInsight(data);
+      setInsight(res.insight || res);
+    } catch (e) {
+      toast.error('Gagal mendapatkan rekap AI');
+    } finally {
+      setLoadingInsight(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -165,15 +179,41 @@ export default function Analytics() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Analitik Performa</h1>
           <p className="text-sm" style={{ color: 'var(--text2)' }}>Pantau pertumbuhan dan produktivitas kamu melalui data.</p>
         </div>
-        <Button
-          onClick={exportPDF}
-          loading={exporting}
-          variant="outline"
-          icon={Download}
-        >
-          Ekspor Laporan
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={getInsight}
+            loading={loadingInsight}
+            variant="secondary"
+            icon={Sparkles}
+          >
+            Analisis AI
+          </Button>
+          <Button
+            onClick={exportPDF}
+            loading={exporting}
+            variant="outline"
+            icon={Download}
+          >
+            Ekspor Laporan
+          </Button>
+        </div>
       </header>
+
+      {insight && (
+          <motion.div {...itemFadeIn}>
+              <Card className="p-6 bg-gradient-to-br from-[var(--surface)] to-[var(--surface2)] border border-[var(--accent)]/30">
+                  <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                          <Brain className="text-[var(--accent)]" size={24} />
+                          <h3 className="font-bold text-lg">AI Insight Mingguan</h3>
+                      </div>
+                  </div>
+                  <div className="prose prose-sm prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap">
+                      {insight}
+                  </div>
+              </Card>
+          </motion.div>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

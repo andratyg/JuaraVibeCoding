@@ -164,6 +164,9 @@
     },
     "privacy": {
       "visibility": "Visibility",
+      "public": "Public",
+      "friends": "Friends Only",
+      "private": "Private",
       "dataSharing": "Data Sharing",
       "dataSharingDesc": "Allow anonymous analytics collection."
     },

@@ -16,6 +16,8 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import { SkeletonPage } from '../components/ui/Skeletons';
+import FocusTimer from '../components/features/FocusTimer';
+import { exportTasksToICS } from '../utils/calendar';
 import toast from 'react-hot-toast';
 import { cn } from '../lib/utils';
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -188,14 +190,26 @@ export default function TaskManager() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('tasks.title')}</h1>
           <p className="text-sm text-[var(--text2)]">{t('tasks.subtitle') || 'Kelola tugas harian Anda dengan sinkronisasi energi AI.'}</p>
         </header>
-        <Button 
-          variant="primary" 
-          loading={scheduling} 
-          onClick={handleAutoSchedule}
-          icon={Sparkles}
-        >
-          {t('tasks.scheduleAI')}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="secondary" 
+            onClick={() => {
+                exportTasksToICS(tasks.filter(t => t.status !== 'Completed'));
+                toast.success('Calendar file downloaded');
+            }}
+            icon={Calendar}
+          >
+            Snyc Calendar
+          </Button>
+          <Button 
+            variant="primary" 
+            loading={scheduling} 
+            onClick={handleAutoSchedule}
+            icon={Sparkles}
+          >
+            {t('tasks.scheduleAI')}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -242,6 +256,8 @@ export default function TaskManager() {
               </Button>
             </div>
           </Card>
+          
+          <FocusTimer energyScore={profile?.energyScore || 5} />
         </div>
 
         <div className="lg:col-span-8 space-y-6">
@@ -314,7 +330,8 @@ function TaskItem({ task, onToggle, onDelete, onStatusChange }: any) {
     <motion.div
         layout
         initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "50px" }}
         exit={{ opacity: 0, scale: 0.95 }}
     >
       <Card className={cn(
