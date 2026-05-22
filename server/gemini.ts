@@ -26,8 +26,27 @@ const callGemini = async (prompt: any, systemInstruction = '', responseSchema?: 
         }
       });
 
-      const text = response.text;
-      if (!text) throw new Error('AI returned an empty response.');
+      const candidate = response.candidates?.[0];
+      const finishReason = candidate?.finishReason;
+      
+      let text = response.text;
+      if (typeof text === 'function') {
+         try { text = text(); } catch(e) { text = ''; }
+      }
+      if (!text && candidate?.content?.parts?.[0]?.text) {
+         text = candidate.content.parts[0].text;
+      }
+
+      if (!text) {
+        console.error("Empty response. Finish Reason:", finishReason);
+        if (finishReason === 'SAFETY') {
+           throw new Error("Konten diblokir oleh filter keamanan AI (Safety Settings). Silakan ubah input Anda.");
+        } else if (finishReason === 'RECITATION') {
+           throw new Error("Konten diblokir karena berpotensi melanggar hak cipta.");
+        } else {
+           throw new Error(`AI returned an empty response. Reason: ${finishReason || 'Unknown'}`);
+        }
+      }
       
       if (!isJson) return text.trim();
       
@@ -257,9 +276,9 @@ Balas JSON: {"response":"<2-3 kalimat empatik>","emotionTags":["","",""],"primar
   generateWeeklyInsight: async (weeklyData: any[]) => {
     const dataString = weeklyData.map(d=>`${d.day||d.date}:E=${Math.round(d.score||0)},T=${d.tasks||0}`).join(';');
     const prompt = `Data 7 hari: ${dataString}.
-Tulis insight mingguan yang sangat ringkas dan padat.`;
-    const systemInstruction = `Beri insight performa mingguan user. Maksimal 3 kalimat per bagian agar respons cepat.
-Balas JSON: {"summary":"<singkat, max 3 kalimat>","bestDay":"","worstDay":"","productivityPattern":"<singkat>","recommendation":"<singkat>","productivityScore":<1-100>,"wellnessScore":<1-100>,"nextWeekFocus":"<singkat>"}${ID}`;
+Tulis insight mingguan yang ringkas tanpa pengulangan kalimat.`;
+    const systemInstruction = `Beri insight performa mingguan user secara ringkas. Dilarang keras mengulang-ulang kalimat tau frasa yang sama (no looping text). Semua bagian maksimal 2 kalimat.
+Balas JSON: {"summary":"<singkat, max 2 kalimat>","bestDay":"","worstDay":"","productivityPattern":"<singkat>","recommendation":"<spesifik, max 2 kalimat, jangan diulang>","productivityScore":<1-100>,"wellnessScore":<1-100>,"nextWeekFocus":"<singkat>"}${ID}`;
     
     const responseSchema = {
       type: Type.OBJECT,

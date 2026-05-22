@@ -126,6 +126,10 @@ export default function SettingsPage() {
         exportData[col] = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       }
 
+      if (window.self !== window.top) {
+        toast('Jika unduhan tidak mulai, silakan buka aplikasi di tab baru (Open in new tab).', { duration: 5000, icon: '💡' });
+      }
+
       const dataStr = JSON.stringify(exportData, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -135,7 +139,7 @@ export default function SettingsPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 100);
       
       toast.success('Data berhasil diekspor!');
     } catch (err: any) {

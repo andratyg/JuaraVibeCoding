@@ -73,10 +73,31 @@ export default function Summarizer() {
 
   const handleCopy = () => {
     const content = `Ringkasan: ${result.summary}\n\nPoin Penting:\n${result.keyPoints.join('\n')}\n\nTindakan:\n${result.actionItems.join('\n')}`;
-    navigator.clipboard.writeText(content);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(content).catch(() => fallbackCopyTextToClipboard(content));
+    } else {
+      fallbackCopyTextToClipboard(content);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast.success('Teks disalin!');
+  };
+
+  const fallbackCopyTextToClipboard = (text: string) => {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+    } catch (err) {
+      console.error('Fallback: Oops, unable to copy', err);
+    }
+    document.body.removeChild(textArea);
   };
 
   return (

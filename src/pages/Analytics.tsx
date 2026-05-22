@@ -13,8 +13,9 @@ import { fadeInUp, itemFadeIn } from '../utils/animations';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { SkeletonPage } from '../components/ui/Skeletons';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// Change jsPDF import
+import { jsPDF } from 'jspdf';
+import { toPng } from 'html-to-image';
 import { toast } from 'react-hot-toast';
 
 export default function Analytics() {
@@ -36,7 +37,19 @@ export default function Analytics() {
     setLoadingInsight(true);
     try {
       const res = await (await import('../services/geminiService')).geminiService.generateWeeklyInsight(data);
-      setInsight(res.insight || res);
+      if (typeof res === 'object') {
+        const text = `Ringkasan Mingguan:
+${res.summary || ''}
+
+Rekomendasi:
+${res.recommendation || ''}
+
+Pola Produktivitas:
+${res.productivityPattern || ''}`;
+        setInsight(text);
+      } else {
+        setInsight(String(res));
+      }
     } catch (e) {
       toast.error('Gagal mendapatkan rekap AI');
     } finally {
@@ -145,18 +158,41 @@ export default function Analytics() {
     const el = document.getElementById('analytics-content');
     if (!el) return;
     setExporting(true);
+    // Notify if in iframe
+    if (window.self !== window.top) {
+      toast('Jika unduhan tidak mulai, silakan buka aplikasi di tab baru (Open in new tab).', { duration: 5000, icon: '💡' });
+    }
     try {
-      const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: '#0f172a' });
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = await toPng(el, { cacheBust: true, backgroundColor: '#0f172a', quality: 1, pixelRatio: 2 });
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 190;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const imgProps = pdf.getImageProperties(imgData);
+      const imgWidth = pdfWidth - 20; // 10mm margin each side
+      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      
+      let heightLeft = imgHeight;
+      let position = 10;
+
       pdf.setFillColor(15, 23, 42);
-      pdf.rect(0, 0, 210, 297, 'F');
-      pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= (pdfHeight - 20);
+
+      while (heightLeft > 0) {
+        position -= (pdfHeight - 20);
+        pdf.addPage();
+        pdf.setFillColor(15, 23, 42);
+        pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= (pdfHeight - 20);
+      }
+
       pdf.save(`Laporan-Analitik-${new Date().toISOString().split('T')[0]}.pdf`);
       toast.success('Laporan berhasil diunduh!');
     } catch (error) {
+      console.error(error);
       toast.error('Gagal mengekspor laporan.');
     } finally {
       setExporting(false);
@@ -165,7 +201,7 @@ export default function Analytics() {
 
   const moodData = [
     { name: 'Produktif', value: 40, color: 'var(--accent)' },
-    { name: 'Fokus', value: 30, color: 'var(--accent2)' },
+    { name: 'Fokus', value: 30, color: '#a855f7' },
     { name: 'Santai', value: 20, color: '#10b981' },
     { name: 'Stres', value: 10, color: '#ef4444' },
   ];
@@ -201,14 +237,14 @@ export default function Analytics() {
 
       {insight && (
           <motion.div {...itemFadeIn}>
-              <Card className="p-6 bg-gradient-to-br from-[var(--surface)] to-[var(--surface2)] border border-[var(--accent)]/30">
+              <Card className="p-6 border border-[var(--accent)]/30" style={{ backgroundImage: 'linear-gradient(to bottom right, var(--surface), var(--surface2))' }}>
                   <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
                           <Brain className="text-[var(--accent)]" size={24} />
                           <h3 className="font-bold text-lg">AI Insight Mingguan</h3>
                       </div>
                   </div>
-                  <div className="prose prose-sm prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap">
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap opacity-90">
                       {insight}
                   </div>
               </Card>
@@ -305,7 +341,7 @@ export default function Analytics() {
                         <span className="text-[10px] font-bold uppercase opacity-60">Tugas</span>
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-[var(--surface2)] rounded-xl">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                        <div className="h-2 w-2 rounded-full" style={{ backgroundColor: '#10b981' }} />
                         <span className="text-[10px] font-bold uppercase opacity-60">Wellness</span>
                     </div>
                 </div>
@@ -335,13 +371,13 @@ export default function Analytics() {
                     </p>
                 </div>
                 <div className="p-5 bg-[var(--surface)] rounded-2xl border border-[var(--border)] space-y-2">
-                    <h5 className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Wellness Index</h5>
+                    <h5 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#10b981' }}>Wellness Index</h5>
                     <p className="text-xs font-medium leading-relaxed opacity-70">
                         Rata-rata indeks kamu minggu ini adalah {stats.wellnessIndex}%. Sangat stabil.
                     </p>
                 </div>
                 <div className="p-5 bg-[var(--surface)] rounded-2xl border border-[var(--border)] space-y-2">
-                    <h5 className="text-[10px] font-bold text-[var(--accent2)] uppercase tracking-widest">Tip Optimasi</h5>
+                    <h5 className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#a855f7' }}>Tip Optimasi</h5>
                     <p className="text-xs font-medium leading-relaxed opacity-70">
                         Lakukan Deep Work di pagi hari saat energi kamu sedang di puncak.
                     </p>
@@ -350,18 +386,18 @@ export default function Analytics() {
         </Card>
 
         {/* Narrative */}
-        <Card className="lg:col-span-12 md:p-10 p-8 border-none bg-slate-900 text-white relative overflow-hidden group">
+        <Card className="lg:col-span-12 md:p-10 p-8 border-none relative overflow-hidden group" style={{ backgroundColor: '#0f172a', color: '#ffffff' }}>
             <div className="absolute top-0 right-0 w-80 h-80 bg-[var(--accent)]/10 rounded-full blur-[100px] -mr-40 -mt-40" />
             
             <div className="relative z-10 space-y-8">
-                <div className="inline-flex items-center gap-3 bg-white/5 px-5 py-2 rounded-full border border-white/10">
+                <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
                    <Sparkles className="h-4 w-4 text-[var(--accent)]" />
                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-60">Narasi AI Mingguan</span>
                 </div>
                 
                 <h3 className="text-2xl md:text-3xl font-bold leading-tight tracking-tight max-w-2xl">Keseimbangan adalah Kunci Kesuksesanmu.</h3>
                 
-                <p className="text-slate-400 leading-relaxed text-lg font-medium border-l-4 border-[var(--accent)]/50 pl-8 italic">
+                <p className="leading-relaxed text-lg font-medium border-l-4 border-[var(--accent)]/50 pl-8 italic" style={{ color: '#94a3b8' }}>
                     "Berdasarkan data minggu ini, terlihat korelasi positif antara energi pagi dengan penyelesaian tugas besar. Tingkat wellness kamu yang stabil membantu menjaga fokus tetap tajam. Pertahankan ritme istirahat di tengah kesibukan."
                 </p>
                 
@@ -382,7 +418,7 @@ function StatCard({ label, value, unit, icon: Icon, trend }: any) {
         <div className="p-3 bg-[var(--surface)] text-[var(--accent)] rounded-xl">
           <Icon size={20} />
         </div>
-        <div className="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[10px] font-bold rounded-lg border border-emerald-500/20">
+        <div className="px-2 py-1 text-[10px] font-bold rounded-lg border" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
           {trend}
         </div>
       </div>
