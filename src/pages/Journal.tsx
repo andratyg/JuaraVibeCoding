@@ -9,6 +9,7 @@ import { BookOpen, Send, Star, Loader2, Sparkles, MessageSquareQuote, Zap, Tag, 
 import { motion, AnimatePresence } from 'motion/react';
 import { fadeInUp, itemFadeIn, stagger } from '../utils/animations';
 import { formatDateLong } from '../utils/formatters';
+import { saveJournal } from '../utils/firestoreHelpers';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { SkeletonPage } from '../components/ui/Skeletons';
@@ -54,35 +55,61 @@ export default function JournalPage() {
 
   useEffect(() => { fetchHistory(); }, [profile?.id]);
 
+  const [isCooldown, setIsCooldown] = useState(false);
+  const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
+
   const handleSubmit = async () => {
     if (!highlight || !profile?.id) return;
+    
+    // Validation
+    if (highlight.length > 5000 || challenge.length > 5000) {
+      toast.error('Teks terlalu panjang. Maksimal 5.000 karakter.');
+      return;
+    }
+    
     setLoading(true);
     
     try {
+      const { checkRateLimit } = await import('../utils/rateLimit');
+      const { remaining } = await checkRateLimit(profile.id);
+      setRemainingQuota(remaining);
+
+      const today = new Date().toISOString().split('T')[0];
+      const cacheKey = `gemini_journal_${today}`;
+      const toastId = toast.loading('⏳ Velora sedang menganalisis...');
+
+      // Sanitization
+      const sanitize = (text: string) => text.replace(/<[^>]*>?/gm, '');
+
       const entry = {
         rating,
-        highlight,
-        challenge,
+        highlight: sanitize(highlight),
+        challenge: sanitize(challenge),
         mood,
         freeWrite: ''
       };
       
       const analysis = await geminiService.generateJournalResponse(entry);
       
-      const journalData = {
-        ...entry,
-        aiResponse: analysis,
-        createdAt: Timestamp.now(),
-      };
+      await saveJournal(profile.id, entry, analysis);
 
-      await addDoc(collection(db, `users/${profile.id}/journals`), journalData);
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: analysis,
+        expiry: Date.now() + 24 * 60 * 60 * 1000
+      }));
+
       setAiResponse(analysis);
-      toast.success(t('journal.success'));
+      toast.success(t('journal.success'), { id: toastId });
       setHighlight('');
       setChallenge('');
       fetchHistory();
+
+      // Cooldown 3 detik
+      setIsCooldown(true);
+      setTimeout(() => setIsCooldown(false), 3000);
     } catch (error: any) {
       handleFirestoreError(error, OperationType.CREATE, `users/${profile.id}/journals`);
+      toast.error(error.message || 'Error occurred', { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -219,11 +246,14 @@ export default function JournalPage() {
                             fullWidth
                             loading={loading}
                             onClick={handleSubmit}
-                            disabled={!highlight}
+                            disabled={!highlight || isCooldown}
                             icon={Sparkles}
                         >
                             {t('journal.process')}
                         </Button>
+                        {remainingQuota !== null && (
+                            <p className="text-center text-xs opacity-50 font-medium pb-2">Analisis tersisa hari ini: {remainingQuota}</p>
+                        )}
                       </Card>
                     </motion.div>
                 )}

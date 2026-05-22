@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Lock } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface PasswordInputProps {
   value: string;
@@ -9,8 +10,10 @@ interface PasswordInputProps {
   required?: boolean;
 }
 
-export default function PasswordInput({ value, onChange, placeholder = 'Password', id, required }: PasswordInputProps) {
+export default function PasswordInput({ value, onChange, placeholder, id, required }: PasswordInputProps) {
   const [show, setShow] = useState(false);
+  const { t } = useTranslation();
+  const effectivePlaceholder = placeholder || t('auth.passwordPlaceholder', 'Kata sandi');
 
   return (
     <div className="relative mb-3">
@@ -24,7 +27,7 @@ export default function PasswordInput({ value, onChange, placeholder = 'Password
         autoCapitalize="none"
         value={value}
         onChange={onChange}
-        placeholder={placeholder}
+        placeholder={effectivePlaceholder}
         className="w-full pl-10 pr-12 py-3 border border-[var(--border)] rounded-xl text-sm bg-[var(--surface)] text-[var(--text)] focus:border-[var(--accent)] focus:outline-none transition-colors placeholder:text-[var(--text3)] min-h-[44px] md:min-h-[48px]"
       />
       <button

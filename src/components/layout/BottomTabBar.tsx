@@ -33,7 +33,7 @@ export default function BottomTabBar() {
             key={tab.path} 
             to={tab.path}
             className={({isActive}) => cn(
-              "flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200",
+              "flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl transition-all duration-200 min-w-[56px] min-h-[44px]",
               isActive ? 'text-indigo-600' : 'text-slate-300 hover:text-slate-900 font-bold'
             )}
           >
@@ -48,7 +48,7 @@ export default function BottomTabBar() {
 
         <button 
           onClick={() => setDrawerOpen(true)}
-          className="flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl text-slate-300 hover:text-slate-900 transition-colors"
+          className="flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl text-slate-300 hover:text-slate-900 transition-colors min-w-[56px] min-h-[44px]"
         >
           < MoreHorizontal size={22} />
           <span className="text-[10px] font-black uppercase tracking-tighter opacity-40">{t('nav.more')}</span>

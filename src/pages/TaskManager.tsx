@@ -41,6 +41,10 @@ export default function TaskManager() {
     deadline: null,
   });
 
+  // --- Start of move ---
+  const energyScore = dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 5;
+  // --- End of move ---
+
   const fetchTasks = async () => {
     if (!profile?.id) return;
     try {
@@ -144,6 +148,7 @@ export default function TaskManager() {
   const handleAutoSchedule = async () => {
     if (!profile?.id || tasks.length === 0) return;
     setScheduling(true);
+    const toastId = toast.loading('⏳ Velora sedang menyusun jadwal...');
     try {
       const pendingTasks = tasks.filter(t => t.status !== 'Completed');
       const workSlots = dashboardData?.todayCheckin?.workSlots || ['09:00-12:00', '13:00-17:00'];
@@ -167,11 +172,11 @@ export default function TaskManager() {
         }
       });
       await Promise.all(updates);
-      toast.success('Jadwal dioptimalkan oleh AI');
+      toast.success('Jadwal dioptimalkan oleh AI', { id: toastId });
       await fetchTasks();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('Gagal optimasi jadwal');
+      toast.error(error.message || 'Gagal optimasi jadwal', { id: toastId });
     } finally {
       setScheduling(false);
     }
@@ -181,7 +186,6 @@ export default function TaskManager() {
 
   const pendingCount = tasks.filter(t => t.status !== 'Completed').length;
   const completedCount = tasks.filter(t => t.status === 'Completed').length;
-  const energyScore = dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 5;
 
   return (
     <motion.div {...fadeInUp} className="space-y-6 md:space-y-8 pb-20">

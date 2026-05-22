@@ -2,8 +2,6 @@ import React from 'react';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import { motion } from 'framer-motion';
-import { Loader2 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 
 const THEME = { baseColor: '#1A1E28', highlightColor: '#252A35' };
 
@@ -42,23 +40,49 @@ export const SkeletonChart: React.FC = () => (
 );
 
 export const SkeletonPage: React.FC = () => {
-  const { t } = useTranslation();
   return (
-  <motion.div 
-    initial={{ opacity: 0 }} 
-    animate={{ opacity: 1 }} 
-    exit={{ opacity: 0 }} 
-    transition={{ duration: 0.3 }}
-    className="flex flex-col items-center justify-center h-[60vh] w-full"
-  >
-    <div className="relative flex flex-col items-center justify-center">
-      <div className="relative flex items-center justify-center mb-6">
-        <Loader2 className="h-12 w-12 animate-spin text-[var(--border2)] absolute" />
-        <Loader2 className="h-12 w-12 animate-[spin_2s_linear_reverse_infinite] text-[var(--accent)] relative" />
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      transition={{ duration: 0.3 }}
+      className="space-y-6 md:space-y-8 w-full"
+    >
+      <div className="flex justify-between items-end mb-8">
+        <div className="space-y-2">
+          <SkeletonTheme {...THEME}>
+            <Skeleton width={200} height={36} borderRadius={8} />
+            <Skeleton width={120} height={14} borderRadius={4} />
+          </SkeletonTheme>
+        </div>
+        <SkeletonTheme {...THEME}>
+          <Skeleton width={140} height={48} borderRadius={12} />
+        </SkeletonTheme>
       </div>
-      <h1 className="text-xl font-black tracking-[0.3em] text-[var(--accent)] uppercase animate-pulse">Velora</h1>
-      <p className="text-[10px] font-bold text-[var(--text3)] uppercase tracking-widest mt-2 animate-pulse">{t('common.preparingWorkspace', 'Menyiapkan Ruang Kerja')}</p>
-    </div>
-  </motion.div>
+      
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <SkeletonStatCard />
+        <SkeletonStatCard />
+        <SkeletonStatCard />
+        <SkeletonStatCard />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-8 space-y-6">
+          <SkeletonChart />
+          <div className="space-y-3">
+            <SkeletonListItem />
+            <SkeletonListItem />
+            <SkeletonListItem />
+          </div>
+        </div>
+        <div className="lg:col-span-4 space-y-6">
+           <SkeletonTheme {...THEME}>
+             <Skeleton width="100%" height={240} borderRadius={20} />
+             <Skeleton width="100%" height={240} borderRadius={20} />
+           </SkeletonTheme>
+        </div>
+      </div>
+    </motion.div>
   );
 };

@@ -9,6 +9,7 @@ import { Zap, ArrowRight, Loader2, Brain, Target, Activity, Flame, Sparkles, Che
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { fadeInUp, cardHover } from '../utils/animations';
+import { fDateLong } from '../utils/formatters';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -32,7 +33,7 @@ export default function EnergyCheckInPage() {
   const [todayStr, setTodayStr] = useState('');
 
   useEffect(() => {
-    const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const today = fDateLong(new Date());
     setTodayStr(today);
   }, []);
 
@@ -78,11 +79,44 @@ export default function EnergyCheckInPage() {
     setStep('result');
 
     try {
+      // Validasi panjang mood state kalau diisi
+      if (moodState && moodState.length > 500) {
+        toast.error('Catatan mood maksimal 500 karakter.');
+        return;
+      }
+      // Sanitasi
+      const sanitizedMood = moodState ? moodState.replace(/<[^>]*>?/gm, '') : 'Normal';
+
+      const today = new Date().toISOString().split('T')[0];
+      const cacheKey = `gemini_checkin_${today}`;
+      const cached = localStorage.getItem(cacheKey);
+
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.expiry > Date.now()) {
+          setResult(parsed.data);
+          setAlreadyCalibrated(true);
+          const mode = parsed.data.mode?.toLowerCase()?.includes('fokus') || parsed.data.mode?.toLowerCase()?.includes('deep') ? 'deep-work' : 
+                       parsed.data.mode?.toLowerCase()?.includes('recovery') || parsed.data.mode?.toLowerCase()?.includes('pulih') ? 'recovery' : 'balance';
+          setVibeMode?.(mode as any);
+          refreshProfile();
+          setLoading(false);
+          setIsAnalyzing(false);
+          return;
+        }
+      }
+
+      // Check Rate Limit
+      const { checkRateLimit } = await import('../utils/rateLimit');
+      await checkRateLimit(profile.id);
+
+      const toastId = toast.loading('⏳ Velora sedang menganalisis...');
+
       const result = await geminiService.analyzeEnergyCheckIn(
         energyLevel,
         stressLevel,
         focusLevel,
-        moodState || 'Normal'
+        sanitizedMood
       );
       
       const now = new Date();
@@ -106,6 +140,12 @@ export default function EnergyCheckInPage() {
         lastCheckInDate: checkinDate
       });
 
+      // Simpan ke cache
+      localStorage.setItem(cacheKey, JSON.stringify({
+        data: checkinData,
+        expiry: Date.now() + 24 * 60 * 60 * 1000 // 24 hours
+      }));
+
       setResult(checkinData);
       setAlreadyCalibrated(true);
       
@@ -114,12 +154,12 @@ export default function EnergyCheckInPage() {
                    result.mode?.toLowerCase()?.includes('recovery') || result.mode?.toLowerCase()?.includes('pulih') ? 'recovery' : 'balance';
       setVibeMode?.(mode as any);
 
-      toast.success('Energi berhasil diperbarui!');
+      toast.success('Energi berhasil diperbarui!', { id: toastId });
       await refreshProfile();
     } catch (error: any) {
       console.error('Error Calibration:', error);
       handleFirestoreError(error, OperationType.WRITE, `users/${profile.id}/checkins`);
-      toast.error(error.message || 'Gagal kalibrasi.');
+      toast.error(error.message || 'Gagal kalibrasi.', { id: toastId });
       setStep('chat');
     } finally {
       setIsAnalyzing(false);

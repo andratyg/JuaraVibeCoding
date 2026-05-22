@@ -26,6 +26,7 @@ import { useEnergyTheme } from './hooks/useEnergyTheme';
 import { useDashboardData } from './hooks/useDashboardData';
 import { SkeletonPage } from './components/ui/Skeletons';
 import SEO from './components/SEO';
+import Onboarding from './pages/Onboarding';
 
 // Lazy loading features
 const FitnessCoach = lazy(() => import('./pages/FitnessCoach'));
@@ -64,9 +65,10 @@ const AppContent = () => {
       <BurnoutAlert recentCheckins={dashboardData?.recentCheckins || []} />
       <Routes>
         <Route path="/login" element={<ProtectedRoute reverse><LoginPage /></ProtectedRoute>} />
+        <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
         <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={profile && !(profile as any).onboardingDone ? <Navigate to="/onboarding" replace /> : <Dashboard />} />
           <Route path="/checkin" element={<EnergyCheckInPage />} />
           <Route path="/tasks" element={<TaskManager />} />
           <Route path="/fitness" element={<Suspense fallback={<SkeletonPage />}><FitnessCoach /></Suspense>} />

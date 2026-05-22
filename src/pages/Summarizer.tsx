@@ -19,23 +19,53 @@ export default function Summarizer() {
   const [result, setResult] = useState<any>(null);
   const [copied, setCopied] = useState(false);
 
+  const [isCooldown, setIsCooldown] = useState(false);
+  const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
+
   const handleSummarize = async () => {
     if (!text.trim()) return;
+    
+    // Validasi panjang
+    if (text.length < 10) {
+      toast.error('Teks terlalu pendek. Masukkan minimal 10 karakter.');
+      return;
+    }
+    if (text.length > 20000) {
+      toast.error('Teks terlalu panjang. Maksimal 20.000 karakter.');
+      return;
+    }
+
     setLoading(true);
+    const toastId = toast.loading('⏳ Velora sedang menganalisis dokumen...');
+    
     try {
-      const res = await geminiService.summarizeDocument(text);
+      if (profile?.id) {
+        const { checkRateLimit } = await import('../utils/rateLimit');
+        const { remaining } = await checkRateLimit(profile.id);
+        setRemainingQuota(remaining);
+      }
+
+      // Sanitasi input user (menghilangkan tag HTML dasar)
+      const sanitizedText = text.replace(/<[^>]*>?/gm, '');
+
+      const res = await geminiService.summarizeDocument(sanitizedText);
       if (profile?.id) {
         await addDoc(collection(db, `users/${profile.id}/summaries`), {
           ...res,
-          originalText: text.substring(0, 500) + '...',
+          originalText: sanitizedText.substring(0, 500) + '...',
           createdAt: new Date().toISOString()
         });
       }
       setResult(res);
-      toast.success('Analisis selesai!');
+      toast.success('Analisis selesai!', { id: toastId });
+
+      // Cooldown 3 detik untuk mencegah spam
+      setIsCooldown(true);
+      setTimeout(() => setIsCooldown(false), 3000);
+
     } catch (error: any) {
       console.error('Summarize Error:', error);
-      toast.error('Gagal menganalisis dokumen.');
+      toast.error(error.message || 'Gagal menganalisis dokumen.', { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -71,12 +101,15 @@ export default function Summarizer() {
               <Button
                 fullWidth
                 loading={loading}
-                disabled={!text.trim()}
+                disabled={!text.trim() || isCooldown}
                 onClick={handleSummarize}
                 icon={Brain}
               >
                 {t('summarizer.action') || 'Analisis Inteligensi'}
               </Button>
+              {remainingQuota !== null && (
+                <p className="text-center text-xs opacity-50 font-medium">Analisis tersisa hari ini: {remainingQuota}</p>
+              )}
             </div>
           </Card>
         </div>

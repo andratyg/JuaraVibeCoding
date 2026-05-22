@@ -1,4 +1,6 @@
-import React, { ReactNode } from 'react';
+import { Component, ReactNode, ErrorInfo } from 'react';
+import { AlertTriangle, RefreshCw } from 'lucide-react';
+import Button from './ui/Button';
 
 interface Props {
   children: ReactNode;
@@ -9,35 +11,45 @@ interface State {
   error: Error | null;
 }
 
-class ErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+export default class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+    error: null
+  };
 
-  static getDerivedStateFromError(error: Error) {
+  public static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: any) {
-    console.error('ErrorBoundary caught an error:', error, info);
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
   }
 
-  render() {
+  public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--bg)' }}>
-          <div className="text-center max-w-sm">
-            <div className="text-4xl mb-4">⚠️</div>
-            <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--text)' }}>Terjadi Kesalahan</h2>
-            <p className="text-sm mb-4" style={{ color: 'var(--text2)' }}>Ada yang tidak beres. Silakan muat ulang halaman.</p>
-            <button
+        <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center p-6 text-[var(--text)]">
+          <div className="max-w-md w-full bg-[var(--surface)] p-8 rounded-[2rem] border border-[var(--border)] shadow-2xl flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-[var(--danger)]/10 text-[var(--danger)] flex items-center justify-center mb-6">
+              <AlertTriangle size={32} />
+            </div>
+            <h1 className="text-2xl font-bold mb-2">Terjadi Kesalahan</h1>
+            <p className="text-[var(--text2)] mb-6 text-sm">
+              Maaf, Velora mengalami kendala teknis. Kesalahan ini telah dicatat.
+            </p>
+            {this.state.error && (
+              <div className="w-full bg-[var(--bg)] p-4 rounded-xl mb-6 overflow-x-auto text-left">
+                <code className="text-xs text-[var(--danger)]">{this.state.error.message}</code>
+              </div>
+            )}
+            <Button 
+              size="lg"
+              fullWidth
+              icon={RefreshCw}
               onClick={() => window.location.reload()}
-              className="px-4 py-2 rounded-[var(--r-md)] text-sm font-medium text-white"
-              style={{ background: 'var(--accent)' }}
             >
-              Muat Ulang
-            </button>
+              Muat Ulang Velora
+            </Button>
           </div>
         </div>
       );
@@ -46,5 +58,3 @@ class ErrorBoundary extends React.Component<Props, State> {
     return this.props.children;
   }
 }
-
-export default ErrorBoundary;

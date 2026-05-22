@@ -216,17 +216,17 @@ const AppLayout = () => {
         </header>
 
         {/* Content Container */}
-        <div className="flex-1 w-full max-w-6xl mx-auto px-5 py-8">
+        <div className="flex-1 w-full max-w-6xl mx-auto px-5 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8">
            <Outlet />
         </div>
       </main>
 
       {/* ── 3. MOBILE BOTTOM NAV (sm: < 768px) ── */}
-      <nav className="md:hidden fixed bottom-4 left-4 right-4 h-16 bg-[var(--surface2)]/80 backdrop-blur-2xl border border-[var(--border)] rounded-3xl z-50 flex items-center justify-around px-4 shadow-2xl shadow-black/10 dark:shadow-black/40">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] bg-[var(--surface2)]/90 backdrop-blur-2xl border-t border-[var(--border)] z-50 flex items-center justify-around px-2 shadow-2xl shadow-black/10 dark:shadow-black/40">
         {bottomTabs.map(tab => (
           <NavLink key={tab.path} to={tab.path}
             className={({ isActive }) => `
-              flex flex-col items-center gap-1 transition-all
+              flex flex-col items-center justify-center gap-1 transition-all min-w-[56px] min-h-[44px]
               ${isActive ? 'text-[var(--accent)] scale-110' : 'text-[var(--text3)]'}
             `}>
             {({ isActive }) => (
@@ -237,7 +237,7 @@ const AppLayout = () => {
             )}
           </NavLink>
         ))}
-        <button onClick={() => setDrawerOpen(true)} className="flex flex-col items-center gap-1 text-[var(--text3)]">
+        <button onClick={() => setDrawerOpen(true)} className="flex flex-col items-center justify-center gap-1 text-[var(--text3)] min-w-[56px] min-h-[44px]">
            <MoreHorizontal size={22} />
         </button>
       </nav>

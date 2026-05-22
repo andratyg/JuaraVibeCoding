@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../App';
 import { db, handleFirestoreError, OperationType } from '../config/firebase';
-import { collection, addDoc, getDocs, query, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { geminiService } from '../services/geminiService';
 import { Workout } from '../types/index';
 import { Dumbbell, CheckCircle, Sparkles, Trophy, Zap, Clock, Activity, Brain } from 'lucide-react';
@@ -12,6 +12,7 @@ import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import { SkeletonPage } from '../components/ui/Skeletons';
 import toast from 'react-hot-toast';
+import { saveFitnessProgram } from '../utils/firestoreHelpers';
 
 export default function FitnessCoach() {
   const { t } = useTranslation();
@@ -23,12 +24,27 @@ export default function FitnessCoach() {
 
   // current energy resolving logic
   const currentEnergy = dashboardData?.todayCheckin?.energyScore ?? dashboardData?.energyScore ?? profile?.energyScore ?? 5;
+  const [isCooldown, setIsCooldown] = useState(false);
+  const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchLatestWorkout = async () => {
       if (!profile?.id) return;
       try {
-        const q = query(collection(db, `users/${profile.id}/workouts`), orderBy('createdAt', 'desc'), limit(1));
+        const today = new Date().toISOString().split('T')[0];
+        const cacheKey = `gemini_fitness_${today}`;
+        const cached = localStorage.getItem(cacheKey);
+        
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed.expiry > Date.now()) {
+                setWorkout(parsed.data);
+                setFetching(false);
+                return;
+            }
+        }
+        
+        const q = query(collection(db, `users/${profile.id}/fitness`), orderBy('createdAt', 'desc'), limit(1));
         const snapshot = await getDocs(q).catch(e => {
           if (e.message?.includes('offline')) {
             console.warn('Workouts fetch: client is offline');
@@ -38,14 +54,18 @@ export default function FitnessCoach() {
         });
         if (!snapshot.empty) {
           const data = snapshot.docs[0].data();
-          setWorkout({
+          const w = Object.assign({
               id: snapshot.docs[0].id,
               ...data,
               createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt)
-          } as Workout);
+          }) as Workout;
+          
+          if (data.date === today) {
+            setWorkout(w);
+          }
         }
       } catch (err) {
-        handleFirestoreError(err, OperationType.LIST, `users/${profile.id}/workouts`);
+        handleFirestoreError(err, OperationType.LIST, `users/${profile.id}/fitness`);
       } finally {
         setFetching(false);
       }
@@ -57,7 +77,16 @@ export default function FitnessCoach() {
     if (!profile?.id) return;
     setLoading(true);
     setCompleted(false);
+    
+    const today = new Date().toISOString().split('T')[0];
+    const cacheKey = `gemini_fitness_${today}`;
+    
+    const toastId = toast.loading('⏳ Velora sedang menganalisis...');
     try {
+      const { checkRateLimit } = await import('../utils/rateLimit');
+      const { remaining } = await checkRateLimit(profile.id);
+      setRemainingQuota(remaining);
+
       let newWorkout;
       try {
         newWorkout = await geminiService.generateFitnessProgram(
@@ -89,14 +118,25 @@ export default function FitnessCoach() {
         ...newWorkout,
         energyScoreAtTime: currentEnergy,
         completed: false,
-        createdAt: Timestamp.now(),
       };
 
-      const docRef = await addDoc(collection(db, `users/${profile.id}/workouts`), workoutData);
-      setWorkout({ id: docRef.id, ...workoutData } as Workout);
-      toast.success(t('common.success'));
-    } catch (err) {
-      handleFirestoreError(err, OperationType.CREATE, `users/${profile.id}/workouts`);
+      await saveFitnessProgram(profile.id, workoutData);
+      
+      const wObj = { id: today, ...workoutData } as Workout;
+      
+      localStorage.setItem(cacheKey, JSON.stringify({
+          data: wObj,
+          expiry: Date.now() + 24 * 60 * 60 * 1000
+      }));
+      
+      setWorkout(wObj);
+      toast.success(t('common.success'), { id: toastId });
+
+      setIsCooldown(true);
+      setTimeout(() => setIsCooldown(false), 3000);
+    } catch (err: any) {
+      handleFirestoreError(err, OperationType.CREATE, `users/${profile.id}/fitness`);
+      toast.error(err.message || 'Error occurred', { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -117,14 +157,20 @@ export default function FitnessCoach() {
           <p className="text-sm" style={{ color: 'var(--text2)' }}>Program latihan adaptif yang disesuaikan dengan energimu.</p>
         </div>
         {(!completed) && (
-          <Button
-            onClick={generateWorkout}
-            loading={loading}
-            icon={Sparkles}
-            variant={workout ? 'outline' : 'primary'}
-          >
-            {workout ? 'Generate Ulang' : t('fitness.generate')}
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button
+              onClick={generateWorkout}
+              loading={loading}
+              disabled={isCooldown}
+              icon={Sparkles}
+              variant={workout ? 'outline' : 'primary'}
+            >
+              {workout ? 'Generate Ulang' : t('fitness.generate')}
+            </Button>
+            {remainingQuota !== null && (
+              <p className="text-xs opacity-50 font-medium">Analisis tersisa: {remainingQuota}</p>
+            )}
+          </div>
         )}
       </header>
 

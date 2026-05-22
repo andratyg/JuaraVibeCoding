@@ -18,16 +18,25 @@ export default function CoachPage() {
   const [isTyping, setIsTyping] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const [remainingQuota, setRemainingQuota] = useState<number | null>(null);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isTyping) return;
-    const userMsg = input.trim();
-    setInput('');
+  const handleSend = async (topicMessage?: string) => {
+    const userMsg = (topicMessage || input).trim();
+    if (!userMsg || isTyping) return;
+    
+    // length limit
+    if (userMsg.length > 1000) {
+      import('react-hot-toast').then(({ default: toast }) => toast.error('Pesan terlalu panjang. Maksimal 1.000 karakter.'));
+      return;
+    }
+
+    if (!topicMessage) setInput('');
     setMessages(prev => [...prev, { role: 'user', content: userMsg }]);
     setIsTyping(true);
 
@@ -41,7 +50,16 @@ export default function CoachPage() {
     };
 
     try {
-      const response = await geminiService.chatWithCoach(userMsg, context, messages);
+      if (profile?.id) {
+        const { checkRateLimit } = await import('../utils/rateLimit');
+        const { remaining } = await checkRateLimit(profile.id);
+        setRemainingQuota(remaining);
+      }
+
+      // sanitasi HTML
+      const sanitizedMsg = userMsg.replace(/<[^>]*>?/gm, '');
+
+      const response = await geminiService.chatWithCoach(sanitizedMsg, context, messages);
       setMessages(prev => [...prev, { role: 'coach', content: response }]);
     } catch (error: any) {
       console.error('Chat Error:', error);
@@ -120,13 +138,16 @@ export default function CoachPage() {
                 className="flex-1 bg-[var(--surface)] border border-[var(--border)] rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-[var(--accent)] transition-all pr-12 shadow-inner"
               />
               <button 
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || isTyping}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-[var(--accent)] text-white rounded-xl flex items-center justify-center disabled:opacity-50 disabled:grayscale transition-all hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/20"
               >
                 <Send size={18} />
               </button>
             </div>
+            {remainingQuota !== null && (
+              <p className="mt-2 text-center text-xs opacity-50 font-medium">Analisis tersisa hari ini: {remainingQuota}</p>
+            )}
             <p className="mt-3 text-[10px] text-center text-[var(--text3)] uppercase tracking-widest font-bold">
                 VELORA TIDAK MEMBERIKAN SARAN MEDIS; KONSULTASIKAN DENGAN AHLI PROFESIONAL JIKA PERLU.
             </p>
@@ -153,9 +174,9 @@ export default function CoachPage() {
             <div className="space-y-3">
                 <p className="text-[10px] font-black text-[var(--text3)] uppercase tracking-widest px-2">Topik Diskusi</p>
                 <div className="grid grid-cols-1 gap-2">
-                    <TopicCard icon={Brain} label="Manajemen Stress" />
-                    <TopicCard icon={Sparkles} label="Optimasi Fokus" />
-                    <TopicCard icon={MessageCircle} label="Refleksi Karir" />
+                    <TopicCard icon={Brain} label="Bagaimana cara manajemen stress yang baik hari ini?" onClick={(t: string) => handleSend(t)} />
+                    <TopicCard icon={Sparkles} label="Beri saya tips optimasi fokus" onClick={(t: string) => handleSend(t)} />
+                    <TopicCard icon={MessageCircle} label="Ayo bahas capaian target saya" onClick={(t: string) => handleSend(t)} />
                 </div>
             </div>
         </aside>
@@ -164,9 +185,9 @@ export default function CoachPage() {
   );
 }
 
-function TopicCard({ icon: Icon, label }: any) {
+function TopicCard({ icon: Icon, label, onClick }: any) {
     return (
-        <button className="flex items-center gap-3 p-4 bg-[var(--surface)] border border-[var(--border)] rounded-2xl hover:border-[var(--accent)] hover:bg-[var(--accent-bg)] transition-all group text-left">
+        <button onClick={() => onClick?.(label)} className="flex items-center gap-3 p-4 bg-[var(--surface)] border border-[var(--border)] rounded-2xl hover:border-[var(--accent)] hover:bg-[var(--accent-bg)] transition-all group text-left">
             <div className="p-2 bg-[var(--surface2)] rounded-lg text-[var(--text2)] group-hover:text-[var(--accent)] transition-colors">
                 <Icon size={16} />
             </div>
